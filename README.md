@@ -311,7 +311,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## Support
 
-- 📧 Email: [mohammed.elnaggar@example.com](mailto:mohammed.elnaggar@example.com)
+- 📧 Email: [moelnaggar14@gmail.com](mailto:moelnaggar14@gmail.com)
 - 💬 Discussions: [GitHub Discussions](https://github.com/MoElnaggar14/SwiftPermissions/discussions)
 - 🐛 Issues: [GitHub Issues](https://github.com/MoElnaggar14/SwiftPermissions/issues)
 

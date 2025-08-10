@@ -5,7 +5,7 @@ Thank you for your interest in contributing to SwiftPermissions! This document p
 ## 🎯 How to Contribute
 
 ### Reporting Issues
-- Use the [GitHub Issues](https://github.com/yourusername/SwiftPermissions/issues) page
+- Use the [GitHub Issues](https://github.com/MoElnaggar14/SwiftPermissions/issues) page
 - Search existing issues to avoid duplicates
 - Provide detailed information including:
   - iOS/macOS version
@@ -15,7 +15,7 @@ Thank you for your interest in contributing to SwiftPermissions! This document p
   - Expected vs actual behavior
 
 ### Suggesting Features
-- Open a [GitHub Discussion](https://github.com/yourusername/SwiftPermissions/discussions)
+- Open a [GitHub Discussion](https://github.com/MoElnaggar14/SwiftPermissions/discussions)
 - Describe the use case and proposed solution
 - Consider backward compatibility
 
@@ -109,8 +109,8 @@ By contributing to SwiftPermissions, you agree that your contributions will be l
 
 ## 🆘 Getting Help
 
-- [GitHub Discussions](https://github.com/yourusername/SwiftPermissions/discussions) for questions
-- [GitHub Issues](https://github.com/yourusername/SwiftPermissions/issues) for bugs
-- Email: [your-email@example.com](mailto:your-email@example.com)
+- [GitHub Discussions](https://github.com/MoElnaggar14/SwiftPermissions/discussions) for questions
+- [GitHub Issues](https://github.com/MoElnaggar14/SwiftPermissions/issues) page
+- Email: [moelnaggar14@gmail.com](mailto:moelnaggar14@gmail.com)
 
 Thank you for contributing to SwiftPermissions! 🙏

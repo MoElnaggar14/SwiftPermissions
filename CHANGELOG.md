@@ -8,17 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial release of SwiftPermissions
-- Comprehensive permission support for 15+ permission types
-- Modern async/await API
-- SwiftUI integration with view modifiers and components
-- Protocol-based design for easy testing
-- Multi-platform support (iOS, macOS, tvOS, watchOS)
-- Reactive programming with Combine
-- Observable permission manager for SwiftUI
-- Permission dashboards and status views
-- Comprehensive unit test coverage
-- Mock implementation for testing
+- TBD
+
+### Changed
+- TBD
+
+### Fixed
+- TBD
+
+## [1.1.0] - 2024-08-11
+
+### Added  
+- Performance benchmarks for permission operations (4 new tests)
+- Comprehensive Documentation.md with architecture guide
+- Enhanced demo app with batch requests and visual feedback
+- Thread-safe implementations throughout codebase
+- Modular architecture: SwiftPermissionsCore + SwiftPermissionsUI + SwiftPermissions umbrella
+
+### Changed
+- **BREAKING CHANGE**: Restructured into modular components
+- Enhanced test coverage (28 total tests, 100% passing)
+- Optimized performance for high-frequency operations
+- Improved CI/CD with macOS-compatible SwiftLint
+- Updated platform requirements to iOS 15.0+, macOS 12.0+, tvOS 15.0+, watchOS 8.0+
+
+### Fixed
+- Thread safety issues in concurrent permission requests
+- SwiftLint violations and code quality issues
+- GitHub Actions compatibility with macOS runners
+- Performance bottlenecks in batch operations
+
+### Performance Metrics
+- Status checks: ~0.3ms average
+- Batch requests: ~31ms for 5 permissions  
+- Permission groups: ~1ms for 1000 operations
+- Factory methods: ~0.3ms
 
 ### Features
 - Location services (when in use, always)

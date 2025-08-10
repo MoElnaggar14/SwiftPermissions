@@ -15,8 +15,8 @@ jobs:
         xcode: ['15.0', '15.1', '15.2']
         destination: [
           'platform=iOS Simulator,OS=17.0,name=iPhone 15',
-          'platform=iOS Simulator,OS=16.4,name=iPhone 14',
-          'platform=iOS Simulator,OS=15.5,name=iPhone 13'
+          'platform=iOS Simulator,OS=16.0,name=iPhone 14',
+          'platform=iOS Simulator,OS=15.0,name=iPhone 13'
         ]
     
     steps:
@@ -81,7 +81,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     
-    - name: SwiftLint
-      uses: norio-nomura/action-swiftlint@3.2.1
-      with:
-        args: --strict
+    - name: Install SwiftLint
+      run: brew install swiftlint
+    
+    - name: Run SwiftLint
+      run: swiftlint --strict

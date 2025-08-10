@@ -599,7 +599,8 @@ extension PermissionManager: CLLocationManagerDelegate {
     }
 }
 
-private nonisolated(unsafe) var locationRequestKey: UInt8 = 0
+// MARK: - Associated Object Key
+private var locationRequestKey: UInt8 = 0
 
 // MARK: - Permission Errors
 public enum PermissionError: LocalizedError {

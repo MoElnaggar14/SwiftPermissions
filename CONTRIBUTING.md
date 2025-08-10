@@ -58,7 +58,7 @@ Thank you for your interest in contributing to SwiftPermissions! This document p
 
 ### Building
 ```bash
-git clone https://github.com/yourusername/SwiftPermissions
+git clone https://github.com/MoElnaggar14/SwiftPermissions
 cd SwiftPermissions
 swift build
 ```

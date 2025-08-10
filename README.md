@@ -24,14 +24,14 @@ A comprehensive Swift package for managing iOS permissions with a modern async/a
 Add SwiftPermissions to your project through Xcode:
 
 1. File → Add Package Dependencies...
-2. Enter the repository URL: `https://github.com/mohammedelnaggar/SwiftPermissions`
+2. Enter the repository URL: `https://github.com/MoElnaggar14/SwiftPermissions`
 3. Choose your version preference
 
 Or add it to your `Package.swift`:
 
 ```swift
 dependencies: [
-.package(url: "https://github.com/mohammedelnaggar/SwiftPermissions", from: "1.0.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "1.0.0")
 ]
 ```
 
@@ -295,7 +295,7 @@ Make sure to add the required usage descriptions to your app's `Info.plist`:
 
 ## Requirements
 
-- iOS 14.0+ / macOS 11.0+ / tvOS 14.0+ / watchOS 7.0+
+- iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+
 - Swift 5.7+
 - Xcode 14.0+
 
@@ -312,8 +312,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## Support
 
 - 📧 Email: [mohammed.elnaggar@example.com](mailto:mohammed.elnaggar@example.com)
-- 💬 Discussions: [GitHub Discussions](https://github.com/mohammedelnaggar/SwiftPermissions/discussions)
-- 🐛 Issues: [GitHub Issues](https://github.com/mohammedelnaggar/SwiftPermissions/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/MoElnaggar14/SwiftPermissions/discussions)
+- 🐛 Issues: [GitHub Issues](https://github.com/MoElnaggar14/SwiftPermissions/issues)
 
 ## License
 

@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 // MARK: - Observable Permission Manager
-@available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
 public final class ObservablePermissionManager: ObservableObject {
     public static let shared = ObservablePermissionManager()
@@ -77,7 +77,7 @@ public final class ObservablePermissionManager: ObservableObject {
 }
 
 // MARK: - Simple Permission Status View
-@available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct PermissionStatusView: View {
     let permission: PermissionType
     
@@ -109,7 +109,8 @@ public struct PermissionStatusView: View {
                         await permissionManager.requestPermission(permission)
                     }
                 }
-                .buttonStyle(DefaultButtonStyle())
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
             }
         }
         .onAppear {
@@ -166,7 +167,7 @@ public struct PermissionStatusView: View {
 }
 
 // MARK: - Basic Permissions Dashboard
-@available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct PermissionsDashboardView: View {
     let permissions: [PermissionType]
     
@@ -190,7 +191,7 @@ public struct PermissionsDashboardView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .buttonStyle(DefaultButtonStyle())
+                    .buttonStyle(.borderedProminent)
                 }
             }
             .navigationTitle("Permissions")

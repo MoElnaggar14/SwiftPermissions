@@ -7,7 +7,7 @@ Get started with SwiftPermissions in under 5 minutes!
 Add SwiftPermissions to your Xcode project:
 
 1. File → Add Package Dependencies...
-2. Enter: `https://github.com/mohammedelnaggar/SwiftPermissions`
+2. Enter: `https://github.com/MoElnaggar14/SwiftPermissions`
 3. Choose version `1.0.0` or later
 
 ## 2. Import the Package

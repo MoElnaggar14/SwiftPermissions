@@ -13,16 +13,39 @@ let package = Package(
         .watchOS(.v8)
     ],
     products: [
+        // Main umbrella framework
         .library(
             name: "SwiftPermissions",
             targets: ["SwiftPermissions"]
+        ),
+        // Individual modules for specific use cases
+        .library(
+            name: "SwiftPermissionsCore",
+            targets: ["SwiftPermissionsCore"]
+        ),
+        .library(
+            name: "SwiftPermissionsUI",
+            targets: ["SwiftPermissionsUI"]
         )
     ],
     dependencies: [],
     targets: [
+        // Core permissions logic (no UI dependencies)
+        .target(
+            name: "SwiftPermissionsCore",
+            dependencies: [],
+            path: "Sources/SwiftPermissionsCore"
+        ),
+        // SwiftUI and UI components
+        .target(
+            name: "SwiftPermissionsUI",
+            dependencies: ["SwiftPermissionsCore"],
+            path: "Sources/SwiftPermissionsUI"
+        ),
+        // Main umbrella target that re-exports everything
         .target(
             name: "SwiftPermissions",
-            dependencies: [],
+            dependencies: ["SwiftPermissionsCore", "SwiftPermissionsUI"],
             path: "Sources/SwiftPermissions"
         ),
         .testTarget(

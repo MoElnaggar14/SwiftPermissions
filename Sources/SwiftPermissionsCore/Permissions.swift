@@ -77,6 +77,26 @@ public extension Array where Element == PermissionType {
         return [.motion, .health, .locationWhenInUse, .notification]
     }
     
+    /// Productivity permissions (calendar, reminders, contacts)
+    static var productivity: [PermissionType] {
+        return [.calendar, .reminders, .contacts]
+    }
+    
+    /// Health and fitness permissions
+    static var healthAndFitness: [PermissionType] {
+        return [.health, .motion]
+    }
+    
+    /// Biometric permissions
+    static var biometric: [PermissionType] {
+        return [.faceID, .touchID]
+    }
+    
+    /// Essential permissions for most apps
+    static var essential: [PermissionType] {
+        return [.notification, .camera, .photoLibrary, .locationWhenInUse]
+    }
+    
     /// All available permissions
     static var all: [PermissionType] {
         return PermissionType.allCases

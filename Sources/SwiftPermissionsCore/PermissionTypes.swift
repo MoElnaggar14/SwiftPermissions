@@ -2,21 +2,21 @@ import Foundation
 
 /// Represents the different types of permissions that can be requested
 public enum PermissionType: String, CaseIterable, Sendable {
-    case location = "location"
-    case locationWhenInUse = "locationWhenInUse"
-    case locationAlways = "locationAlways"
-    case notification = "notification"
-    case camera = "camera"
-    case microphone = "microphone"
-    case photoLibrary = "photoLibrary"
-    case contacts = "contacts"
-    case calendar = "calendar"
-    case reminders = "reminders"
-    case health = "health"
-    case motion = "motion"
-    case faceID = "faceID"
-    case touchID = "touchID"
-    case tracking = "tracking"
+    case location
+    case locationWhenInUse
+    case locationAlways
+    case notification
+    case camera
+    case microphone
+    case photoLibrary
+    case contacts
+    case calendar
+    case reminders
+    case health
+    case motion
+    case faceID
+    case touchID
+    case tracking
     
     /// Human-readable description for each permission type
     public var description: String {
@@ -57,11 +57,11 @@ public enum PermissionType: String, CaseIterable, Sendable {
 
 /// Represents the status of a permission
 public enum PermissionStatus: String, CaseIterable, Sendable {
-    case notDetermined = "notDetermined"
-    case denied = "denied"
-    case authorized = "authorized"
-    case restricted = "restricted"
-    case provisional = "provisional"
+    case notDetermined
+    case denied
+    case authorized
+    case restricted
+    case provisional
     
     /// Whether the permission allows the feature to be used
     public var isAuthorized: Bool {

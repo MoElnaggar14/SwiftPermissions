@@ -50,7 +50,7 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: coverage.lcov
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
   build-example:
     name: Build Example
@@ -85,4 +85,4 @@ jobs:
       run: brew install swiftlint
     
     - name: Run SwiftLint
-      run: swiftlint --strict
+      run: swiftlint

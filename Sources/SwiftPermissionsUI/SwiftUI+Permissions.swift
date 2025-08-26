@@ -14,9 +14,14 @@ public final class ObservablePermissionManager: ObservableObject {
     
     /// Initializes with a permission manager instance
     /// - Parameter permissionManager: The permission manager to use. Defaults to a new standard instance.
-    public init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
+    nonisolated public init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
         self.permissionManager = permissionManager
-        setupObservations()
+        
+        // Setup observations on main actor
+        Task { @MainActor in
+            self.cancellables = Set<AnyCancellable>()
+            self.setupObservations()
+        }
     }
     
     private func setupObservations() {
@@ -81,7 +86,7 @@ public final class ObservablePermissionManager: ObservableObject {
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct PermissionStatusView: View {
     let permission: PermissionType
-    private let permissionManager: ObservablePermissionManager
+    @ObservedObject private var permissionManager: ObservablePermissionManager
     
     /// Initializes a permission status view
     /// - Parameters:
@@ -89,6 +94,7 @@ public struct PermissionStatusView: View {
     ///   - permissionManager: Optional custom permission manager. If nil, creates a new instance.
     public init(_ permission: PermissionType, permissionManager: ObservablePermissionManager? = nil) {
         self.permission = permission
+        // Use provided manager or create a default one
         self.permissionManager = permissionManager ?? ObservablePermissionManager()
     }
     
@@ -183,6 +189,7 @@ public struct PermissionsDashboardView: View {
     ///   - permissionManager: Optional custom permission manager. If nil, creates a new instance.
     public init(permissions: [PermissionType], permissionManager: ObservablePermissionManager? = nil) {
         self.permissions = permissions
+        // Use provided manager or create a default one for StateObject
         self._permissionManager = StateObject(wrappedValue: permissionManager ?? ObservablePermissionManager())
     }
     

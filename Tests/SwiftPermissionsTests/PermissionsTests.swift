@@ -1,10 +1,10 @@
-import XCTest
 import Combine
 @testable import SwiftPermissions
+import XCTest
 
 final class PermissionsTests: XCTestCase {
-    var mockManager: MockPermissionManager!
-    var cancellables: Set<AnyCancellable>!
+    var mockManager: MockPermissionManager?
+    var cancellables: Set<AnyCancellable>?
     
     override func setUp() {
         super.setUp()
@@ -67,13 +67,13 @@ final class PermissionsTests: XCTestCase {
     // MARK: - Mock Permission Manager Tests
     
     func testMockManagerInitialStatus() async {
-        let status = await mockManager.status(for: .camera)
+        let status = await mockManager!.status(for: .camera)
         XCTAssertEqual(status, .notDetermined)
     }
     
     func testMockManagerRequestPermission() async {
-        mockManager.setShouldGrantPermissions(true)
-        let result = await mockManager.request(.camera)
+        mockManager!.setShouldGrantPermissions(true)
+        let result = await mockManager!.request(.camera)
         
         XCTAssertEqual(result.type, .camera)
         XCTAssertEqual(result.status, .authorized)
@@ -81,8 +81,8 @@ final class PermissionsTests: XCTestCase {
     }
     
     func testMockManagerDenyPermission() async {
-        mockManager.setShouldGrantPermissions(false)
-        let result = await mockManager.request(.camera)
+        mockManager!.setShouldGrantPermissions(false)
+        let result = await mockManager!.request(.camera)
         
         XCTAssertEqual(result.type, .camera)
         XCTAssertEqual(result.status, .denied)
@@ -90,8 +90,8 @@ final class PermissionsTests: XCTestCase {
     }
     
     func testMockManagerMultiplePermissions() async {
-        mockManager.setShouldGrantPermissions(true)
-        let results = await mockManager.requestMultiple([.camera, .microphone, .photoLibrary])
+        mockManager!.setShouldGrantPermissions(true)
+        let results = await mockManager!.requestMultiple([.camera, .microphone, .photoLibrary])
         
         XCTAssertEqual(results.count, 3)
         XCTAssertTrue(results.allSatisfy { $0.isSuccess })
@@ -99,28 +99,28 @@ final class PermissionsTests: XCTestCase {
     
     func testMockManagerCanRequest() async {
         // Initially should be able to request
-        let canRequestInitial = await mockManager.canRequest(.camera)
+        let canRequestInitial = await mockManager!.canRequest(.camera)
         XCTAssertTrue(canRequestInitial)
         
         // After granting, should not be able to request
-        mockManager.setShouldGrantPermissions(true)
-        _ = await mockManager.request(.camera)
+        mockManager!.setShouldGrantPermissions(true)
+        _ = await mockManager!.request(.camera)
         
-        let canRequestAfterGrant = await mockManager.canRequest(.camera)
+        let canRequestAfterGrant = await mockManager!.canRequest(.camera)
         XCTAssertFalse(canRequestAfterGrant)
     }
     
     func testMockManagerSetMockStatus() async {
-        mockManager.setMockStatus(.restricted, for: .camera)
-        let status = await mockManager.status(for: .camera)
+        mockManager!.setMockStatus(.restricted, for: .camera)
+        let status = await mockManager!.status(for: .camera)
         XCTAssertEqual(status, .restricted)
     }
     
     func testMockManagerResetStatuses() async {
-        mockManager.setMockStatus(.authorized, for: .camera)
-        mockManager.resetMockStatuses()
+        mockManager!.setMockStatus(.authorized, for: .camera)
+        mockManager!.resetMockStatuses()
         
-        let status = await mockManager.status(for: .camera)
+        let status = await mockManager!.status(for: .camera)
         XCTAssertEqual(status, .notDetermined)
     }
     
@@ -130,15 +130,15 @@ final class PermissionsTests: XCTestCase {
         let expectation = XCTestExpectation(description: "Permission status change")
         var receivedUpdate: (PermissionType, PermissionStatus)?
         
-        mockManager.permissionStatusChanged
+        mockManager!.permissionStatusChanged
             .sink { update in
                 receivedUpdate = update
                 expectation.fulfill()
             }
-            .store(in: &cancellables)
+            .store(in: &cancellables!)
         
-        mockManager.setShouldGrantPermissions(true)
-        _ = await mockManager.request(.camera)
+        mockManager!.setShouldGrantPermissions(true)
+        _ = await mockManager!.request(.camera)
         
         await fulfillment(of: [expectation], timeout: 1.0)
         
@@ -220,27 +220,27 @@ final class PermissionsTests: XCTestCase {
     // MARK: - Protocol Extension Tests
     
     func testProtocolExtensionRequestWithoutConfig() async {
-        let result = await mockManager.request(.camera)
+        let result = await mockManager!.request(.camera)
         XCTAssertEqual(result.type, .camera)
     }
     
     func testProtocolExtensionAreAllAuthorized() async {
-        mockManager.setShouldGrantPermissions(true)
-        _ = await mockManager.requestMultiple([.camera, .microphone])
+        mockManager!.setShouldGrantPermissions(true)
+        _ = await mockManager!.requestMultiple([.camera, .microphone])
         
-        let allAuthorized = await mockManager.areAllAuthorized([.camera, .microphone])
+        let allAuthorized = await mockManager!.areAllAuthorized([.camera, .microphone])
         XCTAssertTrue(allAuthorized)
         
-        mockManager.setMockStatus(.denied, for: .camera)
-        let notAllAuthorized = await mockManager.areAllAuthorized([.camera, .microphone])
+        mockManager!.setMockStatus(.denied, for: .camera)
+        let notAllAuthorized = await mockManager!.areAllAuthorized([.camera, .microphone])
         XCTAssertFalse(notAllAuthorized)
     }
     
     func testProtocolExtensionStatusFor() async {
-        mockManager.setMockStatus(.authorized, for: .camera)
-        mockManager.setMockStatus(.denied, for: .microphone)
+        mockManager!.setMockStatus(.authorized, for: .camera)
+        mockManager!.setMockStatus(.denied, for: .microphone)
         
-        let statuses = await mockManager.statusFor([.camera, .microphone])
+        let statuses = await mockManager!.statusFor([.camera, .microphone])
         
         XCTAssertEqual(statuses[.camera], .authorized)
         XCTAssertEqual(statuses[.microphone], .denied)

@@ -1,6 +1,6 @@
-import SwiftUI
 import Combine
 import SwiftPermissionsCore
+import SwiftUI
 
 // MARK: - Observable Permission Manager
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
@@ -22,7 +22,7 @@ public final class ObservablePermissionManager: ObservableObject {
     private func setupObservations() {
         permissionManager.permissionStatusChanged
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (type, status) in
+            .sink { [weak self] type, status in
                 self?.permissionStatuses[type] = status
             }
             .store(in: &cancellables)
@@ -207,4 +207,3 @@ public struct PermissionsDashboardView: View {
         }
     }
 }
-

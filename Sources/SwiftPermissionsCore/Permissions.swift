@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 // MARK: - Public API Exports
 
@@ -50,7 +50,6 @@ public extension PermissionManagerProtocol {
         return await request(.photoLibrary)
     }
 }
-
 
 // MARK: - Common Permission Groups
 

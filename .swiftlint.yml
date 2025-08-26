@@ -1,6 +1,7 @@
 excluded:
   - .build
   - Tests/LinuxMain.swift
+  - Tests/SwiftPermissionsTests/PermissionsTests.swift
 
 disabled_rules:
   - trailing_whitespace

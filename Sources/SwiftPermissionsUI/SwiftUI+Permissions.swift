@@ -1,28 +1,33 @@
-import SwiftUI
 import Combine
 import SwiftPermissionsCore
+import SwiftUI
 
 // MARK: - Observable Permission Manager
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
 public final class ObservablePermissionManager: ObservableObject {
-    public static let shared = ObservablePermissionManager()
-    
     private let permissionManager: PermissionManagerProtocol
     private var cancellables = Set<AnyCancellable>()
     
     @Published public private(set) var permissionStatuses: [PermissionType: PermissionStatus] = [:]
     @Published public private(set) var isRequestingPermission = false
     
-    public init(permissionManager: PermissionManagerProtocol = PermissionManager.shared) {
+    /// Initializes with a permission manager instance
+    /// - Parameter permissionManager: The permission manager to use. Defaults to a new standard instance.
+    nonisolated public init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
         self.permissionManager = permissionManager
-        setupObservations()
+        
+        // Setup observations on main actor
+        Task { @MainActor in
+            self.cancellables = Set<AnyCancellable>()
+            self.setupObservations()
+        }
     }
     
     private func setupObservations() {
         permissionManager.permissionStatusChanged
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (type, status) in
+            .sink { [weak self] type, status in
                 self?.permissionStatuses[type] = status
             }
             .store(in: &cancellables)
@@ -81,11 +86,16 @@ public final class ObservablePermissionManager: ObservableObject {
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct PermissionStatusView: View {
     let permission: PermissionType
+    @ObservedObject private var permissionManager: ObservablePermissionManager
     
-    @StateObject private var permissionManager = ObservablePermissionManager.shared
-    
-    public init(_ permission: PermissionType) {
+    /// Initializes a permission status view
+    /// - Parameters:
+    ///   - permission: The permission type to display
+    ///   - permissionManager: Optional custom permission manager. If nil, creates a new instance.
+    public init(_ permission: PermissionType, permissionManager: ObservablePermissionManager? = nil) {
         self.permission = permission
+        // Use provided manager or create a default one
+        self.permissionManager = permissionManager ?? ObservablePermissionManager()
     }
     
     public var body: some View {
@@ -171,11 +181,16 @@ public struct PermissionStatusView: View {
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct PermissionsDashboardView: View {
     let permissions: [PermissionType]
+    @StateObject private var permissionManager: ObservablePermissionManager
     
-    @StateObject private var permissionManager = ObservablePermissionManager.shared
-    
-    public init(permissions: [PermissionType]) {
+    /// Initializes a permissions dashboard view
+    /// - Parameters:
+    ///   - permissions: Array of permission types to display
+    ///   - permissionManager: Optional custom permission manager. If nil, creates a new instance.
+    public init(permissions: [PermissionType], permissionManager: ObservablePermissionManager? = nil) {
         self.permissions = permissions
+        // Use provided manager or create a default one for StateObject
+        self._permissionManager = StateObject(wrappedValue: permissionManager ?? ObservablePermissionManager())
     }
     
     public var body: some View {
@@ -199,4 +214,3 @@ public struct PermissionsDashboardView: View {
         }
     }
 }
-

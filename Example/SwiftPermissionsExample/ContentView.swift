@@ -1,8 +1,8 @@
-import SwiftUI
 import SwiftPermissions
+import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var permissionManager = ObservablePermissionManager.shared
+    @StateObject private var permissionManager = ObservablePermissionManager()
     @State private var showPermissionsDashboard = false
     @State private var showCameraAlert = false
     @State private var requestResults: [PermissionResult] = []
@@ -183,7 +183,7 @@ struct PermissionButton: View {
     let systemImage: String
     let permission: PermissionType
     
-    @StateObject private var permissionManager = ObservablePermissionManager.shared
+    @StateObject private var permissionManager = ObservablePermissionManager()
     
     var body: some View {
         Button {
@@ -234,7 +234,8 @@ struct BatchRequestButton: View {
     var body: some View {
         Button {
             Task {
-                let results = await PermissionManager.shared.requestMultiple(permissions)
+                let manager = PermissionManagerFactory.default()
+                let results = await manager.requestMultiple(permissions)
                 await MainActor.run {
                     onComplete(results)
                 }

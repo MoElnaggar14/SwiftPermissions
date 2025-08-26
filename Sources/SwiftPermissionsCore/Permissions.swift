@@ -7,50 +7,93 @@ import Combine
 public typealias Permission = PermissionType
 public typealias Status = PermissionStatus
 
-// Main Manager
-public typealias Permissions = PermissionManager
+// MARK: - Convenience Extensions for PermissionManagerProtocol
 
-// MARK: - Convenience Extensions
-
-public extension PermissionManager {
+public extension PermissionManagerProtocol {
     /// Convenience method to check location permission status
-    static func locationStatus() async -> PermissionStatus {
-        return await shared.status(for: .location)
+    func locationStatus() async -> PermissionStatus {
+        return await status(for: .location)
     }
     
     /// Convenience method to request location permission
-    static func requestLocation() async -> PermissionResult {
-        return await shared.request(.location)
+    func requestLocation() async -> PermissionResult {
+        return await request(.location)
     }
     
     /// Convenience method to check notification permission status
-    static func notificationStatus() async -> PermissionStatus {
-        return await shared.status(for: .notification)
+    func notificationStatus() async -> PermissionStatus {
+        return await status(for: .notification)
     }
     
     /// Convenience method to request notification permission
-    static func requestNotifications() async -> PermissionResult {
-        return await shared.request(.notification)
+    func requestNotifications() async -> PermissionResult {
+        return await request(.notification)
     }
     
     /// Convenience method to check camera permission status
-    static func cameraStatus() async -> PermissionStatus {
-        return await shared.status(for: .camera)
+    func cameraStatus() async -> PermissionStatus {
+        return await status(for: .camera)
     }
     
     /// Convenience method to request camera permission
-    static func requestCamera() async -> PermissionResult {
-        return await shared.request(.camera)
+    func requestCamera() async -> PermissionResult {
+        return await request(.camera)
     }
     
     /// Convenience method to check photo library permission status
-    static func photoLibraryStatus() async -> PermissionStatus {
-        return await shared.status(for: .photoLibrary)
+    func photoLibraryStatus() async -> PermissionStatus {
+        return await status(for: .photoLibrary)
     }
     
     /// Convenience method to request photo library permission
-    static func requestPhotoLibrary() async -> PermissionResult {
-        return await shared.request(.photoLibrary)
+    func requestPhotoLibrary() async -> PermissionResult {
+        return await request(.photoLibrary)
+    }
+}
+
+// MARK: - Static Convenience API using Default Manager
+
+public enum Permissions {
+    private static let defaultManager: PermissionManagerProtocol = PermissionManagerFactory.default()
+    
+    /// Convenience method to check location permission status using default manager
+    public static func locationStatus() async -> PermissionStatus {
+        return await defaultManager.status(for: .location)
+    }
+    
+    /// Convenience method to request location permission using default manager
+    public static func requestLocation() async -> PermissionResult {
+        return await defaultManager.request(.location)
+    }
+    
+    /// Convenience method to check notification permission status using default manager
+    public static func notificationStatus() async -> PermissionStatus {
+        return await defaultManager.status(for: .notification)
+    }
+    
+    /// Convenience method to request notification permission using default manager
+    public static func requestNotifications() async -> PermissionResult {
+        return await defaultManager.request(.notification)
+    }
+    
+    /// Convenience method to check camera permission status using default manager
+    public static func cameraStatus() async -> PermissionStatus {
+        return await defaultManager.status(for: .camera)
+    }
+    
+    /// Convenience method to request camera permission using default manager
+    public static func requestCamera() async -> PermissionResult {
+        return await defaultManager.request(.camera)
+    }
+    
+    /// Convenience method to check photo library permission status using default manager
+    public static func photoLibraryStatus() async -> PermissionStatus {
+        return await defaultManager.status(for: .photoLibrary)
+    }
+    
+    /// Convenience method to request photo library permission using default manager
+    public static func requestPhotoLibrary() async -> PermissionResult {
+        return await defaultManager.request(.photoLibrary)
     }
 }
 
@@ -107,14 +150,26 @@ public extension Array where Element == PermissionType {
 
 /// Factory for creating permission managers with specific configurations
 public struct PermissionManagerFactory {
-    /// Creates a permission manager with default configuration
+    /// Creates a standard permission manager instance
     public static func `default`() -> PermissionManagerProtocol {
-        return PermissionManager.shared
+        return PermissionManager()
+    }
+    
+    /// Creates a new instance of the standard permission manager
+    public static func standard() -> PermissionManagerProtocol {
+        return PermissionManager()
     }
     
     /// Creates a permission manager for testing with mock implementation
     public static func mock() -> PermissionManagerProtocol {
         return MockPermissionManager()
+    }
+    
+    /// Creates a permission manager with custom behavior for testing
+    public static func mock(shouldGrantPermissions: Bool) -> PermissionManagerProtocol {
+        let mockManager = MockPermissionManager()
+        mockManager.setShouldGrantPermissions(shouldGrantPermissions)
+        return mockManager
     }
 }
 

@@ -1,10 +1,16 @@
-# Migration Guide: Removing Singleton Pattern
+# Migration Guide: v2.0.0 - Complete Singleton Removal
 
-This guide helps you migrate from the singleton-based approach to the new dependency injection approach in SwiftPermissions.
+This guide helps you migrate from v1.x to v2.0.0 of SwiftPermissions, which completely removes the singleton pattern in favor of clean dependency injection.
 
-## Overview
+## ⚠️ Breaking Changes
 
-We've removed the singleton pattern to follow clean architecture principles and improve testability. This is a **breaking change** but provides significant benefits:
+**Version 2.0.0 introduces breaking changes that require code updates.** We've completely removed:
+
+- ❌ `PermissionManager.shared` singleton
+- ❌ Static convenience API (`Permissions.requestCamera()`, etc.)
+- ❌ All backward compatibility layers
+
+This is a **major version bump** with significant architectural improvements:
 
 - ✅ Better testability
 - ✅ No global state
@@ -38,11 +44,12 @@ class MyViewController {
 }
 ```
 
-### Alternative (Static Convenience API)
+### Alternative (Direct Factory Usage)
 ```swift
-// For simple use cases - static convenience API
-let cameraResult = await Permissions.requestCamera()
-let locationResult = await Permissions.requestLocation()
+// For simple use cases - direct factory usage
+let permissionManager = PermissionManagerFactory.default()
+let cameraResult = await permissionManager.requestCamera()
+let locationResult = await permissionManager.requestLocation()
 ```
 
 ## Migration Steps
@@ -176,16 +183,14 @@ PermissionsDashboardView(permissions: [.camera, .microphone], permissionManager:
 4. **Clean Architecture**: Clear dependencies, easier to reason about
 5. **No Singleton Anti-patterns**: Avoids tight coupling and hidden dependencies
 
-## Backwards Compatibility
+## No Backwards Compatibility
 
-For simple usage, you can still use static convenience methods:
+**Version 2.0.0 breaks backward compatibility intentionally** to enforce clean architecture patterns. All singleton usage and static convenience APIs have been removed to provide:
 
-```swift
-// These still work and are convenient for simple cases
-let cameraResult = await Permissions.requestCamera()
-let locationResult = await Permissions.requestLocation()
-let notificationResult = await Permissions.requestNotifications()
-```
+- Clear dependency management
+- Better testing capabilities
+- Elimination of global state
+- More explicit code architecture
 
 ## Need Help?
 

@@ -51,51 +51,6 @@ public extension PermissionManagerProtocol {
     }
 }
 
-// MARK: - Static Convenience API using Default Manager
-
-public enum Permissions {
-    private static let defaultManager: PermissionManagerProtocol = PermissionManagerFactory.default()
-    
-    /// Convenience method to check location permission status using default manager
-    public static func locationStatus() async -> PermissionStatus {
-        return await defaultManager.status(for: .location)
-    }
-    
-    /// Convenience method to request location permission using default manager
-    public static func requestLocation() async -> PermissionResult {
-        return await defaultManager.request(.location)
-    }
-    
-    /// Convenience method to check notification permission status using default manager
-    public static func notificationStatus() async -> PermissionStatus {
-        return await defaultManager.status(for: .notification)
-    }
-    
-    /// Convenience method to request notification permission using default manager
-    public static func requestNotifications() async -> PermissionResult {
-        return await defaultManager.request(.notification)
-    }
-    
-    /// Convenience method to check camera permission status using default manager
-    public static func cameraStatus() async -> PermissionStatus {
-        return await defaultManager.status(for: .camera)
-    }
-    
-    /// Convenience method to request camera permission using default manager
-    public static func requestCamera() async -> PermissionResult {
-        return await defaultManager.request(.camera)
-    }
-    
-    /// Convenience method to check photo library permission status using default manager
-    public static func photoLibraryStatus() async -> PermissionStatus {
-        return await defaultManager.status(for: .photoLibrary)
-    }
-    
-    /// Convenience method to request photo library permission using default manager
-    public static func requestPhotoLibrary() async -> PermissionResult {
-        return await defaultManager.request(.photoLibrary)
-    }
-}
 
 // MARK: - Common Permission Groups
 

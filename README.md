@@ -43,7 +43,7 @@ dependencies: [
 
 ### Basic Usage
 
-#### Using Dependency Injection (Recommended)
+#### Dependency Injection Pattern
 
 ```swift
 import SwiftPermissions
@@ -73,24 +73,30 @@ class MyViewController {
 }
 ```
 
-#### Using Static Convenience API
+#### Direct Usage
 
 ```swift
 import SwiftPermissions
 
-// For simple usage, you can still use the static convenience API
-let cameraResult = await Permissions.requestCamera()
-let locationResult = await Permissions.requestLocation()
-let notificationResult = await Permissions.requestNotifications()
+// Create a permission manager instance
+let permissionManager = PermissionManagerFactory.default()
+
+// Check and request permissions
+let cameraStatus = await permissionManager.status(for: .camera)
+let cameraResult = await permissionManager.request(.camera)
+let locationResult = await permissionManager.request(.locationWhenInUse)
 ```
 
 ### Convenience Methods
 
 ```swift
+// Use convenience methods on any permission manager instance
+let permissionManager = PermissionManagerFactory.default()
+
 // Quick access to common permissions
-let cameraResult = await Permissions.requestCamera()
-let locationResult = await Permissions.requestLocation()
-let notificationResult = await Permissions.requestNotifications()
+let cameraResult = await permissionManager.requestCamera()
+let locationResult = await permissionManager.requestLocation()
+let notificationResult = await permissionManager.requestNotifications()
 ```
 
 ### Permission Groups

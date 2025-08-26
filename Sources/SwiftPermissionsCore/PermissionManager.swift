@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 #if canImport(UIKit)
 import UIKit
@@ -48,8 +48,6 @@ import AppTrackingTransparency
 /// Main implementation of PermissionManagerProtocol
 public final class PermissionManager: NSObject, PermissionManagerProtocol, @unchecked Sendable {
     
-    public static let shared = PermissionManager()
-    
     private let permissionStatusSubject = PassthroughSubject<(PermissionType, PermissionStatus), Never>()
     public var permissionStatusChanged: AnyPublisher<(PermissionType, PermissionStatus), Never> {
         permissionStatusSubject.eraseToAnyPublisher()
@@ -64,7 +62,7 @@ public final class PermissionManager: NSObject, PermissionManagerProtocol, @unch
     }()
     #endif
     
-    private override init() {
+    public override init() {
         super.init()
     }
     

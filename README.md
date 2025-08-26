@@ -16,6 +16,8 @@ A comprehensive Swift package for managing iOS permissions with a modern async/a
 - 📱 **Multi-Platform**: iOS, macOS, tvOS, watchOS support
 - 🧪 **Fully Tested**: Comprehensive unit test coverage
 - 🎨 **Customizable UI**: Beautiful permission request views and dashboards
+- 🏗️ **Dependency Injection**: No singletons - follows clean architecture principles
+- 🧪 **Testable**: Easy to mock and unit test with dependency injection
 
 ## 📦 Installation
 
@@ -41,40 +43,72 @@ dependencies: [
 
 ### Basic Usage
 
+#### Dependency Injection Pattern
+
 ```swift
 import SwiftPermissions
 
-// Check permission status
-let status = await PermissionManager.shared.status(for: .camera)
-
-// Request a permission
-let result = await PermissionManager.shared.request(.camera)
-if result.isSuccess {
-    // Permission granted
-} else {
-    // Permission denied or error occurred
+class MyViewController {
+    private let permissionManager: PermissionManagerProtocol
+    
+    init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
+        self.permissionManager = permissionManager
+    }
+    
+    func requestCameraAccess() async {
+        // Check permission status
+        let status = await permissionManager.status(for: .camera)
+        
+        // Request a permission
+        let result = await permissionManager.request(.camera)
+        if result.isSuccess {
+            // Permission granted
+        } else {
+            // Permission denied or error occurred
+        }
+        
+        // Request multiple permissions
+        let results = await permissionManager.requestMultiple([.camera, .microphone, .photoLibrary])
+    }
 }
+```
 
-// Request multiple permissions
-let results = await PermissionManager.shared.requestMultiple([.camera, .microphone, .photoLibrary])
+#### Direct Usage
+
+```swift
+import SwiftPermissions
+
+// Create a permission manager instance
+let permissionManager = PermissionManagerFactory.default()
+
+// Check and request permissions
+let cameraStatus = await permissionManager.status(for: .camera)
+let cameraResult = await permissionManager.request(.camera)
+let locationResult = await permissionManager.request(.locationWhenInUse)
 ```
 
 ### Convenience Methods
 
 ```swift
+// Use convenience methods on any permission manager instance
+let permissionManager = PermissionManagerFactory.default()
+
 // Quick access to common permissions
-let cameraResult = await Permissions.requestCamera()
-let locationResult = await Permissions.requestLocation()
-let notificationResult = await Permissions.requestNotifications()
+let cameraResult = await permissionManager.requestCamera()
+let locationResult = await permissionManager.requestLocation()
+let notificationResult = await permissionManager.requestNotifications()
 ```
 
 ### Permission Groups
 
 ```swift
+// Create a permission manager instance
+let permissionManager = PermissionManagerFactory.default()
+
 // Request permissions by category
-let mediaResults = await PermissionManager.shared.requestMultiple(.media) // Camera, microphone, photo library
-let locationResults = await PermissionManager.shared.requestMultiple(.location) // Location when in use, notifications
-let socialResults = await PermissionManager.shared.requestMultiple(.social) // Contacts, photo library, camera, notifications
+let mediaResults = await permissionManager.requestMultiple(.media) // Camera, microphone, photo library
+let locationResults = await permissionManager.requestMultiple(.location) // Location when in use, notifications
+let socialResults = await permissionManager.requestMultiple(.social) // Contacts, photo library, camera, notifications
 ```
 
 ### SwiftUI Integration
@@ -122,7 +156,7 @@ struct ContentView: View {
 
 ```swift
 struct PermissionView: View {
-    @StateObject private var permissionManager = ObservablePermissionManager.shared
+    @StateObject private var permissionManager = ObservablePermissionManager()
     
     var body: some View {
         VStack {
@@ -171,6 +205,7 @@ struct PermissionsView: View {
 ### Custom Configuration
 
 ```swift
+let permissionManager = PermissionManagerFactory.default()
 let config = PermissionConfig(
     title: "Location Permission Required",
     message: "This app uses location to provide personalized recommendations.",
@@ -178,7 +213,7 @@ let config = PermissionConfig(
     settingsMessage: "Go to Settings > Privacy > Location Services to enable location for this app."
 )
 
-let result = await PermissionManager.shared.request(.location, config: config)
+let result = await permissionManager.request(.location, config: config)
 ```
 
 ### Reactive Programming with Combine
@@ -187,10 +222,13 @@ let result = await PermissionManager.shared.request(.location, config: config)
 import Combine
 
 class ViewModel: ObservableObject {
+    private let permissionManager: PermissionManagerProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    init() {
-        PermissionManager.shared.permissionStatusChanged
+    init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
+        self.permissionManager = permissionManager
+        
+        permissionManager.permissionStatusChanged
             .sink { (type, status) in
                 print("Permission \(type) changed to \(status)")
             }
@@ -230,6 +268,44 @@ Each permission can have one of the following statuses:
 - `.denied` - Permission is denied
 - `.restricted` - Permission is restricted (parental controls, etc.)
 - `.provisional` - Provisional permission (notifications only)
+
+## Architecture
+
+### Clean Architecture Principles
+
+This package follows clean architecture principles and avoids common anti-patterns:
+
+#### No Singleton Pattern
+Unlike many permission libraries, SwiftPermissions **does not use singleton patterns**. Instead, it uses:
+- **Dependency Injection**: Pass permission managers as dependencies
+- **Protocol-based design**: Easy to mock and test
+- **Factory pattern**: Create instances when needed
+
+#### Benefits of Our Approach
+- ✅ **Testable**: Easy to inject mocks for unit testing
+- ✅ **Flexible**: Multiple instances for different contexts
+- ✅ **Maintainable**: Clear dependencies, no global state
+- ✅ **Thread-safe**: No shared mutable state
+- ❌ **Avoids**: Tight coupling, hidden dependencies, testing difficulties
+
+#### Creating Permission Managers
+
+```swift
+// Recommended: Use dependency injection
+class MyService {
+    private let permissionManager: PermissionManagerProtocol
+    
+    init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
+        self.permissionManager = permissionManager
+    }
+}
+
+// Alternative: Create instances directly
+let permissionManager = PermissionManagerFactory.default()
+
+// For testing: Use mocks
+let mockManager = PermissionManagerFactory.mock(shouldGrantPermissions: true)
+```
 
 ## Testing
 

@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 /// Protocol defining the interface for permission management
 public protocol PermissionManagerProtocol: Sendable {

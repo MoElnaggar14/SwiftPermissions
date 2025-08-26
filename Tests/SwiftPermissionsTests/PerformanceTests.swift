@@ -1,5 +1,5 @@
+@testable import SwiftPermissions
 import XCTest
-@testable import SwiftPermissionsCore
 
 final class PerformanceTests: XCTestCase {
     

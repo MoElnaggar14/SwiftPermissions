@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-14
     strategy:
       matrix:
-        xcode: ['15.4', '16.0']
+        xcode: ['15.4', '16.2']
         destination: [
           'platform=iOS Simulator,OS=17.0,name=iPhone 15',
           'platform=iOS Simulator,OS=16.0,name=iPhone 14'

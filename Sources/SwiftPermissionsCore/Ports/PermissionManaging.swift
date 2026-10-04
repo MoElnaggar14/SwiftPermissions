@@ -37,7 +37,8 @@ public extension PermissionStatusReading {
     }
 
     func areAllGranted(_ permissions: some Sequence<Permission>) async -> Bool {
-        for permission in permissions {
+        // swiftlint:disable:next for_where
+        for permission in permissions { // The condition awaits, which a `where` clause can't.
             if await !status(of: permission).isGranted { return false }
         }
         return true

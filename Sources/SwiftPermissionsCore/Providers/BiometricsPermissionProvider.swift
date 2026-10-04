@@ -34,7 +34,7 @@ public struct BiometricsPermissionProvider: PermissionProvider {
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             return .authorized
         }
-        return Self.map(error.map { LAError.Code(rawValue: $0.code) } ?? nil, biometryType: context.biometryType)
+        return Self.map(error.flatMap { LAError.Code(rawValue: $0.code) }, biometryType: context.biometryType)
     }
 
     public func request() async throws -> PermissionStatus {

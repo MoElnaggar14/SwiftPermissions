@@ -1,396 +1,178 @@
 # SwiftPermissions
 
-A comprehensive Swift package for managing iOS permissions with a modern async/await API and SwiftUI integration.
+One async API for every Apple permission. Built for Swift 6 strict concurrency, it ships SwiftUI components and is testable without a device.
 
-[![Swift Version](https://img.shields.io/badge/Swift-5.7+-orange.svg)](https://swift.org)
-[![Platforms](https://img.shields.io/badge/Platforms-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS-brightgreen.svg)](https://developer.apple.com/swift/)
-[![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-## 🌟 Features
-
-- 🎯 **Comprehensive Permission Support**: Location, Notifications, Camera, Microphone, Photo Library, Contacts, Calendar, Reminders, Health, Motion, Biometrics, and App Tracking Transparency
-- ⚡ **Modern API**: Built with async/await and Combine for reactive programming
-- 🧩 **SwiftUI Integration**: Ready-to-use view modifiers and components
-- 🔍 **Protocol-Based**: Easily mockable for testing
-- 📱 **Multi-Platform**: iOS, macOS, tvOS, watchOS support
-- 🧪 **Fully Tested**: Comprehensive unit test coverage
-- 🎨 **Customizable UI**: Beautiful permission request views and dashboards
-- 🏗️ **Dependency Injection**: No singletons - follows clean architecture principles
-- 🧪 **Testable**: Easy to mock and unit test with dependency injection
-
-## 📦 Installation
-
-### Swift Package Manager
-
-Add SwiftPermissions to your project through Xcode:
-
-1. File → Add Package Dependencies...
-2. Enter the repository URL: `https://github.com/MoElnaggar14/SwiftPermissions`
-3. Choose your version preference
-
-Or add it to your `Package.swift`:
+[![CI](https://github.com/MoElnaggar14/SwiftPermissions/actions/workflows/ci.yml/badge.svg)](https://github.com/MoElnaggar14/SwiftPermissions/actions/workflows/ci.yml)
+![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg)
+![Platforms](https://img.shields.io/badge/platforms-iOS%2015%20%7C%20macOS%2012%20%7C%20tvOS%2015%20%7C%20watchOS%209-blue.svg)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
 
 ```swift
-dependencies: [
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "1.0.0")
-]
-```
+let permissions = PermissionManager()
 
-## 🚀 Quick Start
-
-## Usage
-
-### Basic Usage
-
-#### Dependency Injection Pattern
-
-```swift
-import SwiftPermissions
-
-class MyViewController {
-    private let permissionManager: PermissionManagerProtocol
-    
-    init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
-        self.permissionManager = permissionManager
-    }
-    
-    func requestCameraAccess() async {
-        // Check permission status
-        let status = await permissionManager.status(for: .camera)
-        
-        // Request a permission
-        let result = await permissionManager.request(.camera)
-        if result.isSuccess {
-            // Permission granted
-        } else {
-            // Permission denied or error occurred
-        }
-        
-        // Request multiple permissions
-        let results = await permissionManager.requestMultiple([.camera, .microphone, .photoLibrary])
-    }
+switch try await permissions.request(.camera) {
+case .authorized:          startCapture()
+case .limited:             startCapture(limited: true)
+case .denied:              await AppSettings.open(for: .camera)
+case .restricted, .unavailable, .notDetermined, .provisional:
+    showUnavailableState()
 }
 ```
 
-#### Direct Usage
+## Why
+
+Every framework has its own authorization enum, its own request API (async, callback, delegate, or "just touch the data"), and its own Info.plist key. If a key is missing, the app crashes. SwiftPermissions handles all of that behind one model:
+
+- **One vocabulary.** `PermissionStatus` normalises 15+ framework enums. It keeps the distinctions UX depends on: `limited` photos, `provisional` notifications, parental `restricted`, and `unavailable` hardware.
+- **No Info.plist crashes.** Before showing a prompt it checks the usage descriptions and throws `missingUsageDescription` instead. `missingUsageDescriptions(for:)` lets you assert this in a unit test.
+- **Concurrency-correct.** `PermissionManager` is an actor. It's checked under the Swift 6 language mode. Concurrent requests for the same permission share one prompt.
+- **Live.** `updates(for:)` and `changes()` are `AsyncStream`s, and the SwiftUI store refreshes when the user returns from Settings.
+- **Open for extension.** Each permission is a small `PermissionProvider`. You can add your own permission, or replace how a built-in one is requested, without forking.
+- **Testable.** `SwiftPermissionsTesting` provides scriptable stubs that run through the real manager logic, with no simulator prompts.
+
+## Installation
 
 ```swift
-import SwiftPermissions
-
-// Create a permission manager instance
-let permissionManager = PermissionManagerFactory.default()
-
-// Check and request permissions
-let cameraStatus = await permissionManager.status(for: .camera)
-let cameraResult = await permissionManager.request(.camera)
-let locationResult = await permissionManager.request(.locationWhenInUse)
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.0.0")
 ```
 
-### Convenience Methods
+| Product | Use it for |
+| --- | --- |
+| `SwiftPermissions` | Everything (Core + SwiftUI) |
+| `SwiftPermissionsCore` | Domain, manager, providers. No SwiftUI. |
+| `SwiftPermissionsUI` | `PermissionStore`, `PermissionGate`, `PermissionPrompt`, `PermissionRow`, `PermissionsList` |
+| `SwiftPermissionsTesting` | `StubPermissionProvider`, `PermissionManager.stubbed(...)`, for test targets and previews |
+
+## Supported permissions
+
+| Permission | iOS | macOS | tvOS | watchOS | Info.plist key(s) |
+| --- | :-: | :-: | :-: | :-: | --- |
+| `.camera` | ✓ | ✓ | | | `NSCameraUsageDescription` |
+| `.microphone` | ✓ | ✓ | | | `NSMicrophoneUsageDescription` |
+| `.photoLibrary` / `.photoLibraryAddOnly` | ✓ | ✓ | | | `NSPhotoLibraryUsageDescription` / `NSPhotoLibraryAddUsageDescription` |
+| `.contacts` | ✓ | ✓ | | ✓ | `NSContactsUsageDescription` |
+| `.calendar` / `.calendarWriteOnly` | ✓ | ✓ | | ✓ | `NSCalendarsFullAccessUsageDescription` / `NSCalendarsWriteOnlyAccessUsageDescription` (iOS 17+) |
+| `.reminders` | ✓ | ✓ | | ✓ | `NSRemindersFullAccessUsageDescription` (iOS 17+) |
+| `.locationWhenInUse` | ✓ | ✓ | ✓ | ✓ | `NSLocationWhenInUseUsageDescription` |
+| `.locationAlways` | ✓ | ✓ | | ✓ | + `NSLocationAlwaysAndWhenInUseUsageDescription` |
+| `.notifications` | ✓ | ✓ | ✓ | ✓ | none |
+| `.bluetooth` | ✓ | ✓ | ✓ | ✓ | `NSBluetoothAlwaysUsageDescription` |
+| `.tracking` | ✓ | ✓ | ✓ | | `NSUserTrackingUsageDescription` |
+| `.speechRecognition` | ✓ | ✓ | | | `NSSpeechRecognitionUsageDescription` |
+| `.motion` | ✓ | | | ✓ | `NSMotionUsageDescription` |
+| `.siri` | ✓ | | | ✓ | `NSSiriUsageDescription` |
+| `.mediaLibrary` | ✓ | | | | `NSAppleMusicUsageDescription` |
+| `.biometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` |
+| `.health` (opt-in) | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` |
+
+## SwiftUI
 
 ```swift
-// Use convenience methods on any permission manager instance
-let permissionManager = PermissionManagerFactory.default()
+struct ScannerScreen: View {
+    @StateObject private var permissions = PermissionStore()
 
-// Quick access to common permissions
-let cameraResult = await permissionManager.requestCamera()
-let locationResult = await permissionManager.requestLocation()
-let notificationResult = await permissionManager.requestNotifications()
-```
-
-### Permission Groups
-
-```swift
-// Create a permission manager instance
-let permissionManager = PermissionManagerFactory.default()
-
-// Request permissions by category
-let mediaResults = await permissionManager.requestMultiple(.media) // Camera, microphone, photo library
-let locationResults = await permissionManager.requestMultiple(.location) // Location when in use, notifications
-let socialResults = await permissionManager.requestMultiple(.social) // Contacts, photo library, camera, notifications
-```
-
-### SwiftUI Integration
-
-#### Using View Modifiers
-
-```swift
-import SwiftUI
-import SwiftPermissions
-
-struct ContentView: View {
-    @State private var showPermissionAlert = false
-    
     var body: some View {
-        VStack {
-            Text("My App")
-            
-            Button("Request Camera Permission") {
-                showPermissionAlert = true
-            }
-        }
-        .requestPermissionsOnAppear([.notification]) { results in
-            // Handle results
-        }
-        .permissionAlert(
-            for: .camera,
-            isPresented: $showPermissionAlert,
-            config: PermissionConfig(
-                title: "Camera Access Required",
-                message: "We need camera access to take photos."
-            )
-        )
-        .conditionalOnPermission(.camera) {
-            // Show when camera is authorized
-            CameraView()
-        } notAuthorized: {
-            // Show when camera is not authorized
-            PermissionDeniedView()
+        // Shows the scanner once granted. Until then it shows a pre-permission prompt
+        // with the right action for the status: Continue, Open Settings, or nothing.
+        PermissionGate(.camera, message: "Scan receipts with your camera.", store: permissions) {
+            ScannerView()
         }
     }
 }
 ```
 
-#### Using Observable Permission Manager
+You can provide your own fallback UI:
 
 ```swift
-struct PermissionView: View {
-    @StateObject private var permissionManager = ObservablePermissionManager()
-    
-    var body: some View {
-        VStack {
-            if permissionManager.isAuthorized(.camera) {
-                Text("Camera is authorized")
-                    .foregroundColor(.green)
-            } else {
-                Button("Request Camera Permission") {
-                    Task {
-                        await permissionManager.requestPermission(.camera)
-                    }
-                }
-            }
-        }
-        .task {
-            await permissionManager.checkStatus(for: .camera)
-        }
-    }
+PermissionGate(.microphone, store: permissions) {
+    Recorder()
+} fallback: { status in
+    MicrophoneOnboarding(status: status) { Task { await permissions.request(.microphone) } }
 }
 ```
 
-#### Permission Status Views
-
-```swift
-struct SettingsView: View {
-    var body: some View {
-        List {
-            PermissionStatusView(.camera)
-            PermissionStatusView(.microphone)
-            PermissionStatusView(.photoLibrary)
-        }
-    }
-}
-```
-
-#### Permissions Dashboard
-
-```swift
-struct PermissionsView: View {
-    var body: some View {
-        PermissionsDashboardView(permissions: [.camera, .microphone, .photoLibrary, .location])
-    }
-}
-```
-
-### Custom Configuration
-
-```swift
-let permissionManager = PermissionManagerFactory.default()
-let config = PermissionConfig(
-    title: "Location Permission Required",
-    message: "This app uses location to provide personalized recommendations.",
-    settingsTitle: "Enable Location in Settings",
-    settingsMessage: "Go to Settings > Privacy > Location Services to enable location for this app."
-)
-
-let result = await permissionManager.request(.location, config: config)
-```
-
-### Reactive Programming with Combine
-
-```swift
-import Combine
-
-class ViewModel: ObservableObject {
-    private let permissionManager: PermissionManagerProtocol
-    private var cancellables = Set<AnyCancellable>()
-    
-    init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
-        self.permissionManager = permissionManager
-        
-        permissionManager.permissionStatusChanged
-            .sink { (type, status) in
-                print("Permission \(type) changed to \(status)")
-            }
-            .store(in: &cancellables)
-    }
-}
-```
-
-## Permission Types
-
-The package supports the following permission types:
-
-| Permission Type | Description |
-|----------------|-------------|
-| `.location` | General location access |
-| `.locationWhenInUse` | Location when app is in use |
-| `.locationAlways` | Always-on location access |
-| `.notification` | Push notifications |
-| `.camera` | Camera access |
-| `.microphone` | Microphone access |
-| `.photoLibrary` | Photo library access |
-| `.contacts` | Contacts access |
-| `.calendar` | Calendar access |
-| `.reminders` | Reminders access |
-| `.health` | HealthKit data access |
-| `.motion` | Motion and fitness data |
-| `.faceID` | Face ID authentication |
-| `.touchID` | Touch ID authentication |
-| `.tracking` | App tracking transparency |
-
-## Permission Status
-
-Each permission can have one of the following statuses:
-
-- `.notDetermined` - Permission hasn't been requested yet
-- `.authorized` - Permission is granted
-- `.denied` - Permission is denied
-- `.restricted` - Permission is restricted (parental controls, etc.)
-- `.provisional` - Provisional permission (notifications only)
+For an onboarding or privacy screen: `PermissionsList([.camera, .microphone, .notifications], store: permissions)`.
 
 ## Architecture
 
-### Clean Architecture Principles
+```
+┌──────────────── SwiftPermissionsUI ────────────────┐
+│ PermissionStore (MainActor) → Gate / Prompt / Row  │
+└───────────────────────┬────────────────────────────┘
+                        │ depends on protocols
+┌──────────────── SwiftPermissionsCore ──────────────┐
+│ Domain:  Permission · PermissionStatus · Error     │
+│ Ports:   PermissionStatusReading / Requesting /    │
+│          Observing · PermissionProvider            │
+│ Manager: PermissionManager (actor) + Registry      │
+│ Providers: Camera · Photos · Location · …          │
+└────────────────────────────────────────────────────┘
+```
 
-This package follows clean architecture principles and avoids common anti-patterns:
+Think of `PermissionManager` as an airport control tower and providers as the airlines. The tower doesn't care how each airline boards its passengers. It sequences take-offs (prompts), prevents two planes from taking the same runway at once (coalescing), and announces every status change on the radio (streams).
 
-#### No Singleton Pattern
-Unlike many permission libraries, SwiftPermissions **does not use singleton patterns**. Instead, it uses:
-- **Dependency Injection**: Pass permission managers as dependencies
-- **Protocol-based design**: Easy to mock and test
-- **Factory pattern**: Create instances when needed
+Depend on the narrowest protocol: a screen that only shows status takes a `PermissionStatusReading`, not the whole manager.
 
-#### Benefits of Our Approach
-- ✅ **Testable**: Easy to inject mocks for unit testing
-- ✅ **Flexible**: Multiple instances for different contexts
-- ✅ **Maintainable**: Clear dependencies, no global state
-- ✅ **Thread-safe**: No shared mutable state
-- ❌ **Avoids**: Tight coupling, hidden dependencies, testing difficulties
-
-#### Creating Permission Managers
+### Custom permissions
 
 ```swift
-// Recommended: Use dependency injection
-class MyService {
-    private let permissionManager: PermissionManagerProtocol
-    
-    init(permissionManager: PermissionManagerProtocol = PermissionManagerFactory.default()) {
-        self.permissionManager = permissionManager
-    }
+extension Permission {
+    static let localNetwork = Permission("localNetwork", displayName: "Local Network")
 }
 
-// Alternative: Create instances directly
-let permissionManager = PermissionManagerFactory.default()
+struct LocalNetworkProvider: PermissionProvider {
+    let permission = Permission.localNetwork
+    let requiredUsageDescriptionKeys = ["NSLocalNetworkUsageDescription"]
+    func status() async -> PermissionStatus { /* … */ }
+    func request() async throws -> PermissionStatus { /* … */ }
+}
 
-// For testing: Use mocks
-let mockManager = PermissionManagerFactory.mock(shouldGrantPermissions: true)
+let permissions = PermissionManager(registry: .standard.registering(LocalNetworkProvider()))
+```
+
+### HealthKit
+
+```swift
+let permissions = PermissionManager(
+    registry: .standard.registering(
+        HealthPermissionProvider(share: [HKQuantityType(.stepCount)], read: [HKQuantityType(.heartRate)])
+    )
+)
 ```
 
 ## Testing
 
-The package includes a mock implementation for testing:
-
 ```swift
-import SwiftPermissions
+import SwiftPermissionsTesting
 
-class MyTestCase: XCTestCase {
-    func testPermissions() async {
-        let mockManager = PermissionManagerFactory.mock()
-        
-        // Configure mock behavior
-        if let mock = mockManager as? MockPermissionManager {
-            mock.setShouldGrantPermissions(true)
-            mock.setMockStatus(.authorized, for: .camera)
-        }
-        
-        let result = await mockManager.request(.camera)
-        XCTAssertTrue(result.isSuccess)
-    }
+func testScannerShowsSettingsHintWhenDenied() async {
+    let camera = StubPermissionProvider(.camera, status: .notDetermined, onRequest: .deny)
+    let model = ScannerModel(permissions: PermissionManager.stubbed(camera))
+
+    await model.start()
+
+    XCTAssertTrue(model.showsSettingsHint)
+    let prompts = await camera.requestCount
+    XCTAssertEqual(prompts, 1)
 }
 ```
 
-## Info.plist Requirements
+Catch a missing Info.plist key in CI rather than in App Review:
 
-Make sure to add the required usage descriptions to your app's `Info.plist`:
-
-```xml
-<key>NSCameraUsageDescription</key>
-<string>This app needs access to camera to take photos.</string>
-
-<key>NSMicrophoneUsageDescription</key>
-<string>This app needs access to microphone to record audio.</string>
-
-<key>NSPhotoLibraryUsageDescription</key>
-<string>This app needs access to photo library to save and select photos.</string>
-
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>This app needs location access to provide location-based features.</string>
-
-<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-<string>This app needs location access to provide location-based features.</string>
-
-<key>NSContactsUsageDescription</key>
-<string>This app needs access to contacts to help you connect with friends.</string>
-
-<key>NSCalendarsUsageDescription</key>
-<string>This app needs access to calendar to schedule events.</string>
-
-<key>NSRemindersUsageDescription</key>
-<string>This app needs access to reminders to create tasks.</string>
-
-<key>NSMotionUsageDescription</key>
-<string>This app needs access to motion data to track your activity.</string>
-
-<key>NSFaceIDUsageDescription</key>
-<string>This app uses Face ID for secure authentication.</string>
-
-<key>NSUserTrackingUsageDescription</key>
-<string>This app would like to track you across apps and websites to provide personalized ads.</string>
+```swift
+func testInfoPlistDeclaresEveryPermissionWeUse() {
+    let missing = PermissionManager(usageDescriptions: InfoPlist(bundle: appBundle))
+        .missingUsageDescriptions(for: [.camera, .photoLibrary, .locationWhenInUse])
+    XCTAssertEqual(missing, [:])
+}
 ```
 
 ## Requirements
 
-- iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+
-- Swift 5.7+
-- Xcode 14.0+
+Xcode 16+ (Swift 6). iOS 15, macOS 12, tvOS 15, watchOS 9.
 
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for more details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## Support
-
-- 📧 Email: [moelnaggar14@gmail.com](mailto:moelnaggar14@gmail.com)
-- 💬 Discussions: [GitHub Discussions](https://github.com/MoElnaggar14/SwiftPermissions/discussions)
-- 🐛 Issues: [GitHub Issues](https://github.com/MoElnaggar14/SwiftPermissions/issues)
+Upgrading from 2.x? See [MIGRATION.md](MIGRATION.md).
 
 ## License
 
-This package is available under the MIT license. See the LICENSE file for more info.
+MIT

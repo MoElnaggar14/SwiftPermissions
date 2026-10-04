@@ -7,14 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0]
+
+A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIGRATION.md).
+
 ### Added
-- TBD
+- `PermissionProvider` strategy protocol and `PermissionProviderRegistry`: add or replace permissions without touching the core.
+- New permissions: `.photoLibraryAddOnly`, `.calendarWriteOnly`, `.bluetooth`, `.speechRecognition`, `.mediaLibrary`, `.siri`; `.health` via `HealthPermissionProvider(share:read:)`.
+- `PermissionStatus.limited` and `.unavailable`.
+- Info.plist usage-description validation before prompting, plus `missingUsageDescriptions(for:)` for tests.
+- Request coalescing: concurrent requests for one permission show one prompt.
+- `updates(for:)` / `changes()` async streams, and `refresh()` for changes made in Settings.
+- `AppSettings.open(for:)`, with per-permission Privacy panes on macOS and notification settings on iOS 16+.
+- SwiftUI: `PermissionStore`, `PermissionGate`, `PermissionPrompt`, `PermissionRow`, `PermissionsList`, auto-refresh on foreground.
+- `SwiftPermissionsTesting` product with `StubPermissionProvider` and `PermissionManager.stubbed(...)`.
+- DocC catalog.
 
 ### Changed
-- TBD
+- Swift 6 language mode; `PermissionManager` is an actor.
+- Interface segregation: `PermissionStatusReading`, `PermissionRequesting`, `PermissionObserving`.
+- `request(_:)` returns `PermissionStatus` and throws a typed `PermissionError`.
+- CI builds iOS, Mac Catalyst, tvOS and watchOS and runs tests on macOS and the iOS Simulator.
 
 ### Fixed
-- TBD
+- Location requests resolved immediately with `.notDetermined` (the delegate's initial callback) and leaked or overwrote continuations under concurrent requests.
+- The package didn't compile for tvOS and watchOS.
+- Data races in `PermissionManager` (`@unchecked Sendable` with lazy mutable state).
+- `.limited`, `.restricted` and write-only statuses were reported as `.authorized` or `.denied`.
+- `PermissionStatusView` created a new manager on every render.
+
+### Removed
+- `PermissionConfig` (unused), `PermissionManagerFactory`, `MockPermissionManager` from the production module, the Combine publisher.
 
 ## [1.1.0] - 2024-08-11
 

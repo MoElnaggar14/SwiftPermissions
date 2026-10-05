@@ -27,7 +27,7 @@ A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIG
 - Swift 6 language mode; `PermissionManager` is an actor.
 - Interface segregation: `PermissionStatusReading`, `PermissionRequesting`, `PermissionObserving`.
 - `request(_:)` returns `PermissionStatus` and throws a typed `PermissionError`.
-- CI builds iOS, Mac Catalyst, tvOS and watchOS and runs tests on macOS and the iOS Simulator.
+- CI builds iOS, Mac Catalyst, tvOS and watchOS with Xcode 27, runs tests on the iOS Simulator, and tests on macOS with Swift 6.4, 6.3 and 6.1.
 
 ### Fixed
 - Location requests resolved immediately with `.notDetermined` (the delegate's initial callback) and leaked or overwrote continuations under concurrent requests.

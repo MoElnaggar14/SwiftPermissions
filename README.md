@@ -3,7 +3,7 @@
 One async API for every Apple permission. Built for Swift 6 strict concurrency, it ships SwiftUI components and is testable without a device.
 
 [![CI](https://github.com/MoElnaggar14/SwiftPermissions/actions/workflows/ci.yml/badge.svg)](https://github.com/MoElnaggar14/SwiftPermissions/actions/workflows/ci.yml)
-![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg)
+![Swift 6.0 → 6.4](https://img.shields.io/badge/Swift-6.0_→_6.4-orange.svg)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%2015%20%7C%20macOS%2012%20%7C%20tvOS%2015%20%7C%20watchOS%209-blue.svg)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
 
@@ -185,7 +185,9 @@ Task {
 
 ## Requirements
 
-Xcode 16+ (Swift 6). iOS 15, macOS 12, tvOS 15, watchOS 9.
+Xcode 16+ (Swift 6.0+). iOS 15, macOS 12, tvOS 15, watchOS 9.
+
+CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 16.4), and runs the test suite on the newest iOS Simulator.
 
 Upgrading from 2.x? See [MIGRATION.md](MIGRATION.md).
 

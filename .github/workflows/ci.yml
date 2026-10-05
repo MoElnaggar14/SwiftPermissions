@@ -12,20 +12,40 @@ concurrency:
 
 jobs:
   test-macos:
-    name: Test (macOS, SwiftPM)
-    runs-on: macos-15
+    name: Test (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Swift 6.4, Xcode 27
+            runner: xcode-27
+            xcode: latest-stable
+            swift: '6\.([4-9]|[1-9][0-9])'
+          - name: Swift 6.3, Xcode 26.6
+            runner: macos-26
+            xcode: '26.6'
+            swift: '6\.3'
+          - name: Swift 6.1, Xcode 16.4 (oldest supported)
+            runner: macos-15
+            xcode: '16.4'
+            swift: '6\.1'
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
-      - run: swift --version
+          xcode-version: ${{ matrix.xcode }}
+      - name: Check the toolchain
+        # Fails if the runner image changed and this job no longer tests the Swift it's named after.
+        run: |
+          swift --version
+          swift --version 2>&1 | grep -E "Swift version ${{ matrix.swift }}"
       - name: Build and test
         run: swift test --parallel --enable-code-coverage
 
   test-ios:
     name: Test (iOS Simulator)
-    runs-on: macos-15
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
@@ -50,7 +70,7 @@ jobs:
 
   build:
     name: Build (${{ matrix.destination }})
-    runs-on: macos-15
+    runs-on: xcode-27
     strategy:
       fail-fast: false
       matrix:

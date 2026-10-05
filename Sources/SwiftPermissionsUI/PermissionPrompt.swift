@@ -64,7 +64,7 @@ public struct PermissionPrompt: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(store.isPending(permission))
-        } else if status.requiresSettings || status == .limited {
+        } else if status.requiresSettings || status == .limited, AppSettings.url(for: permission) != nil {
             Button("Open Settings") {
                 Task { await store.openSettings(for: permission) }
             }

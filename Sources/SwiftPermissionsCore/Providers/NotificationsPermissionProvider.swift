@@ -23,8 +23,18 @@ public struct NotificationsPermissionProvider: PermissionProvider {
         Self.map(await UNUserNotificationCenter.current().notificationSettings().authorizationStatus)
     }
 
+    /// Provisional authorization can be upgraded to full by asking without `.provisional`.
+    public func canRequest(from status: PermissionStatus) -> Bool {
+        #if os(tvOS)
+        status == .notDetermined
+        #else
+        status == .notDetermined || (status == .provisional && !options.contains(.provisional))
+        #endif
+    }
+
     public func request() async throws -> PermissionStatus {
-        _ = try await UNUserNotificationCenter.current().requestAuthorization(options: options)
+        // The resulting status is the answer, even if the request reports an error.
+        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: options)
         return await status()
     }
 

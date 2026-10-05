@@ -42,7 +42,7 @@ public struct PermissionRow: View {
                 Task { await store.request(permission) }
             }
             .buttonStyle(.borderedProminent)
-        } else if let status, status.requiresSettings {
+        } else if let status, status.requiresSettings, AppSettings.url(for: permission) != nil {
             Button("Settings") {
                 Task { await store.openSettings(for: permission) }
             }

@@ -14,12 +14,24 @@ public protocol PermissionProvider: Sendable {
     /// The current status. Must never show UI.
     func status() async -> PermissionStatus
 
+    /// Whether a prompt can still be shown from `status`. Defaults to
+    /// `status == .notDetermined`. Providers that support an upgrade prompt
+    /// (when-in-use → always location, write-only → full calendar, provisional
+    /// → full notifications) return `true` for the partial status too.
+    func canRequest(from status: PermissionStatus) -> Bool
+
     /// Shows the system prompt and returns the resulting status.
     ///
-    /// Only called when ``status()`` is ``PermissionStatus/notDetermined``.
+    /// Only called when ``canRequest(from:)`` is `true` for the current status.
+    /// A user declining should be reported as a status (usually `.denied`),
+    /// not thrown.
     func request() async throws -> PermissionStatus
 }
 
 public extension PermissionProvider {
     var requiredUsageDescriptionKeys: [String] { [] }
+
+    func canRequest(from status: PermissionStatus) -> Bool {
+        status == .notDetermined
+    }
 }

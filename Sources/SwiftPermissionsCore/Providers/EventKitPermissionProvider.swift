@@ -40,16 +40,22 @@ public struct EventKitPermissionProvider: PermissionProvider {
         Self.map(EKEventStore.authorizationStatus(for: entityType), wantsFullAccess: access != .writeOnlyEvents)
     }
 
+    /// Write-only calendar access (reported as `.limited`) can be upgraded to full access.
+    public func canRequest(from status: PermissionStatus) -> Bool {
+        status == .notDetermined || (access == .fullEvents && status == .limited)
+    }
+
     public func request() async throws -> PermissionStatus {
         let store = EKEventStore()
+        // A decline can surface as an error; the status read afterwards is the answer.
         if #available(iOS 17, macOS 14, watchOS 10, *) {
             switch access {
-            case .fullEvents: _ = try await store.requestFullAccessToEvents()
-            case .writeOnlyEvents: _ = try await store.requestWriteOnlyAccessToEvents()
-            case .reminders: _ = try await store.requestFullAccessToReminders()
+            case .fullEvents: _ = try? await store.requestFullAccessToEvents()
+            case .writeOnlyEvents: _ = try? await store.requestWriteOnlyAccessToEvents()
+            case .reminders: _ = try? await store.requestFullAccessToReminders()
             }
         } else {
-            _ = try await store.requestAccess(to: entityType)
+            _ = try? await store.requestAccess(to: entityType)
         }
         return await status()
     }

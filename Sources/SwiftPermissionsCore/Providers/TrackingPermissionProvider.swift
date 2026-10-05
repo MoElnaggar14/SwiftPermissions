@@ -4,7 +4,8 @@
 /// App Tracking Transparency.
 ///
 /// The system ignores the request (and reports `.notDetermined`) while the app isn't
-/// active, so request it from a foreground interaction, not from `application(_:didFinishLaunching…)`.
+/// active, so the provider waits until the app is active before asking. That makes it
+/// safe in a batch right after another permission alert.
 public struct TrackingPermissionProvider: PermissionProvider {
     public let permission = Permission.tracking
     public let requiredUsageDescriptionKeys = ["NSUserTrackingUsageDescription"]
@@ -16,7 +17,10 @@ public struct TrackingPermissionProvider: PermissionProvider {
     }
 
     public func request() async throws -> PermissionStatus {
-        Self.map(await ATTrackingManager.requestTrackingAuthorization())
+        #if canImport(UIKit)
+        await AppActivation.waitUntilActive()
+        #endif
+        return Self.map(await ATTrackingManager.requestTrackingAuthorization())
     }
 
     static func map(_ status: ATTrackingManager.AuthorizationStatus) -> PermissionStatus {

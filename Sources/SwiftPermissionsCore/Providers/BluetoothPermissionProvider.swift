@@ -6,13 +6,9 @@ public struct BluetoothPermissionProvider: PermissionProvider {
 
     public init() {}
 
-    public var requiredUsageDescriptionKeys: [String] {
-        #if os(macOS)
-        []
-        #else
-        ["NSBluetoothAlwaysUsageDescription"]
-        #endif
-    }
+    /// Required on every platform, macOS 11+ included: TCC terminates the app if
+    /// a `CBCentralManager` is created without it.
+    public let requiredUsageDescriptionKeys = ["NSBluetoothAlwaysUsageDescription"]
 
     public func status() async -> PermissionStatus {
         Self.map(CBManager.authorization)

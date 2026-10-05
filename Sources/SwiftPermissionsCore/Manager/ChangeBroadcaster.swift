@@ -10,6 +10,7 @@ final class ChangeBroadcaster: @unchecked Sendable {
         let permission: Permission?
         let send: @Sendable (PermissionChange) -> Void
         let finish: @Sendable () -> Void
+        var hasReceivedValue = false
     }
 
     private let lock = NSLock()
@@ -35,10 +36,26 @@ final class ChangeBroadcaster: @unchecked Sendable {
     }
 
     func send(_ change: PermissionChange) {
-        let recipients = locked { Array(subscribers.values) }
-        for subscriber in recipients where subscriber.permission == nil || subscriber.permission == change.permission {
-            subscriber.send(change)
+        let recipients = locked { () -> [Subscriber] in
+            var matching: [Subscriber] = []
+            for (id, subscriber) in subscribers
+            where subscriber.permission == nil || subscriber.permission == change.permission {
+                subscribers[id]?.hasReceivedValue = true
+                matching.append(subscriber)
+            }
+            return matching
         }
+        recipients.forEach { $0.send(change) }
+    }
+
+    /// Sends `change` to one subscriber unless it has already received a value.
+    func sendIfUndelivered(_ change: PermissionChange, to id: UUID) {
+        let recipient = locked { () -> Subscriber? in
+            guard let subscriber = subscribers[id], !subscriber.hasReceivedValue else { return nil }
+            subscribers[id]?.hasReceivedValue = true
+            return subscriber
+        }
+        recipient?.send(change)
     }
 
     func finishAll() {

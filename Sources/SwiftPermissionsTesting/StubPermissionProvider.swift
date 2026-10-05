@@ -25,6 +25,8 @@ public actor StubPermissionProvider: PermissionProvider {
 
     public nonisolated let permission: Permission
     public nonisolated let requiredUsageDescriptionKeys: [String]
+    /// Partial statuses a prompt can still be shown from (e.g. `.limited` for an upgrade).
+    public nonisolated let upgradableFrom: Set<PermissionStatus>
 
     public private(set) var currentStatus: PermissionStatus
     public private(set) var requestCount = 0
@@ -33,19 +35,27 @@ public actor StubPermissionProvider: PermissionProvider {
     private let requestDelayNanoseconds: UInt64
 
     /// - Parameters:
+    ///   - upgradableFrom: Partial statuses that can still be requested, like a real
+    ///     provider's upgrade prompt.
     ///   - requestDelay: Seconds the simulated prompt stays on screen. Useful for testing concurrency.
     public init(
         _ permission: Permission,
         status: PermissionStatus = .notDetermined,
         onRequest outcome: RequestOutcome = .grant,
         requiredUsageDescriptionKeys: [String] = [],
+        upgradableFrom: Set<PermissionStatus> = [],
         requestDelay: Double = 0
     ) {
+        self.upgradableFrom = upgradableFrom
         self.permission = permission
         self.currentStatus = status
         self.outcome = outcome
         self.requiredUsageDescriptionKeys = requiredUsageDescriptionKeys
         self.requestDelayNanoseconds = UInt64(max(0, requestDelay) * 1_000_000_000)
+    }
+
+    public nonisolated func canRequest(from status: PermissionStatus) -> Bool {
+        status == .notDetermined || upgradableFrom.contains(status)
     }
 
     public func status() async -> PermissionStatus {

@@ -26,7 +26,8 @@ Every framework has its own authorization enum, its own request API (async, call
 - **One vocabulary.** `PermissionStatus` normalises 15+ framework enums. It keeps the distinctions UX depends on: `limited` photos, `provisional` notifications, parental `restricted`, and `unavailable` hardware.
 - **No Info.plist crashes.** Before showing a prompt it checks the usage descriptions and throws `missingUsageDescription` instead. `missingUsageDescriptions(for:)` lets you assert this in a unit test.
 - **Concurrency-correct.** `PermissionManager` is an actor. It's checked under the Swift 6 language mode. Concurrent requests for the same permission share one prompt.
-- **Live.** `updates(for:)` and `changes()` are `AsyncStream`s, and the SwiftUI store refreshes when the user returns from Settings.
+- **Live.** `updates(for:)` and `changes()` are `AsyncStream`s. `PermissionGate`, `PermissionPrompt` and `PermissionsList` refresh when the user returns from Settings; use `.refreshesPermissions(store)` on your own views.
+- **Upgrades included.** When-in-use → Always location, write-only → full calendar and provisional → full notifications can be requested from the partial status. The location upgrade never hangs, even when iOS doesn't show the prompt.
 - **Open for extension.** Each permission is a small `PermissionProvider`. You can add your own permission, or replace how a built-in one is requested, without forking.
 - **Testable.** `SwiftPermissionsTesting` provides scriptable stubs that run through the real manager logic, with no simulator prompts.
 
@@ -54,7 +55,7 @@ Every framework has its own authorization enum, its own request API (async, call
 | `.calendar` / `.calendarWriteOnly` | ✓ | ✓ | | ✓ | `NSCalendarsFullAccessUsageDescription` / `NSCalendarsWriteOnlyAccessUsageDescription` (iOS 17+) |
 | `.reminders` | ✓ | ✓ | | ✓ | `NSRemindersFullAccessUsageDescription` (iOS 17+) |
 | `.locationWhenInUse` | ✓ | ✓ | ✓ | ✓ | `NSLocationWhenInUseUsageDescription` |
-| `.locationAlways` | ✓ | ✓ | | ✓ | + `NSLocationAlwaysAndWhenInUseUsageDescription` |
+| `.locationAlways` | ✓ | ✓ | | ✓ | + `NSLocationAlwaysAndWhenInUseUsageDescription` (not on macOS) |
 | `.notifications` | ✓ | ✓ | ✓ | ✓ | none |
 | `.bluetooth` | ✓ | ✓ | ✓ | ✓ | `NSBluetoothAlwaysUsageDescription` |
 | `.tracking` | ✓ | ✓ | ✓ | | `NSUserTrackingUsageDescription` |
@@ -62,7 +63,7 @@ Every framework has its own authorization enum, its own request API (async, call
 | `.motion` | ✓ | | | ✓ | `NSMotionUsageDescription` |
 | `.siri` | ✓ | | | ✓ | `NSSiriUsageDescription` |
 | `.mediaLibrary` | ✓ | | | | `NSAppleMusicUsageDescription` |
-| `.biometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` |
+| `.biometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS) |
 | `.health` (opt-in) | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` |
 
 ## SwiftUI

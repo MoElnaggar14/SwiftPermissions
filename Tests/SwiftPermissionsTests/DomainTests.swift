@@ -78,6 +78,11 @@ final class DomainTests: XCTestCase {
         XCTAssertEqual(status, .authorized)
     }
 
+    func testBluetoothRequiresItsUsageDescriptionEverywhere() {
+        let keys = PermissionProviderRegistry.standard.provider(for: .bluetooth)?.requiredUsageDescriptionKeys
+        XCTAssertEqual(keys, ["NSBluetoothAlwaysUsageDescription"])
+    }
+
     func testStandardRegistryNeverIncludesHealth() {
         XCTAssertFalse(PermissionProviderRegistry.standard.permissions.contains(.health))
         XCTAssertTrue(PermissionProviderRegistry.standard.permissions.contains(.notifications))

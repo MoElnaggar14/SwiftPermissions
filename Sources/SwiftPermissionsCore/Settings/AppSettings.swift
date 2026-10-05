@@ -34,6 +34,9 @@ public enum AppSettings {
         #endif
         return URL(string: UIApplication.openSettingsURLString)
         #elseif os(macOS)
+        if permission == .notifications {
+            return URL(string: "x-apple.systempreferences:com.apple.preference.notifications")
+        }
         let base = "x-apple.systempreferences:com.apple.preference.security"
         guard let anchor = permission.flatMap(macOSPrivacyAnchor) else { return URL(string: base) }
         return URL(string: "\(base)?\(anchor)")

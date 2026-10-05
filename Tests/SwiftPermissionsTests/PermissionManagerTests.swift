@@ -219,6 +219,63 @@ final class PermissionManagerTests: XCTestCase {
         XCTAssertFalse(allGranted)
     }
 
+    // MARK: - Upgrades
+
+    func testUpgradablePartialStatusIsRequested() async throws {
+        let location = StubPermissionProvider(
+            .locationAlways,
+            status: .limited,
+            onRequest: .grant,
+            upgradableFrom: [.limited]
+        )
+        let manager = PermissionManager.stubbed(location)
+
+        let status = try await manager.request(.locationAlways)
+
+        XCTAssertEqual(status, .authorized)
+        let requestCount = await location.requestCount
+        XCTAssertEqual(requestCount, 1)
+    }
+
+    func testNonUpgradablePartialStatusIsNotRequested() async throws {
+        let photos = StubPermissionProvider(.photoLibrary, status: .limited, onRequest: .grant)
+        let manager = PermissionManager.stubbed(photos)
+
+        let status = try await manager.request(.photoLibrary)
+
+        XCTAssertEqual(status, .limited)
+        let requestCount = await photos.requestCount
+        XCTAssertEqual(requestCount, 0)
+    }
+
+    // MARK: - Initial values
+
+    func testUpdatesForUnregisteredPermissionEmitsUnavailable() async {
+        let manager = PermissionManager.stubbed()
+        var iterator = manager.updates(for: .health).makeAsyncIterator()
+        let first = await iterator.next()
+        XCTAssertEqual(first, .unavailable)
+    }
+
+    func testEachSubscriberGetsTheInitialValueExactlyOnce() async throws {
+        let camera = StubPermissionProvider(.camera, status: .denied)
+        let manager = PermissionManager.stubbed(camera)
+        var first = manager.updates(for: .camera).makeAsyncIterator()
+        var second = manager.updates(for: .camera).makeAsyncIterator()
+
+        let firstInitial = await first.next()
+        let secondInitial = await second.next()
+        XCTAssertEqual(firstInitial, .denied)
+        XCTAssertEqual(secondInitial, .denied)
+
+        await camera.setStatus(.authorized)
+        await manager.refresh()
+
+        // The next value is the change, not a repeated initial value.
+        let secondNext = await second.next()
+        XCTAssertEqual(secondNext, .authorized)
+    }
+
     // MARK: - Extensibility
 
     func testCustomPermissionsPlugIn() async throws {

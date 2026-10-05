@@ -28,7 +28,7 @@ public actor PermissionManager: PermissionManaging {
     private let validatesUsageDescriptions: Bool
 
     private var lastKnown: [Permission: PermissionStatus] = [:]
-    private var inFlight: [Permission: Task<PermissionStatus, any Error>] = [:]
+    private var inFlight: [Permission: (id: UUID, task: Task<PermissionStatus, any Error>)] = [:]
     private nonisolated let broadcaster = ChangeBroadcaster()
 
     /// - Parameters:
@@ -52,39 +52,45 @@ public actor PermissionManager: PermissionManaging {
     // MARK: - PermissionStatusReading
 
     public func status(of permission: Permission) async -> PermissionStatus {
-        guard let provider = registry.provider(for: permission) else { return .unavailable }
-        let status = await provider.status()
+        let status = await currentStatus(of: permission)
         publish(status, for: permission)
         return status
+    }
+
+    private func currentStatus(of permission: Permission) async -> PermissionStatus {
+        guard let provider = registry.provider(for: permission) else { return .unavailable }
+        return await provider.status()
     }
 
     // MARK: - PermissionRequesting
 
     public func request(_ permission: Permission) async throws(PermissionError) -> PermissionStatus {
-        let task: Task<PermissionStatus, any Error>
-        if let pending = inFlight[permission] {
-            task = pending
+        let pending: (id: UUID, task: Task<PermissionStatus, any Error>)
+        if let current = inFlight[permission] {
+            pending = current
         } else {
-            task = try makeRequestTask(for: permission)
+            pending = try makeRequestTask(for: permission)
+        }
+        // Only the request that's still current may clear the slot: a caller
+        // resuming late must not remove a newer request started meanwhile.
+        defer {
+            if inFlight[permission]?.id == pending.id { inFlight[permission] = nil }
         }
         let status: PermissionStatus
         do {
-            status = try await task.value
+            status = try await pending.task.value
         } catch let error as PermissionError {
-            inFlight[permission] = nil
             throw error
         } catch {
-            inFlight[permission] = nil
             throw .requestFailed(permission, reason: String(describing: error))
         }
-        inFlight[permission] = nil
         publish(status, for: permission)
         return status
     }
 
     private func makeRequestTask(
         for permission: Permission
-    ) throws(PermissionError) -> Task<PermissionStatus, any Error> {
+    ) throws(PermissionError) -> (id: UUID, task: Task<PermissionStatus, any Error>) {
         guard let provider = registry.provider(for: permission) else {
             throw .providerNotRegistered(permission)
         }
@@ -94,11 +100,12 @@ public actor PermissionManager: PermissionManaging {
         }
         let task = Task<PermissionStatus, any Error> {
             let current = await provider.status()
-            guard current == .notDetermined else { return current }
+            guard provider.canRequest(from: current) else { return current }
             return try await provider.request()
         }
-        inFlight[permission] = task
-        return task
+        let pending = (id: UUID(), task: task)
+        inFlight[permission] = pending
+        return pending
     }
 
     // MARK: - PermissionObserving
@@ -114,7 +121,7 @@ public actor PermissionManager: PermissionManaging {
             finish: { continuation.finish() }
         )
         continuation.onTermination = { [broadcaster] _ in broadcaster.unsubscribe(id) }
-        Task { await self.yieldCurrentStatus(of: permission, to: continuation) }
+        Task { await self.deliverCurrentStatus(of: permission, to: id) }
         return stream
     }
 
@@ -167,16 +174,12 @@ public actor PermissionManager: PermissionManaging {
         broadcaster.send(PermissionChange(permission: permission, status: status))
     }
 
-    private func yieldCurrentStatus(
-        of permission: Permission,
-        to continuation: AsyncStream<PermissionStatus>.Continuation
-    ) async {
-        let previous = lastKnown[permission]
-        let current = await status(of: permission)
-        // `status(of:)` already broadcast the value if it changed; otherwise send it here
-        // so a new observer always starts with the current status.
-        if previous == current {
-            continuation.yield(current)
-        }
+    /// Gives a new subscriber the current status exactly once: either through
+    /// the broadcast (if the status changed) or directly, unless it already
+    /// received a value in the meantime.
+    private func deliverCurrentStatus(of permission: Permission, to subscriber: UUID) async {
+        let current = await currentStatus(of: permission)
+        publish(current, for: permission)
+        broadcaster.sendIfUndelivered(PermissionChange(permission: permission, status: current), to: subscriber)
     }
 }

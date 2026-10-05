@@ -36,6 +36,15 @@ A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIG
 - `.limited`, `.restricted` and write-only statuses were reported as `.authorized` or `.denied`.
 - `PermissionStatusView` created a new manager on every render.
 
+### Fixed during 3.0 review
+- Declining Contacts (and EventKit/notification requests that report errors) now yields `.denied` instead of `requestFailed`.
+- Upgrade prompts: `PermissionProvider.canRequest(from:)` lets when-in-use → Always location (iOS), write-only → full calendar and provisional → full notifications be requested. The location upgrade resolves even when iOS shows no prompt.
+- Bluetooth requires `NSBluetoothAlwaysUsageDescription` on macOS too (TCC terminates the app without it).
+- `updates(for:)` delivers the initial value exactly once per subscriber, including for unavailable permissions.
+- ATT waits for the app to be active, so it works in batches right after another alert.
+- A late caller can no longer clear a newer in-flight request.
+- macOS opens the Notifications pane for `.notifications`; "Open Settings" is hidden where there's nothing to open (watchOS).
+
 ### Removed
 - `PermissionConfig` (unused), `PermissionManagerFactory`, `MockPermissionManager` from the production module, the Combine publisher.
 

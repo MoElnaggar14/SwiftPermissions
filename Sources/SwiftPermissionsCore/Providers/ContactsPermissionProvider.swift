@@ -13,7 +13,9 @@ public struct ContactsPermissionProvider: PermissionProvider {
     }
 
     public func request() async throws -> PermissionStatus {
-        _ = try await CNContactStore().requestAccess(for: .contacts)
+        // Declining surfaces as a thrown CNError ("access denied"), not `false`.
+        // The resulting status is what matters, so read it back either way.
+        _ = try? await CNContactStore().requestAccess(for: .contacts)
         return await status()
     }
 

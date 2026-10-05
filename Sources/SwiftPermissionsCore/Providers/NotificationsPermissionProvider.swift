@@ -53,3 +53,16 @@ public struct NotificationsPermissionProvider: PermissionProvider {
         }
     }
 }
+
+public extension PermissionRegistration {
+    /// User notifications with ``NotificationsPermissionProvider/defaultOptions``.
+    /// Needs no usage description, so it's part of Core.
+    static var notifications: PermissionRegistration {
+        PermissionRegistration(NotificationsPermissionProvider())
+    }
+
+    /// User notifications with custom options, e.g. `[.alert, .sound, .provisional]`.
+    static func notifications(options: UNAuthorizationOptions) -> PermissionRegistration {
+        PermissionRegistration(NotificationsPermissionProvider(options: options))
+    }
+}

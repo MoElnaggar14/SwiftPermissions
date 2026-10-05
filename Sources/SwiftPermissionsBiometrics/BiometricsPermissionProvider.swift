@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(macOS) || os(visionOS)
 @preconcurrency import LocalAuthentication
 
@@ -17,8 +18,13 @@
 /// actually needs it, with ``authenticate(reason:)``.
 public struct BiometricsPermissionProvider: PermissionProvider {
     public let permission = Permission.biometrics
+    private let usageDescriptions: any UsageDescriptionSource
 
-    public init() {}
+    /// - Parameter usageDescriptions: Where ``authenticate(reason:)`` looks up
+    ///   `NSFaceIDUsageDescription`. Defaults to the main bundle.
+    public init(usageDescriptions: any UsageDescriptionSource = InfoPlist.main) {
+        self.usageDescriptions = usageDescriptions
+    }
 
     public var requiredUsageDescriptionKeys: [String] {
         #if os(iOS)
@@ -42,8 +48,22 @@ public struct BiometricsPermissionProvider: PermissionProvider {
     }
 
     /// Runs a biometric authentication and reports whether it succeeded.
+    ///
+    /// - Throws: ``PermissionError/missingUsageDescription(_:keys:)`` on a Face ID device
+    ///   when `NSFaceIDUsageDescription` is missing (iOS would terminate the app), or the
+    ///   `LAError` from the evaluation.
     public func authenticate(reason: String) async throws -> Bool {
-        try await LAContext().evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason)
+        let context = LAContext()
+        #if os(iOS)
+        _ = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+        if context.biometryType == .faceID {
+            let missing = requiredUsageDescriptionKeys.filter {
+                usageDescriptions.usageDescription(forKey: $0) == nil
+            }
+            guard missing.isEmpty else { throw PermissionError.missingUsageDescription(permission, keys: missing) }
+        }
+        #endif
+        return try await context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason)
     }
 
     static func map(_ code: LAError.Code?, biometryType: LABiometryType) -> PermissionStatus {
@@ -57,5 +77,10 @@ public struct BiometricsPermissionProvider: PermissionProvider {
             return .unavailable
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// Face ID / Touch ID / Optic ID. Face ID needs `NSFaceIDUsageDescription`.
+    static var biometrics: PermissionRegistration { PermissionRegistration(BiometricsPermissionProvider()) }
 }
 #endif

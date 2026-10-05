@@ -137,6 +137,40 @@ final class PermissionManagerTests: XCTestCase {
         XCTAssertEqual(status, .authorized)
     }
 
+    func testUsageDescriptionIsOnlyNeededForAPrompt() async throws {
+        // Already decided: no prompt will show, so a missing key doesn't matter.
+        let camera = StubPermissionProvider(
+            .camera,
+            status: .denied,
+            requiredUsageDescriptionKeys: ["NSCameraUsageDescription"]
+        )
+        let manager = PermissionManager(
+            registry: PermissionProviderRegistry([camera]),
+            usageDescriptions: InfoPlist([:])
+        )
+
+        let status = try await manager.request(.camera)
+
+        XCTAssertEqual(status, .denied)
+    }
+
+    func testCancelledCallerStopsWaitingWithoutCancellingTheOthers() async throws {
+        let camera = StubPermissionProvider(.camera, onRequest: .grant, requestDelay: 0.5)
+        let manager = PermissionManager.stubbed(camera)
+
+        let cancelled = Task { try await manager.request(.camera) }
+        let patient = Task { try await manager.request(.camera) }
+        try await Task.sleep(nanoseconds: 100_000_000)
+        cancelled.cancel()
+
+        let cancelledResult = await cancelled.result
+        XCTAssertEqual(cancelledResult.failure as? PermissionError, .cancelled(.camera))
+        let patientStatus = try await patient.value
+        XCTAssertEqual(patientStatus, .authorized)
+        let prompts = await camera.requestCount
+        XCTAssertEqual(prompts, 1)
+    }
+
     func testMissingUsageDescriptionsDiagnostics() {
         let camera = StubPermissionProvider(.camera, requiredUsageDescriptionKeys: ["NSCameraUsageDescription"])
         let mic = StubPermissionProvider(.microphone, requiredUsageDescriptionKeys: ["NSMicrophoneUsageDescription"])
@@ -285,5 +319,11 @@ final class PermissionManagerTests: XCTestCase {
         let status = try await manager.request(pushToTalk)
 
         XCTAssertEqual(status, .authorized)
+    }
+}
+
+private extension Result {
+    var failure: Failure? {
+        if case let .failure(error) = self { error } else { nil }
     }
 }

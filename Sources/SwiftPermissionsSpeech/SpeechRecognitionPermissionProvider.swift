@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(macOS) || os(visionOS)
 @preconcurrency import Speech
 
@@ -27,6 +28,13 @@ public struct SpeechRecognitionPermissionProvider: PermissionProvider {
         case .authorized: .authorized
         @unknown default: .denied
         }
+    }
+}
+
+public extension PermissionRegistration {
+    /// Speech recognition. Needs `NSSpeechRecognitionUsageDescription`.
+    static var speechRecognition: PermissionRegistration {
+        PermissionRegistration(SpeechRecognitionPermissionProvider())
     }
 }
 #endif

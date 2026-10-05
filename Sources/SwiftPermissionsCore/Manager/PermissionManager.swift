@@ -15,7 +15,9 @@ import Foundation
 /// becomes active. `PermissionStore` in SwiftPermissionsUI does this for you.
 ///
 /// ```swift
-/// let permissions = PermissionManager()
+/// import SwiftPermissionsCamera
+///
+/// let permissions = PermissionManager(permissions: [.camera])
 /// switch try await permissions.request(.camera) {
 /// case .authorized: startCapture()
 /// case .denied: showSettingsHint()
@@ -31,12 +33,35 @@ public actor PermissionManager: PermissionManaging {
     private var inFlight: [Permission: (id: UUID, task: Task<PermissionStatus, any Error>)] = [:]
     private nonisolated let broadcaster = ChangeBroadcaster()
 
+    /// A manager for the permissions your app uses.
+    ///
+    /// Each framework is its own product that adds a registration, e.g. `.camera` from
+    /// `SwiftPermissionsCamera`. Requesting a permission that isn't registered throws
+    /// ``PermissionError/providerNotRegistered(_:)`` naming the product to add.
+    ///
     /// - Parameters:
-    ///   - registry: The providers to use. Defaults to every system permission available on this platform.
+    ///   - permissions: What to support, e.g. `[.camera, .photoLibrary, .notifications]`.
     ///   - usageDescriptions: Where to look up `NS…UsageDescription` keys. Defaults to the main bundle.
     ///   - validatesUsageDescriptions: Whether to check usage descriptions before prompting.
     public init(
-        registry: PermissionProviderRegistry = .standard,
+        permissions: [PermissionRegistration],
+        usageDescriptions: any UsageDescriptionSource = InfoPlist.main,
+        validatesUsageDescriptions: Bool = true
+    ) {
+        self.init(
+            registry: PermissionProviderRegistry(registering: permissions),
+            usageDescriptions: usageDescriptions,
+            validatesUsageDescriptions: validatesUsageDescriptions
+        )
+    }
+
+    /// - Parameters:
+    ///   - registry: The providers to use. Defaults to notifications only; prefer
+    ///     ``init(permissions:usageDescriptions:validatesUsageDescriptions:)``.
+    ///   - usageDescriptions: Where to look up `NS…UsageDescription` keys. Defaults to the main bundle.
+    ///   - validatesUsageDescriptions: Whether to check usage descriptions before prompting.
+    public init(
+        registry: PermissionProviderRegistry = PermissionProviderRegistry(registering: [.notifications]),
         usageDescriptions: any UsageDescriptionSource = InfoPlist.main,
         validatesUsageDescriptions: Bool = true
     ) {
@@ -73,17 +98,25 @@ public actor PermissionManager: PermissionManaging {
         }
         // Only the request that's still current may clear the slot: a caller
         // resuming late must not remove a newer request started meanwhile.
-        defer {
+        func finish() {
             if inFlight[permission]?.id == pending.id { inFlight[permission] = nil }
         }
         let status: PermissionStatus
         do {
-            status = try await pending.task.value
+            // A cancelled caller stops waiting; the prompt stays up for the others.
+            status = try await awaitValue(of: pending.task)
+        } catch is CancellationError {
+            // The prompt is still running, so keep it in flight: a new request joins
+            // it instead of stacking a second prompt.
+            throw .cancelled(permission)
         } catch let error as PermissionError {
+            finish()
             throw error
         } catch {
+            finish()
             throw .requestFailed(permission, reason: String(describing: error))
         }
+        finish()
         publish(status, for: permission)
         return status
     }
@@ -94,13 +127,12 @@ public actor PermissionManager: PermissionManaging {
         guard let provider = registry.provider(for: permission) else {
             throw .providerNotRegistered(permission)
         }
-        if validatesUsageDescriptions {
-            let missing = missingKeys(for: provider)
-            guard missing.isEmpty else { throw .missingUsageDescription(permission, keys: missing) }
-        }
+        let missing = validatesUsageDescriptions ? missingKeys(for: provider) : []
         let task = Task<PermissionStatus, any Error> {
             let current = await provider.status()
             guard provider.canRequest(from: current) else { return current }
+            // Only a prompt needs the usage description; reading a status never does.
+            guard missing.isEmpty else { throw PermissionError.missingUsageDescription(permission, keys: missing) }
             return try await provider.request()
         }
         let pending = (id: UUID(), task: task)

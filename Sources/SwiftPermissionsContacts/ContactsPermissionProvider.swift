@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(macOS) || os(watchOS) || os(visionOS)
 @preconcurrency import Contacts
 
@@ -30,5 +31,10 @@ public struct ContactsPermissionProvider: PermissionProvider {
             return status.rawValue == 4 ? .limited : .denied
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// Contacts. Needs `NSContactsUsageDescription`.
+    static var contacts: PermissionRegistration { PermissionRegistration(ContactsPermissionProvider()) }
 }
 #endif

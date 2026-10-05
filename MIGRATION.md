@@ -2,6 +2,22 @@
 
 3.0 is a redesign around a domain model and per-permission providers. Most call sites change mechanically.
 
+## Link only the permissions you use
+
+Each system framework is now its own product. Add the ones you request and register them:
+
+```swift
+// Package.swift
+.product(name: "SwiftPermissions", package: "SwiftPermissions"),
+.product(name: "SwiftPermissionsCamera", package: "SwiftPermissions"),
+.product(name: "SwiftPermissionsLocation", package: "SwiftPermissions"),
+
+// App
+let permissions = PermissionManager(permissions: [.camera, .locationWhenInUse, .notifications])
+```
+
+2.x linked every privacy framework into your app, so App Store review could ask for usage descriptions of permissions you never request. See the README for the product of each permission.
+
 ## API mapping
 
 | 2.x | 3.0 |
@@ -11,7 +27,7 @@
 | `.location` | `.locationWhenInUse` |
 | `.faceID`, `.touchID` | `.biometrics` |
 | `PermissionManagerProtocol` | `PermissionManaging` (= `PermissionStatusReading & PermissionRequesting & PermissionObserving`) |
-| `PermissionManagerFactory.default()` | `PermissionManager()` |
+| `PermissionManagerFactory.default()` | `PermissionManager(permissions: [...])` |
 | `status(for:)` | `status(of:)` |
 | `request(_:config:) -> PermissionResult` | `try request(_:) -> PermissionStatus` (throws `PermissionError`) |
 | `requestMultiple(_:) -> [PermissionResult]` | `request(_:) -> PermissionBatchResult` |
@@ -31,7 +47,8 @@
 - **Statuses are no longer collapsed.** Limited photo access returns `.limited` (it used to return `.authorized`). Write-only calendar access returns `.limited` for `.calendar`. Parental controls return `.restricted` (they used to return `.denied`). `isGranted` treats `.limited` and `.provisional` as granted.
 - **Missing usage descriptions throw** `PermissionError.missingUsageDescription` instead of letting the system terminate the app.
 - **Unsupported permissions** report `.unavailable` from `status(of:)` and throw `.providerNotRegistered` from `request(_:)`.
-- **Health** is no longer in the default registry. Register `HealthPermissionProvider(share:read:)` with your types.
+- **Nothing is registered by default** except notifications. Requesting an unregistered permission throws `.providerNotRegistered`, naming the product to add.
+- **Health** needs your data types: `.health(share:read:)` from `SwiftPermissionsHealth`. Without the HealthKit capability its status is `.unavailable`.
 - **Biometrics** never prompts from `request(_:)`; use `BiometricsPermissionProvider().authenticate(reason:)`.
 - **Requirements:** Swift 6 / Xcode 16. watchOS 9 minimum (was 8).
 
@@ -44,6 +61,6 @@ let result = await manager.request(.camera, config: nil)
 if result.isSuccess { start() }
 
 // 3.0
-let manager = PermissionManager()
+let manager = PermissionManager(permissions: [.camera])
 if try await manager.request(.camera).isGranted { start() }
 ```

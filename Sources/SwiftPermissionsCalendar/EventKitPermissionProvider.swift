@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(macOS) || os(watchOS) || os(visionOS)
 @preconcurrency import EventKit
 
@@ -74,5 +75,16 @@ public struct EventKitPermissionProvider: PermissionProvider {
             }
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// Full calendar access.
+    static var calendar: PermissionRegistration { PermissionRegistration(EventKitPermissionProvider.calendar) }
+    /// Write-only calendar access (full access before iOS 17 / macOS 14).
+    static var calendarWriteOnly: PermissionRegistration {
+        PermissionRegistration(EventKitPermissionProvider.calendarWriteOnly)
+    }
+    /// Reminders.
+    static var reminders: PermissionRegistration { PermissionRegistration(EventKitPermissionProvider.reminders) }
 }
 #endif

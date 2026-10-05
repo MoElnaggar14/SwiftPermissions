@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if canImport(AppTrackingTransparency) && !os(watchOS)
 @preconcurrency import AppTrackingTransparency
 
@@ -32,5 +33,10 @@ public struct TrackingPermissionProvider: PermissionProvider {
         @unknown default: .denied
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// App Tracking Transparency. Needs `NSUserTrackingUsageDescription`.
+    static var tracking: PermissionRegistration { PermissionRegistration(TrackingPermissionProvider()) }
 }
 #endif

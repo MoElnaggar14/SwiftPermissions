@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(watchOS)
 @preconcurrency import Intents
 
@@ -28,5 +29,11 @@ public struct SiriPermissionProvider: PermissionProvider {
         @unknown default: .denied
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// Siri. Needs `NSSiriUsageDescription` and the Siri capability
+    /// (`com.apple.developer.siri` entitlement).
+    static var siri: PermissionRegistration { PermissionRegistration(SiriPermissionProvider()) }
 }
 #endif

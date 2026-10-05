@@ -1,4 +1,5 @@
 @preconcurrency import CoreLocation
+import SwiftPermissionsCore
 #if os(iOS)
 import UIKit
 #endif
@@ -38,6 +39,11 @@ public struct LocationPermissionProvider: PermissionProvider {
 
     public func status() async -> PermissionStatus {
         let status = await MainActor.run { CLLocationManager().authorizationStatus }
+        // With Location Services off system-wide no prompt can appear, so a request
+        // would never get an answer. (Checked off the main thread: it can block.)
+        if status == .notDetermined && !CLLocationManager.locationServicesEnabled() {
+            return .unavailable
+        }
         return Self.map(status, wantsAlways: level == .always)
     }
 
@@ -50,6 +56,11 @@ public struct LocationPermissionProvider: PermissionProvider {
     }
 
     public func request() async throws -> PermissionStatus {
+        #if os(iOS)
+        // iOS doesn't show permission prompts while the app is in the background or
+        // inactive (e.g. right after another alert), so the answer would never come.
+        await AppActivation.waitUntilActive()
+        #endif
         let request = await LocationAuthorizationRequest()
         let status = await request.run(always: level == .always)
         return Self.map(status, wantsAlways: level == .always)
@@ -142,6 +153,19 @@ private final class LocationAuthorizationRequest: NSObject, @preconcurrency CLLo
             self.finish(with: self.manager.authorizationStatus)
         }
     }
+    #endif
+}
+
+public extension PermissionRegistration {
+    /// Location while the app is in use. Needs `NSLocationWhenInUseUsageDescription`.
+    static var locationWhenInUse: PermissionRegistration {
+        PermissionRegistration(LocationPermissionProvider.whenInUse)
+    }
+    #if !os(tvOS)
+    /// Location always. Needs `NSLocationWhenInUseUsageDescription` and
+    /// `NSLocationAlwaysAndWhenInUseUsageDescription`. Register ``locationWhenInUse`` too
+    /// if you ask for when-in-use first and upgrade later.
+    static var locationAlways: PermissionRegistration { PermissionRegistration(LocationPermissionProvider.always) }
     #endif
 }
 

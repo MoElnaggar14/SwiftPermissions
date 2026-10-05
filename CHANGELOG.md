@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIGRATION.md).
 
 ### Added
+- **One product per framework** (`SwiftPermissionsCamera`, `…Photos`, `…Contacts`, `…Calendar`, `…Location`, `…Bluetooth`, `…Motion`, `…Speech`, `…MediaLibrary`, `…Siri`, `…Tracking`, `…Biometrics`, `…Health`). App Store review asks for the usage description of every permission whose request API is in the binary, so apps link only what they request. Register with `PermissionManager(permissions: [.camera, .photoLibrary])` / `PermissionStore(permissions:)`. CI fails if Core, UI or the umbrella imports a privacy framework.
+- `PermissionError.providerNotRegistered` names the product and registration to add.
+- `PermissionError.cancelled`: cancelling the calling task stops waiting without dismissing the prompt for other callers.
 - `PermissionProvider` strategy protocol and `PermissionProviderRegistry`: add or replace permissions without touching the core.
 - New permissions: `.photoLibraryAddOnly`, `.calendarWriteOnly`, `.bluetooth`, `.speechRecognition`, `.mediaLibrary`, `.siri`; `.health` via `HealthPermissionProvider(share:read:)`.
 - `PermissionStatus.limited` and `.unavailable`.
@@ -43,10 +46,17 @@ A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIG
 - `updates(for:)` delivers the initial value exactly once per subscriber, including for unavailable permissions.
 - ATT waits for the app to be active, so it works in batches right after another alert.
 - A late caller can no longer clear a newer in-flight request.
+- Location no longer hangs when requested while the app is in the background (it waits until active) or with Location Services off system-wide (`.unavailable`).
+- HealthKit without the entitlement (or with no data types) reports `.unavailable` instead of `.authorized`.
+- `BiometricsPermissionProvider.authenticate(reason:)` checks `NSFaceIDUsageDescription` on Face ID devices instead of letting iOS terminate the app.
+- Usage descriptions are only required when a prompt can actually appear, so `request(.biometrics)` on a Touch ID device no longer throws.
+- README lists the pre-iOS 17 calendar and reminders keys.
 - macOS opens the Notifications pane for `.notifications`; "Open Settings" is hidden where there's nothing to open (watchOS).
 
 ### Removed
 - `PermissionConfig` (unused), `PermissionManagerFactory`, `MockPermissionManager` from the production module, the Combine publisher.
+- `PermissionProviderRegistry.standard`: it linked every privacy framework into every app.
+- Stale 1.x/2.x release notes and announcement drafts.
 
 ## [1.1.0] - 2024-08-11
 

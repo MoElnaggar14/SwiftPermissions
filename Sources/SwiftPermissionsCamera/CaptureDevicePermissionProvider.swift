@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(macOS) || os(visionOS)
 @preconcurrency import AVFoundation
 
@@ -36,5 +37,12 @@ public struct CaptureDevicePermissionProvider: PermissionProvider {
         @unknown default: .denied
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// Camera access. Needs `NSCameraUsageDescription`.
+    static var camera: PermissionRegistration { PermissionRegistration(CaptureDevicePermissionProvider.camera) }
+    /// Microphone access. Needs `NSMicrophoneUsageDescription`.
+    static var microphone: PermissionRegistration { PermissionRegistration(CaptureDevicePermissionProvider.microphone) }
 }
 #endif

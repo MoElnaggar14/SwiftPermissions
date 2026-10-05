@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(watchOS) || os(visionOS)
 @preconcurrency import HealthKit
 
@@ -12,13 +13,17 @@
 /// - ``PermissionStatus/authorized`` once the sheet has been shown, for read-only setups.
 ///   Your queries may still return no data if the user declined.
 ///
-/// Not part of ``PermissionProviderRegistry/standard``; register it with your types:
+/// Register it with the types you use. The app needs the HealthKit capability; without
+/// it (or with no types) the status is ``PermissionStatus/unavailable``.
 ///
 /// ```swift
-/// let registry = PermissionProviderRegistry.standard.registering(
-///     HealthPermissionProvider(read: [HKQuantityType(.stepCount)])
-/// )
+/// let permissions = PermissionManager(permissions: [
+///     .health(read: [HKQuantityType(.stepCount)])
+/// ])
 /// ```
+///
+/// Only request share access for types your app can write: HealthKit raises an
+/// exception (which Swift can't catch) for read-only types such as characteristics.
 public struct HealthPermissionProvider: PermissionProvider, @unchecked Sendable {
     // HKHealthStore is documented as thread-safe and the type sets are immutable.
     public let permission = Permission.health
@@ -40,7 +45,13 @@ public struct HealthPermissionProvider: PermissionProvider, @unchecked Sendable 
 
     public func status() async -> PermissionStatus {
         guard HKHealthStore.isHealthDataAvailable() else { return .unavailable }
-        let requestStatus = try? await store.statusForAuthorizationRequest(toShare: shareTypes, read: readTypes)
+        let requestStatus: HKAuthorizationRequestStatus
+        do {
+            requestStatus = try await store.statusForAuthorizationRequest(toShare: shareTypes, read: readTypes)
+        } catch {
+            // Missing HealthKit entitlement, or no data types: nothing can be requested.
+            return .unavailable
+        }
         if requestStatus == .shouldRequest { return .notDetermined }
         guard !shareTypes.isEmpty else { return .authorized }
         return Self.aggregate(shareTypes.map { store.authorizationStatus(for: $0) })
@@ -60,6 +71,14 @@ public struct HealthPermissionProvider: PermissionProvider, @unchecked Sendable 
         case 0: return .denied
         default: return .limited
         }
+    }
+}
+
+public extension PermissionRegistration {
+    /// HealthKit for the given data types. Needs the HealthKit capability and
+    /// `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription`.
+    static func health(share: Set<HKSampleType> = [], read: Set<HKObjectType> = []) -> PermissionRegistration {
+        PermissionRegistration(HealthPermissionProvider(share: share, read: read))
     }
 }
 #endif

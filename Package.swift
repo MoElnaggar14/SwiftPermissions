@@ -2,6 +2,14 @@
 
 import PackageDescription
 
+/// One product per system framework. App Store review scans the binary for code that
+/// can request a permission and asks for that permission's usage description, so an
+/// app should link only the permissions it actually requests.
+let frameworks = [
+    "Camera", "Photos", "Contacts", "Calendar", "Location", "Bluetooth", "Motion",
+    "Speech", "MediaLibrary", "Siri", "Tracking", "Biometrics", "Health"
+]
+
 let package = Package(
     name: "SwiftPermissions",
     platforms: [
@@ -11,15 +19,15 @@ let package = Package(
         .watchOS(.v9)
     ],
     products: [
-        // Everything: Core + SwiftUI components.
+        // Core + SwiftUI components. Add the framework products you need.
         .library(name: "SwiftPermissions", targets: ["SwiftPermissions"]),
-        // Domain model, manager and system providers. No SwiftUI.
+        // Domain model, manager, registry and notifications. No SwiftUI, no privacy frameworks.
         .library(name: "SwiftPermissionsCore", targets: ["SwiftPermissionsCore"]),
         // SwiftUI store, gates, primers and rows.
         .library(name: "SwiftPermissionsUI", targets: ["SwiftPermissionsUI"]),
         // Stubs for unit tests and SwiftUI previews. Link from test targets only.
         .library(name: "SwiftPermissionsTesting", targets: ["SwiftPermissionsTesting"])
-    ],
+    ] + frameworks.map { Product.library(name: "SwiftPermissions\($0)", targets: ["SwiftPermissions\($0)"]) },
     targets: [
         .target(name: "SwiftPermissionsCore"),
         .target(name: "SwiftPermissionsUI", dependencies: ["SwiftPermissionsCore"]),
@@ -27,12 +35,15 @@ let package = Package(
         .target(name: "SwiftPermissionsTesting", dependencies: ["SwiftPermissionsCore"]),
         .testTarget(
             name: "SwiftPermissionsTests",
-            dependencies: ["SwiftPermissionsCore", "SwiftPermissionsTesting"]
+            dependencies: [
+                "SwiftPermissionsCore", "SwiftPermissionsTesting",
+                "SwiftPermissionsBluetooth", "SwiftPermissionsCamera", "SwiftPermissionsLocation"
+            ]
         ),
         .testTarget(
             name: "SwiftPermissionsUITests",
             dependencies: ["SwiftPermissionsUI", "SwiftPermissionsTesting"]
         )
-    ],
+    ] + frameworks.map { Target.target(name: "SwiftPermissions\($0)", dependencies: ["SwiftPermissionsCore"]) },
     swiftLanguageModes: [.v6]
 )

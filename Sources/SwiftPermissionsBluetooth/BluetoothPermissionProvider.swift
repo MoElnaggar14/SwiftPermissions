@@ -1,4 +1,5 @@
 @preconcurrency import CoreBluetooth
+import SwiftPermissionsCore
 
 /// Bluetooth access. The prompt is shown the first time a `CBCentralManager` is created.
 public struct BluetoothPermissionProvider: PermissionProvider {
@@ -55,4 +56,9 @@ private final class BluetoothAuthorizationRequest: NSObject, @preconcurrency CBC
         manager = nil
         continuation.resume()
     }
+}
+
+public extension PermissionRegistration {
+    /// Bluetooth. Needs `NSBluetoothAlwaysUsageDescription`.
+    static var bluetooth: PermissionRegistration { PermissionRegistration(BluetoothPermissionProvider()) }
 }

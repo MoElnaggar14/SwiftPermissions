@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(watchOS)
 @preconcurrency import CoreMotion
 
@@ -39,5 +40,10 @@ public struct MotionPermissionProvider: PermissionProvider {
         @unknown default: .denied
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// Motion & Fitness. Needs `NSMotionUsageDescription`.
+    static var motion: PermissionRegistration { PermissionRegistration(MotionPermissionProvider()) }
 }
 #endif

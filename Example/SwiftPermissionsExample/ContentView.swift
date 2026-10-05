@@ -1,12 +1,19 @@
 import SwiftPermissions
+import SwiftPermissionsCamera
+import SwiftPermissionsContacts
+import SwiftPermissionsLocation
+import SwiftPermissionsPhotos
 import SwiftUI
 
 /// Demonstrates the three common ways to use SwiftPermissions in SwiftUI.
 ///
-/// Add the usage descriptions for the permissions you try (NSCameraUsageDescription, …)
-/// to the app's Info.plist. Missing keys surface as an alert instead of a crash.
+/// Link the products for the permissions you use (SwiftPermissionsCamera, …) and add
+/// their usage descriptions (NSCameraUsageDescription, …) to the app's Info.plist.
+/// Missing keys surface as an alert instead of a crash.
 struct ContentView: View {
-    @StateObject private var permissions = PermissionStore()
+    @StateObject private var permissions = PermissionStore(permissions: [
+        .camera, .microphone, .photoLibrary, .contacts, .locationWhenInUse, .notifications
+    ])
 
     var body: some View {
         NavigationView {

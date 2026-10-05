@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS) || os(macOS) || os(visionOS)
 @preconcurrency import Photos
 
@@ -35,6 +36,15 @@ public struct PhotoLibraryPermissionProvider: PermissionProvider {
         case .limited: .limited
         @unknown default: .denied
         }
+    }
+}
+
+public extension PermissionRegistration {
+    /// Read and write access to the photo library. Needs `NSPhotoLibraryUsageDescription`.
+    static var photoLibrary: PermissionRegistration { PermissionRegistration(PhotoLibraryPermissionProvider.readWrite) }
+    /// Add-only access. Needs `NSPhotoLibraryAddUsageDescription`.
+    static var photoLibraryAddOnly: PermissionRegistration {
+        PermissionRegistration(PhotoLibraryPermissionProvider.addOnly)
     }
 }
 #endif

@@ -1,5 +1,8 @@
 import Foundation
+import SwiftPermissionsBluetooth
+import SwiftPermissionsCamera
 import SwiftPermissionsCore
+import SwiftPermissionsLocation
 import XCTest
 
 final class DomainTests: XCTestCase {
@@ -79,14 +82,40 @@ final class DomainTests: XCTestCase {
     }
 
     func testBluetoothRequiresItsUsageDescriptionEverywhere() {
-        let keys = PermissionProviderRegistry.standard.provider(for: .bluetooth)?.requiredUsageDescriptionKeys
+        let keys = BluetoothPermissionProvider().requiredUsageDescriptionKeys
         XCTAssertEqual(keys, ["NSBluetoothAlwaysUsageDescription"])
     }
 
-    func testStandardRegistryNeverIncludesHealth() {
-        XCTAssertFalse(PermissionProviderRegistry.standard.permissions.contains(.health))
-        XCTAssertTrue(PermissionProviderRegistry.standard.permissions.contains(.notifications))
+    func testRegistrationsRegisterOnlyWhatYouLink() {
+        let registry = PermissionProviderRegistry(registering: [.locationWhenInUse, .bluetooth, .notifications])
+        XCTAssertEqual(registry.permissions, [.locationWhenInUse, .bluetooth, .notifications])
     }
+
+    func testDefaultManagerSupportsNotificationsOnly() {
+        XCTAssertEqual(PermissionManager().registry.permissions, [.notifications])
+    }
+
+    func testCustomProviderRegistration() {
+        let custom = StubLike(permission: Permission("pushToTalk"), value: .authorized)
+        let registry = PermissionProviderRegistry(registering: [.provider(custom)])
+        XCTAssertEqual(registry.permissions, [Permission("pushToTalk")])
+    }
+
+    func testUnregisteredErrorNamesTheProductToAdd() {
+        let message = PermissionError.providerNotRegistered(.camera).description
+        XCTAssertTrue(message.contains("SwiftPermissionsCamera"), message)
+        XCTAssertTrue(message.contains(".camera"), message)
+    }
+
+    #if os(iOS) || os(macOS) || os(visionOS)
+    func testCameraRegistrationUsesTheCaptureProvider() {
+        let registry = PermissionProviderRegistry(registering: [.camera, .microphone])
+        let cameraKeys = registry.provider(for: .camera)?.requiredUsageDescriptionKeys
+        let microphoneKeys = registry.provider(for: .microphone)?.requiredUsageDescriptionKeys
+        XCTAssertEqual(cameraKeys, ["NSCameraUsageDescription"])
+        XCTAssertEqual(microphoneKeys, ["NSMicrophoneUsageDescription"])
+    }
+    #endif
 }
 
 private struct StubLike: PermissionProvider {

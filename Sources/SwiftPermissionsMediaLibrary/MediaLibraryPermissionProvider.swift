@@ -1,3 +1,4 @@
+import SwiftPermissionsCore
 #if os(iOS)
 @preconcurrency import MediaPlayer
 
@@ -28,5 +29,10 @@ public struct MediaLibraryPermissionProvider: PermissionProvider {
         @unknown default: .denied
         }
     }
+}
+
+public extension PermissionRegistration {
+    /// Apple Music and the media library. Needs `NSAppleMusicUsageDescription`.
+    static var mediaLibrary: PermissionRegistration { PermissionRegistration(MediaLibraryPermissionProvider()) }
 }
 #endif

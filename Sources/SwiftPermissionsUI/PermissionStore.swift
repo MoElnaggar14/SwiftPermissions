@@ -4,11 +4,12 @@ import SwiftPermissionsCore
 /// Main-actor state for SwiftUI: the last known status of each permission, which
 /// requests are on screen, and the last error.
 ///
-/// Create one per app (or per feature) and pass it down. It stays in sync with every
-/// change the underlying manager publishes, including requests made elsewhere.
+/// Create one per app and pass it down: concurrent requests for the same permission
+/// are merged into one prompt per manager. It stays in sync with every change the
+/// underlying manager publishes, including requests made elsewhere.
 ///
 /// ```swift
-/// @StateObject private var permissions = PermissionStore()
+/// @StateObject private var permissions = PermissionStore(permissions: [.camera, .notifications])
 ///
 /// var body: some View {
 ///     PermissionGate(.camera, store: permissions) {
@@ -27,6 +28,11 @@ public final class PermissionStore: ObservableObject {
 
     private let manager: any PermissionManaging
     nonisolated(unsafe) private var observation: Task<Void, Never>?
+
+    /// A store backed by a new ``PermissionManager`` for `permissions`.
+    public convenience init(permissions: [PermissionRegistration]) {
+        self.init(manager: PermissionManager(permissions: permissions))
+    }
 
     public init(manager: any PermissionManaging = PermissionManager()) {
         self.manager = manager

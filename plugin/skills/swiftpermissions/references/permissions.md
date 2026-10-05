@@ -22,7 +22,7 @@
 | `.biometrics` | `SwiftPermissionsBiometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS, Face ID devices) |
 | `.health(share:read:)` | `SwiftPermissionsHealth` | ✓ | | | ✓ | `NSHealthShareUsageDescription` (read) / `NSHealthUpdateUsageDescription` (share) + HealthKit capability |
 
-On **visionOS 1+**, every permission above that isn't iOS-only is available, except `.motion`, `.siri` and `.mediaLibrary`.
+On **visionOS 1+**, every permission above that isn't iOS-only is available, except `.locationAlways`, `.motion`, `.siri` and `.mediaLibrary`.
 
 ## Notes per permission
 

@@ -254,7 +254,7 @@ mkdir -p .agents/skills && cp -R /tmp/SwiftPermissions/plugin/skills/swiftpermis
 
 ## Requirements
 
-Xcode 16+ (Swift 6.0+). iOS 15, macOS 12, tvOS 15, watchOS 9, visionOS 1. On visionOS, `.motion`, `.siri` and `.mediaLibrary` aren't available.
+Xcode 16+ (Swift 6.0+). iOS 15, macOS 12, tvOS 15, watchOS 9, visionOS 1. On visionOS, `.locationAlways`, `.motion`, `.siri` and `.mediaLibrary` aren't available.
 
 CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 16.4), and runs the test suite on the newest iOS Simulator. It also builds for Mac Catalyst, tvOS, watchOS and visionOS, and builds the whole package as app-extension-safe.
 

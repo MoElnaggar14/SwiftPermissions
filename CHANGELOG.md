@@ -22,7 +22,7 @@ A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIG
 - Info.plist usage-description validation before prompting, plus `missingUsageDescriptions(for:)` for tests.
 - Request coalescing: concurrent requests for one permission show one prompt.
 - `updates(for:)` / `changes()` async streams, and `refresh()` for changes made in Settings.
-- **visionOS 1+** is a supported platform, and CI builds for it. On visionOS, `.motion`, `.siri` and `.mediaLibrary` aren't available.
+- **visionOS 1+** is a supported platform, and CI builds for it. On visionOS, `.locationAlways`, `.motion`, `.siri` and `.mediaLibrary` aren't available.
 - **App-extension safe.** Core no longer references `UIApplication.shared`, so every product compiles into widgets and notification extensions. CI builds the package with `APPLICATION_EXTENSION_API_ONLY=YES`. `AppSettings.open` and `PermissionStore.openSettings` are unavailable in extensions. `PermissionPrompt` and `PermissionRow` open Settings with SwiftUI's `openURL`.
 - **Privacy manifest** (`PrivacyInfo.xcprivacy`) in Core: no tracking, no collected data, no required-reason APIs.
 - `PermissionStatus` documents its stability: no new cases in 3.x.

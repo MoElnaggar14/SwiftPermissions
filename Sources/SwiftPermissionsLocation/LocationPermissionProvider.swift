@@ -17,7 +17,7 @@ public struct LocationPermissionProvider: PermissionProvider {
     private let level: Level
 
     public static let whenInUse = LocationPermissionProvider(permission: .locationWhenInUse, level: .whenInUse)
-    #if !os(tvOS)
+    #if !os(tvOS) && !os(visionOS)
     public static let always = LocationPermissionProvider(permission: .locationAlways, level: .always)
     #endif
 
@@ -102,7 +102,8 @@ private final class LocationAuthorizationRequest: NSObject, @preconcurrency CLLo
             #if os(iOS)
             if isUpgrade { watchForUpgradeOutcome() }
             #endif
-            #if os(tvOS)
+            #if os(tvOS) || os(visionOS)
+            // No Always authorization on tvOS and visionOS.
             manager.requestWhenInUseAuthorization()
             #else
             if always {
@@ -161,7 +162,7 @@ public extension PermissionRegistration {
     static var locationWhenInUse: PermissionRegistration {
         PermissionRegistration(LocationPermissionProvider.whenInUse)
     }
-    #if !os(tvOS)
+    #if !os(tvOS) && !os(visionOS)
     /// Location always. Needs `NSLocationWhenInUseUsageDescription` and
     /// `NSLocationAlwaysAndWhenInUseUsageDescription`. Register ``locationWhenInUse`` too
     /// if you ask for when-in-use first and upgrade later.

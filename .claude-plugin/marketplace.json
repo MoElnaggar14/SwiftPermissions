@@ -1,7 +1,7 @@
 {
   "name": "swiftpermissions",
   "description": "Agent skill for the SwiftPermissions Swift package",
-  "owner": { "name": "Mohamed Elnaggar", "url": "https://github.com/MoElnaggar14" },
+  "owner": { "name": "Mohammed Elnaggar", "url": "https://github.com/MoElnaggar14" },
   "plugins": [
     {
       "name": "swiftpermissions",

@@ -46,6 +46,8 @@ jobs:
   test-ios:
     name: Test (iOS Simulator)
     runs-on: xcode-27
+    # A simulator that never connects to xctest otherwise hangs until the runner's limit.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
@@ -60,12 +62,21 @@ jobs:
           ios = [d for runtime, ds in devices.items() if "iOS" in runtime for d in ds if d["name"].startswith("iPhone")]
           print(ios[-1]["udid"])')
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+      - name: Boot the simulator
+        # Booting up front, and waiting until it's ready, avoids "the test runner hung
+        # before establishing connection" when the second test bundle launches.
+        run: |
+          xcrun simctl boot "${{ steps.sim.outputs.udid }}" || true
+          xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b
       - name: Test
+        # Parallel testing clones the simulator per bundle; one clone failing to connect
+        # fails the run, and these suites take seconds anyway.
         run: |
           set -o pipefail
           xcodebuild test \
             -scheme SwiftPermissions-Package \
             -destination "id=${{ steps.sim.outputs.udid }}" \
+            -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO
 
   build:

@@ -6,7 +6,8 @@ import UIKit
 @MainActor
 package enum AppActivation {
     package static func waitUntilActive() async {
-        guard UIApplication.shared.applicationState != .active else { return }
+        // No shared application in an app extension: there's nothing to wait for.
+        guard let application = sharedApplication, application.applicationState != .active else { return }
         let observation = OneShotObservation()
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             observation.token = NotificationCenter.default.addObserver(
@@ -17,6 +18,13 @@ package enum AppActivation {
                 observation.finish { continuation.resume() }
             }
         }
+    }
+
+    /// `UIApplication.shared` is unavailable in app extensions, so referencing it would stop
+    /// Core from compiling into a widget or notification extension. Looking it up at runtime
+    /// keeps Core extension-safe; it's `nil` inside an extension.
+    package static var sharedApplication: UIApplication? {
+        UIApplication.value(forKey: "sharedApplication") as? UIApplication
     }
 }
 

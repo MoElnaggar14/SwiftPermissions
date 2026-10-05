@@ -123,7 +123,12 @@ public final class PermissionStore: ObservableObject {
         return result
     }
 
-    /// Sends the user to the place where they can change `permission`.
+    /// Sends the user to the place where they can change `permission`. Unavailable in app
+    /// extensions; the built-in views use SwiftUI's `openURL` instead.
+    @available(iOSApplicationExtension, unavailable)
+    @available(macCatalystApplicationExtension, unavailable)
+    @available(tvOSApplicationExtension, unavailable)
+    @available(visionOSApplicationExtension, unavailable)
     public func openSettings(for permission: Permission? = nil) async {
         await AppSettings.open(for: permission)
     }

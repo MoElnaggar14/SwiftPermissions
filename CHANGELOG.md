@@ -22,6 +22,10 @@ A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIG
 - Info.plist usage-description validation before prompting, plus `missingUsageDescriptions(for:)` for tests.
 - Request coalescing: concurrent requests for one permission show one prompt.
 - `updates(for:)` / `changes()` async streams, and `refresh()` for changes made in Settings.
+- **visionOS 1+** is a supported platform, and CI builds for it. On visionOS, `.motion`, `.siri` and `.mediaLibrary` aren't available.
+- **App-extension safe.** Core no longer references `UIApplication.shared`, so every product compiles into widgets and notification extensions. CI builds the package with `APPLICATION_EXTENSION_API_ONLY=YES`. `AppSettings.open` and `PermissionStore.openSettings` are unavailable in extensions. `PermissionPrompt` and `PermissionRow` open Settings with SwiftUI's `openURL`.
+- **Privacy manifest** (`PrivacyInfo.xcprivacy`) in Core: no tracking, no collected data, no required-reason APIs.
+- `PermissionStatus` documents its stability: no new cases in 3.x.
 - `SwiftPermissionsTesting` re-exports `SwiftPermissionsCore`, so `import SwiftPermissionsTesting` is enough in a test file.
 - **Agent skill** for Claude Code (installable as a plugin) and Codex: `plugin/skills/swiftpermissions`. It teaches AI coding agents the right product, registration, Info.plist keys and testing setup, and includes `check_usage_descriptions.py`, which checks the registered permissions against the app's Info.plist. `AGENTS.md` covers contributors.
 - `AppSettings.open(for:)`, with per-permission Privacy panes on macOS and notification settings on iOS 16+.

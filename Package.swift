@@ -16,7 +16,8 @@ let package = Package(
         .iOS(.v15),
         .macOS(.v12),
         .tvOS(.v15),
-        .watchOS(.v9)
+        .watchOS(.v9),
+        .visionOS(.v1)
     ],
     products: [
         // Core + SwiftUI components. Add the framework products you need.
@@ -29,7 +30,7 @@ let package = Package(
         .library(name: "SwiftPermissionsTesting", targets: ["SwiftPermissionsTesting"])
     ] + frameworks.map { Product.library(name: "SwiftPermissions\($0)", targets: ["SwiftPermissions\($0)"]) },
     targets: [
-        .target(name: "SwiftPermissionsCore"),
+        .target(name: "SwiftPermissionsCore", resources: [.copy("PrivacyInfo.xcprivacy")]),
         .target(name: "SwiftPermissionsUI", dependencies: ["SwiftPermissionsCore"]),
         .target(name: "SwiftPermissions", dependencies: ["SwiftPermissionsCore", "SwiftPermissionsUI"]),
         .target(name: "SwiftPermissionsTesting", dependencies: ["SwiftPermissionsCore"]),

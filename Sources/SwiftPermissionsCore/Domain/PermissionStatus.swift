@@ -4,6 +4,12 @@
 /// your app logic has a single vocabulary. Nothing is collapsed that matters for UX:
 /// `limited` photo access, `provisional` notifications and parental `restricted`
 /// controls each keep their own case.
+///
+/// ## Stability
+///
+/// The set of cases is fixed for the 3.x releases, so you can switch over it exhaustively
+/// without a `default`. New permissions map onto these cases. Adding a case would break
+/// exhaustive switches, so it only happens in a major release.
 public enum PermissionStatus: String, Sendable, Codable, CaseIterable, CustomStringConvertible {
     /// The user hasn't been asked yet. Requesting will show the system prompt.
     case notDetermined

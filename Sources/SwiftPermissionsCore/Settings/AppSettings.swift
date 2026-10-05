@@ -11,8 +11,15 @@ public enum AppSettings {
     /// Opens the app's page in Settings (iOS, tvOS, visionOS) or the matching
     /// Privacy & Security pane (macOS). Does nothing on watchOS.
     ///
+    /// Unavailable in app extensions, which can't open Settings. In SwiftUI, prefer
+    /// `openURL(AppSettings.url(for:))`, which works everywhere.
+    ///
     /// - Returns: `true` if a settings URL was opened.
     @discardableResult
+    @available(iOSApplicationExtension, unavailable)
+    @available(macCatalystApplicationExtension, unavailable)
+    @available(tvOSApplicationExtension, unavailable)
+    @available(visionOSApplicationExtension, unavailable)
     public static func open(for permission: Permission? = nil) async -> Bool {
         guard let url = url(for: permission) else { return false }
         #if canImport(UIKit) && !os(watchOS)

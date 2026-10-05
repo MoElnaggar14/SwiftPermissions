@@ -4,7 +4,7 @@ One async API for every Apple permission. Built for Swift 6 strict concurrency, 
 
 [![CI](https://github.com/MoElnaggar14/SwiftPermissions/actions/workflows/ci.yml/badge.svg)](https://github.com/MoElnaggar14/SwiftPermissions/actions/workflows/ci.yml)
 ![Swift 6.0 → 6.4](https://img.shields.io/badge/Swift-6.0_→_6.4-orange.svg)
-![Platforms](https://img.shields.io/badge/platforms-iOS%2015%20%7C%20macOS%2012%20%7C%20tvOS%2015%20%7C%20watchOS%209-blue.svg)
+![Platforms](https://img.shields.io/badge/platforms-iOS%2015%20%7C%20macOS%2012%20%7C%20tvOS%2015%20%7C%20watchOS%209%20%7C%20visionOS%201-blue.svg)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
 
 ```swift
@@ -254,9 +254,13 @@ mkdir -p .agents/skills && cp -R /tmp/SwiftPermissions/plugin/skills/swiftpermis
 
 ## Requirements
 
-Xcode 16+ (Swift 6.0+). iOS 15, macOS 12, tvOS 15, watchOS 9.
+Xcode 16+ (Swift 6.0+). iOS 15, macOS 12, tvOS 15, watchOS 9, visionOS 1. On visionOS, `.motion`, `.siri` and `.mediaLibrary` aren't available.
 
-CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 16.4), and runs the test suite on the newest iOS Simulator.
+CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 16.4), and runs the test suite on the newest iOS Simulator. It also builds for Mac Catalyst, tvOS, watchOS and visionOS, and builds the whole package as app-extension-safe.
+
+- **App extensions.** Every product compiles into widgets and notification extensions. Requests skip the "wait until the app is active" step there. `AppSettings.open` and `PermissionStore.openSettings` are unavailable in extensions. The SwiftUI views open Settings through SwiftUI's `openURL` action, so they work everywhere.
+- **Privacy manifest.** Core ships a `PrivacyInfo.xcprivacy` declaring no tracking, no collected data and no required-reason APIs. Your app still declares what it does with the data each permission unlocks.
+- **Stable statuses.** `PermissionStatus` won't gain cases in 3.x, so exhaustive `switch`es stay valid. New permissions map onto the existing cases.
 
 Upgrading from 2.x? See [MIGRATION.md](MIGRATION.md).
 

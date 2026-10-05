@@ -12,6 +12,8 @@ public struct PermissionPrompt: View {
     private let permission: Permission
     private let message: String?
     @ObservedObject private var store: PermissionStore
+    // openURL rather than AppSettings.open, so the view also compiles in app extensions.
+    @Environment(\.openURL) private var openURL
 
     /// - Parameter message: Why your app needs this permission. Shown while it can still be requested.
     public init(_ permission: Permission, message: String? = nil, store: PermissionStore) {
@@ -64,9 +66,9 @@ public struct PermissionPrompt: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(store.isPending(permission))
-        } else if status.requiresSettings || status == .limited, AppSettings.url(for: permission) != nil {
+        } else if status.requiresSettings || status == .limited, let settings = AppSettings.url(for: permission) {
             Button("Open Settings") {
-                Task { await store.openSettings(for: permission) }
+                openURL(settings)
             }
             .buttonStyle(.bordered)
         }

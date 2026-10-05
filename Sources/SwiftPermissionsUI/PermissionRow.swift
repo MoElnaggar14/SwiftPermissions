@@ -5,6 +5,8 @@ import SwiftUI
 public struct PermissionRow: View {
     private let permission: Permission
     @ObservedObject private var store: PermissionStore
+    // openURL rather than AppSettings.open, so the view also compiles in app extensions.
+    @Environment(\.openURL) private var openURL
 
     public init(_ permission: Permission, store: PermissionStore) {
         self.permission = permission
@@ -42,9 +44,9 @@ public struct PermissionRow: View {
                 Task { await store.request(permission) }
             }
             .buttonStyle(.borderedProminent)
-        } else if let status, status.requiresSettings, AppSettings.url(for: permission) != nil {
+        } else if let status, status.requiresSettings, let settings = AppSettings.url(for: permission) {
             Button("Settings") {
-                Task { await store.openSettings(for: permission) }
+                openURL(settings)
             }
             .buttonStyle(.bordered)
         }

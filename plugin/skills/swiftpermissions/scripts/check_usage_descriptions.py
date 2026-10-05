@@ -72,8 +72,9 @@ def scan_swift(root):
     imports, registered = set(), set()
     for path in walk(root, {".swift"}):
         text = path.read_text(errors="ignore")
-        if "/Tests/" in str(path) or path.stem.endswith("Tests"):
-            continue  # stubs in tests don't need usage descriptions
+        in_test_dir = any(part.endswith(("Tests", "UITests")) for part in path.relative_to(root).parts[:-1])
+        if in_test_dir or path.stem.endswith("Tests") or re.search(r"^\s*import\s+(XCTest|Testing)\b", text, re.M):
+            continue  # tests register stubs; they don't need usage descriptions
         imports.update(IMPORT_RE.findall(text))
         for match in REGISTRATION_LIST_RE.finditer(text):
             body = balanced_list(text, match.end())

@@ -1,4 +1,5 @@
-import SwiftPermissionsCore
+// Re-exported so `import SwiftPermissionsTesting` alone gives tests PermissionManager and Permission.
+@_exported import SwiftPermissionsCore
 
 /// A scriptable ``PermissionProvider`` for unit tests and SwiftUI previews.
 ///

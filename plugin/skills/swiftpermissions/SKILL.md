@@ -30,6 +30,8 @@ Suggest the alternative when it fits; ask the user if unsure.
 ### 2. Add one product per framework
 
 ```swift
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.0.0"),
+
 .target(name: "App", dependencies: [
     .product(name: "SwiftPermissions", package: "SwiftPermissions"),        // Core + SwiftUI
     .product(name: "SwiftPermissionsCamera", package: "SwiftPermissions"),  // .camera / .microphone
@@ -87,6 +89,8 @@ Also suggest a unit test that runs on every build. See "Testing" below.
 
 Ask when the user taps the feature, not at launch. A prompt with context gets accepted far more often, and a denial can't be asked again.
 
+With a `PermissionManager` (or `any PermissionManaging`), `request(_:)` throws:
+
 ```swift
 do {
     switch try await permissions.request(.camera) {
@@ -105,7 +109,17 @@ do {
 ```
 
 Keep these behaviours in mind:
-- `request(_:)` throws `PermissionError` (typed throws). `.cancelled` means the calling task was cancelled; the prompt stays up for other callers.
+With a `PermissionStore`, `request(_:)` doesn't throw. It returns `PermissionStatus?` (nil on failure) and sets `store.lastError`:
+
+```swift
+guard let status = await store.request(.camera) else {
+    if case .missingUsageDescription(_, let keys)? = store.lastError { assertionFailure("Add \(keys) to Info.plist") }
+    return
+}
+if status.isGranted { startCapture() } else if status.requiresSettings { showSettingsHint() }
+```
+
+- The manager's `request(_:)` throws `PermissionError` (typed throws). `.cancelled` means the calling task was cancelled; the prompt stays up for other callers.
 - `isGranted` is true for `.authorized`, `.limited` and `.provisional`.
 - **Upgrades.** `request(_:)` also upgrades a partial grant: when-in-use → Always, write-only → full calendar, provisional → full notifications. A status alone can't tell you whether another prompt can appear (`.limited` location can be upgraded, `.limited` photos can't), so call `await permissions.canRequest(.x)` or `store.canRequest(.x)` before you show an "Allow" button.
 - Requests made while the app is in the background wait until it is active. Location reports `.unavailable` when Location Services are off system-wide.
@@ -138,9 +152,10 @@ import SwiftPermissionsTesting
 
 - `onRequest:` takes `.grant`, `.deny`, `.status(...)` or `.fail(error)`.
 - `upgradableFrom: [.limited]` simulates an upgrade prompt, and `requestDelay:` simulates a slow prompt for concurrency tests.
-- For SwiftUI previews, use `PermissionManager.stubbed([.camera: .denied])`.
+- For a SwiftUI app built around the store, inject a stubbed manager: `PermissionStore(manager: PermissionManager.stubbed(camera))`. For previews, use `PermissionStore(manager: PermissionManager.stubbed([.camera: .denied]))`.
+- `import SwiftPermissionsTesting` also brings in `PermissionManager` and `Permission`.
 
-Guard the Info.plist in a unit test hosted by the app:
+Guard the Info.plist with a unit test. The test must be hosted by the app, so `Bundle.main` is the app's bundle, and the test target must link the framework products it registers, besides `SwiftPermissionsTesting`:
 
 ```swift
 @Test func infoPlistDeclaresEveryPermission() {

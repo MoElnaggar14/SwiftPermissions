@@ -1,4 +1,4 @@
-import SwiftPermissionsCore
+// Only the testing module: it re-exports Core, as the README promises.
 import SwiftPermissionsTesting
 import Testing
 

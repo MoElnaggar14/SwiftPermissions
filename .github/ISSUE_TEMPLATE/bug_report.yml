@@ -1,0 +1,74 @@
+name: Bug report
+description: Something doesn't work as documented.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Security problems go through [private reporting](https://github.com/MoElnaggar14/SwiftPermissions/security/advisories/new), not here.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The SwiftPermissions version or commit you use.
+      placeholder: "3.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: products
+    attributes:
+      label: Products involved
+      multiple: true
+      options:
+        - SwiftPermissionsCore
+        - SwiftPermissionsUI
+        - SwiftPermissions (umbrella)
+        - A framework product (Camera, Photos, Location, …)
+        - SwiftPermissionsTesting
+        - Docs
+    validations:
+      required: true
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Platforms
+      multiple: true
+      options:
+        - iOS
+        - iPadOS
+        - Mac Catalyst
+        - macOS
+        - tvOS
+        - watchOS
+        - visionOS
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Xcode and OS versions
+      placeholder: "Xcode 27.0, iOS 27.0 (iPhone 17 simulator)"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: The smallest code that shows the problem.
+      render: swift
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or crash output
+      description: Remove anything private before pasting.
+      render: shell

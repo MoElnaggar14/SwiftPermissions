@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Not Now.** `PermissionPrompt` and `PermissionGate` take an optional `onDefer` closure. When it's set, the prompt also shows a **Not Now** button while the permission can still be requested (including upgrades), so users can decline without spending the one-time system prompt. The package stores nothing; the app decides when to ask again. ([#12](https://github.com/MoElnaggar14/SwiftPermissions/issues/12))
+
 ## [3.0.0] — 2026-10-05
 
 A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIGRATION.md).

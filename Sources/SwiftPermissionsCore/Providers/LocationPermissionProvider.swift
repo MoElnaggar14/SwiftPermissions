@@ -82,7 +82,9 @@ private final class LocationAuthorizationRequest: NSObject, @preconcurrency CLLo
     private var observations: [OneShotObservationToken] = []
 
     func run(always: Bool) async -> CLAuthorizationStatus {
+        #if os(iOS)
         isUpgrade = always && manager.authorizationStatus == .authorizedWhenInUse
+        #endif
         return await withCheckedContinuation { continuation in
             self.continuation = continuation
             manager.delegate = self
@@ -106,7 +108,9 @@ private final class LocationAuthorizationRequest: NSObject, @preconcurrency CLLo
         guard status != .notDetermined else { return }
         // During an upgrade the delegate first reports the existing When-In-Use
         // status; only a different status is an answer.
+        #if os(iOS)
         if isUpgrade && status == .authorizedWhenInUse { return }
+        #endif
         finish(with: status)
     }
 
@@ -164,4 +168,3 @@ private final class OneShotObservationToken {
     func cancel() {}
 }
 #endif
-}

@@ -1,116 +1,61 @@
 # Contributing to SwiftPermissions
 
-Thank you for your interest in contributing to SwiftPermissions! This document provides guidelines and information for contributors.
+Thanks for helping! Bug reports, docs fixes and pull requests are all welcome. By taking part you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## 🎯 How to Contribute
+## Reporting bugs and requesting features
 
-### Reporting Issues
-- Use the [GitHub Issues](https://github.com/MoElnaggar14/SwiftPermissions/issues) page
-- Search existing issues to avoid duplicates
-- Provide detailed information including:
-  - iOS/macOS version
-  - Xcode version
-  - Swift version
-  - Steps to reproduce
-  - Expected vs actual behavior
+- Search [existing issues](https://github.com/MoElnaggar14/SwiftPermissions/issues) first.
+- Open a [bug report](https://github.com/MoElnaggar14/SwiftPermissions/issues/new?template=bug_report.yml) or a [feature request](https://github.com/MoElnaggar14/SwiftPermissions/issues/new?template=feature_request.yml). The forms ask for the version, platform and a small reproduction.
+- Security problems go through [private reporting](SECURITY.md), never a public issue.
 
-### Suggesting Features
-- Open a [GitHub Discussion](https://github.com/MoElnaggar14/SwiftPermissions/discussions)
-- Describe the use case and proposed solution
-- Consider backward compatibility
+## Development setup
 
-### Code Contributions
+You need Xcode 16.4 or later (Swift 6.1+). CI also tests Swift 6.3 (Xcode 26.6) and Swift 6.4 (Xcode 27).
 
-#### Before You Start
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Make sure all tests pass: `swift test`
-
-#### Code Style
-- Follow Swift conventions and best practices
-- Use meaningful variable and function names
-- Add documentation comments for public APIs
-- Keep functions focused and concise
-
-#### Testing
-- Write unit tests for new functionality
-- Ensure all existing tests pass
-- Test on multiple iOS versions when possible
-- Update mock implementations as needed
-
-#### Documentation
-- Update README.md if adding new features
-- Add inline documentation for public APIs
-- Include usage examples
-
-#### Pull Request Process
-1. Create a clear PR title and description
-2. Reference any related issues
-3. Ensure CI passes
-4. Request review from maintainers
-
-## 🏗️ Development Setup
-
-### Prerequisites
-- Xcode 14.0+
-- Swift 5.7+
-- iOS 14.0+ simulator
-
-### Building
 ```bash
-git clone https://github.com/MoElnaggar14/SwiftPermissions
+git clone https://github.com/MoElnaggar14/SwiftPermissions.git
 cd SwiftPermissions
-swift build
-```
-
-### Testing
-```bash
+swift build --build-tests
 swift test
 ```
 
-### Example App
-The package includes example usage in the test files. You can also create a new iOS app and add the package locally for testing.
+Open `Package.swift` in Xcode to work on the package, and lint before pushing:
 
-## 📋 Code Guidelines
+```bash
+brew install swiftlint
+swiftlint lint
+```
 
-### Architecture
-- Maintain protocol-based design for testability
-- Keep platform-specific code isolated
-- Use async/await for new APIs
-- Maintain Combine support for reactive programming
+## How the code is organised
 
-### Error Handling
-- Use Result types where appropriate
-- Provide meaningful error messages
-- Handle edge cases gracefully
+| Folder | Product |
+| --- | --- |
+| `Sources/SwiftPermissionsCore` | Domain, ports, `PermissionManager`, registry, notifications |
+| `Sources/SwiftPermissionsUI` | `PermissionStore`, `PermissionGate`, `PermissionPrompt`, `PermissionRow`, `PermissionsList` |
+| `Sources/SwiftPermissions<Framework>` | One provider product per system framework (Camera, Photos, Location, …) |
+| `Sources/SwiftPermissionsTesting` | `StubPermissionProvider`, `PermissionManager.stubbed(...)` |
 
-### Performance
-- Minimize permission requests
-- Cache permission status when appropriate
-- Avoid blocking the main thread
+## Design rules
 
-## 🚀 Release Process
+- **Core links no privacy frameworks.** A new permission gets its own `SwiftPermissions<Framework>` target and product, plus a `PermissionRegistration` static member. CI fails if Core, UI or the umbrella imports a privacy framework.
+- **The manager never knows about frameworks.** Framework code lives in a `PermissionProvider`.
+- **Report declines as a status, not an error.** A user saying no is `.denied`.
+- **Never hang.** Every request must resume, including when the app is in the background or the system shows no prompt.
+- **Never crash the host app.** List every Info.plist key a prompt needs in `requiredUsageDescriptionKeys`.
 
-Releases are managed by maintainers following semantic versioning:
-- **Major**: Breaking changes
-- **Minor**: New features, backward compatible
-- **Patch**: Bug fixes
+## Tests
 
-## 🤝 Community Guidelines
+Test manager behaviour with `StubPermissionProvider` and `PermissionManager.stubbed(...)`. Real system prompts can't run in CI, so describe any manual device testing in your pull request.
 
-- Be respectful and inclusive
-- Provide constructive feedback
-- Help newcomers learn
-- Follow the [Swift Code of Conduct](https://swift.org/code-of-conduct/)
+## Pull requests
 
-## 📝 License
+1. Branch from `main`, keep the change focused, and explain *why* in the description (the pull request template will guide you).
+2. Add or update tests, docs (README, DocC comments) and `CHANGELOG.md` under the next version.
+3. Breaking changes need an entry in `MIGRATION.md`.
+4. Make sure CI is green: tests on three Swift versions, builds for iOS, Mac Catalyst, tvOS and watchOS, and SwiftLint.
 
-By contributing to SwiftPermissions, you agree that your contributions will be licensed under the MIT License.
+Commit messages and pull request titles follow [Conventional Commits](https://www.conventionalcommits.org): `fix: …`, `feat: …`, `docs: …`, `feat!: …` for breaking changes.
 
-## 🆘 Getting Help
+## License
 
-- [GitHub Discussions](https://github.com/MoElnaggar14/SwiftPermissions/discussions) for questions
-- [GitHub Issues](https://github.com/MoElnaggar14/SwiftPermissions/issues) page
-- Email: [moelnaggar14@gmail.com](mailto:moelnaggar14@gmail.com)
-
-Thank you for contributing to SwiftPermissions! 🙏
+By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).

@@ -1,330 +1,155 @@
 import SwiftPermissions
+import SwiftPermissionsBiometrics
 import SwiftUI
 
+/// Tours the ways to use SwiftPermissions in SwiftUI: gating a feature, upgrades,
+/// a custom multi-permission flow, an onboarding list and a live change log.
+///
+/// Every usage description is in `Example/Info.plist`. Remove one to see the
+/// `missingUsageDescription` alert instead of a crash.
 struct ContentView: View {
-    @StateObject private var permissionManager = ObservablePermissionManager()
-    @State private var showPermissionsDashboard = false
-    @State private var showCameraAlert = false
-    @State private var requestResults: [PermissionResult] = []
-    
+    let changes: any PermissionObserving
+    @EnvironmentObject private var permissions: PermissionStore
+
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    headerSection
-                    
-                    quickActionsSection
-                    
-                    permissionStatusSection
-                    
-                    batchRequestsSection
-                    
-                    resultsSection
+        NavigationStack {
+            List {
+                Section {
+                    NavigationLink("Camera") {
+                        PermissionGate(.camera, message: "Scan documents with your camera.", store: permissions) {
+                            Label("Camera is ready", systemImage: "camera.viewfinder")
+                                .font(.title2)
+                        }
+                        .navigationTitle("Camera")
+                    }
+                } header: {
+                    Text("Gate a feature")
+                } footer: {
+                    Text("PermissionGate shows its content once granted, and the right prompt until then.")
                 }
-                .padding()
+
+                Section {
+                    PermissionRow(.locationWhenInUse, store: permissions)
+                    PermissionRow(.locationAlways, store: permissions)
+                    PermissionRow(.calendar, store: permissions)
+                } header: {
+                    Text("Upgrades")
+                } footer: {
+                    Text("Allow location while using first, then Always: the row offers Allow More while an upgrade prompt can still appear.")
+                }
+
+                Section("Custom flows") {
+                    RecordButton(store: permissions)
+                    BiometricsButton()
+                }
+
+                Section {
+                    NavigationLink("All permissions") {
+                        PermissionsList(
+                            ExamplePermissions.all,
+                            footer: "You can change these at any time in Settings.",
+                            store: permissions
+                        )
+                        .navigationTitle("Permissions")
+                    }
+                    NavigationLink("Live changes") {
+                        ChangeLog(changes: changes)
+                            .navigationTitle("Live changes")
+                    }
+                } header: {
+                    Text("Onboarding and diagnostics")
+                } footer: {
+                    Text("Change a permission in Settings and come back: the list refreshes and the change log records it.")
+                }
             }
-            .navigationTitle("SwiftPermissions Example")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Dashboard") {
-                        showPermissionsDashboard = true
+            .navigationTitle("SwiftPermissions")
+        }
+        .refreshesPermissions(permissions)
+        .alert(
+            "Can't request permission",
+            isPresented: Binding(
+                get: { permissions.lastError != nil },
+                set: { if !$0 { permissions.lastError = nil } }
+            ),
+            presenting: permissions.lastError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { error in
+            Text(error.description)
+        }
+    }
+}
+
+/// Requests two permissions in sequence and reacts to the combined result.
+private struct RecordButton: View {
+    @ObservedObject var store: PermissionStore
+    @State private var outcome = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Button("Record a video (camera + microphone)") {
+                Task {
+                    let result = await store.request([.camera, .microphone])
+                    outcome = result.allGranted
+                        ? "Recording…"
+                        : "Missing: \(result.notGranted.map(\.displayName).sorted().joined(separator: ", "))"
+                }
+            }
+            if !outcome.isEmpty {
+                Text(outcome).font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// Biometrics never prompts from `request(_:)`: the prompt is the authentication itself.
+private struct BiometricsButton: View {
+    @State private var outcome = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Button("Unlock with Face ID / Touch ID") {
+                Task {
+                    do {
+                        let success = try await BiometricsPermissionProvider().authenticate(reason: "Unlock your notes")
+                        outcome = success ? "Unlocked" : "Not recognised"
+                    } catch {
+                        outcome = "\(error)"
                     }
                 }
             }
-            .sheet(isPresented: $showPermissionsDashboard) {
-                PermissionsDashboardView(
-                    permissions: [.camera, .microphone, .photoLibrary, .locationWhenInUse, .notification, .contacts]
-                )
-            }
-        }
-        .permissionAlert(
-            for: .camera,
-            isPresented: $showCameraAlert,
-            config: PermissionConfig(
-                title: "Camera Access Required",
-                message: "This example needs camera access to demonstrate permission requests."
-            )
-        )
-    }
-    
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "lock.shield")
-                .font(.system(size: 60))
-                .foregroundColor(.blue)
-            
-            Text("SwiftPermissions Example")
-                .font(.title)
-                .fontWeight(.bold)
-            
-            Text("Demonstrating comprehensive permission management")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-    }
-    
-    private var quickActionsSection: some View {
-        VStack(spacing: 16) {
-            Text("Quick Actions")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                PermissionButton(
-                    title: "Camera",
-                    systemImage: "camera",
-                    permission: .camera
-                )
-                
-                PermissionButton(
-                    title: "Location",
-                    systemImage: "location",
-                    permission: .locationWhenInUse
-                )
-                
-                PermissionButton(
-                    title: "Notifications",
-                    systemImage: "bell",
-                    permission: .notification
-                )
-                
-                PermissionButton(
-                    title: "Microphone",
-                    systemImage: "mic",
-                    permission: .microphone
-                )
-            }
-        }
-    }
-    
-    private var permissionStatusSection: some View {
-        VStack(spacing: 16) {
-            Text("Permission Status")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            VStack(spacing: 8) {
-                PermissionStatusView(.camera)
-                PermissionStatusView(.microphone)
-                PermissionStatusView(.photoLibrary)
-                PermissionStatusView(.locationWhenInUse)
-                PermissionStatusView(.notification)
-                PermissionStatusView(.contacts)
-            }
-        }
-    }
-    
-    private var batchRequestsSection: some View {
-        VStack(spacing: 16) {
-            Text("Batch Requests")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            VStack(spacing: 12) {
-                BatchRequestButton(
-                    title: "Media Permissions",
-                    subtitle: "Camera, Microphone, Photo Library",
-                    permissions: .media,
-                    color: .purple
-                ) { results in
-                    requestResults = results
-                }
-                
-                BatchRequestButton(
-                    title: "Location Permissions",
-                    subtitle: "Location, Notifications",
-                    permissions: .location,
-                    color: .blue
-                ) { results in
-                    requestResults = results
-                }
-                
-                BatchRequestButton(
-                    title: "Social Permissions",
-                    subtitle: "Contacts, Camera, Photo Library, Notifications",
-                    permissions: .social,
-                    color: .green
-                ) { results in
-                    requestResults = results
-                }
-            }
-        }
-    }
-    
-    private var resultsSection: some View {
-        if !requestResults.isEmpty {
-            VStack(spacing: 16) {
-                Text("Last Request Results")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                VStack(spacing: 8) {
-                    ForEach(requestResults.indices, id: \.self) { index in
-                        let result = requestResults[index]
-                        ResultRow(result: result)
-                    }
-                }
-                
-                Button("Clear Results") {
-                    requestResults = []
-                }
-                .foregroundColor(.red)
+            if !outcome.isEmpty {
+                Text(outcome).font(.footnote).foregroundStyle(.secondary)
             }
         }
     }
 }
 
-struct PermissionButton: View {
-    let title: String
-    let systemImage: String
-    let permission: PermissionType
-    
-    @StateObject private var permissionManager = ObservablePermissionManager()
-    
+/// Every status change the manager publishes, newest first.
+private struct ChangeLog: View {
+    let changes: any PermissionObserving
+    @State private var events: [String] = []
+
     var body: some View {
-        Button {
-            Task {
-                await permissionManager.requestPermission(permission)
+        List {
+            if events.isEmpty {
+                Text("No changes yet. Grant or deny something, or change it in Settings.")
+                    .foregroundStyle(.secondary)
             }
-        } label: {
-            VStack(spacing: 8) {
-                Image(systemName: systemImage)
-                    .font(.title2)
-                
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
+            ForEach(Array(events.enumerated().reversed()), id: \.offset) { _, event in
+                Text(event).font(.callout.monospaced())
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 80)
-            .background(backgroundColor)
-            .foregroundColor(foregroundColor)
-            .cornerRadius(12)
         }
-    }
-    
-    private var backgroundColor: Color {
-        if permissionManager.isAuthorized(permission) {
-            return .green.opacity(0.2)
-        } else {
-            return .gray.opacity(0.2)
-        }
-    }
-    
-    private var foregroundColor: Color {
-        if permissionManager.isAuthorized(permission) {
-            return .green
-        } else {
-            return .primary
+        .task {
+            for await change in changes.changes() {
+                let time = Date.now.formatted(date: .omitted, time: .standard)
+                events.append("\(time)  \(change.permission.displayName): \(change.status)")
+            }
         }
     }
 }
 
-struct BatchRequestButton: View {
-    let title: String
-    let subtitle: String
-    let permissions: [PermissionType]
-    let color: Color
-    let onComplete: ([PermissionResult]) -> Void
-    
-    var body: some View {
-        Button {
-            Task {
-                let manager = PermissionManagerFactory.default()
-                let results = await manager.requestMultiple(permissions)
-                await MainActor.run {
-                    onComplete(results)
-                }
-            }
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "arrow.right.circle.fill")
-                    .foregroundColor(color)
-            }
-            .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(12)
-        }
-    }
-}
-
-struct ResultRow: View {
-    let result: PermissionResult
-    
-    var body: some View {
-        HStack {
-            Image(systemName: result.isSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundColor(result.isSuccess ? .green : .red)
-            
-            Text(result.type.description)
-                .fontWeight(.medium)
-            
-            Spacer()
-            
-            Text(result.status.rawValue.capitalized)
-                .font(.caption)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(statusBackgroundColor)
-                .foregroundColor(statusForegroundColor)
-                .cornerRadius(8)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
-    }
-    
-    private var statusBackgroundColor: Color {
-        switch result.status {
-        case .authorized, .provisional:
-            return .green.opacity(0.2)
-        case .denied, .restricted:
-            return .red.opacity(0.2)
-        case .notDetermined:
-            return .orange.opacity(0.2)
-        }
-    }
-    
-    private var statusForegroundColor: Color {
-        switch result.status {
-        case .authorized, .provisional:
-            return .green
-        case .denied, .restricted:
-            return .red
-        case .notDetermined:
-            return .orange
-        }
-    }
-}
-
-// Extensions for permission groups
-extension Array where Element == PermissionType {
-    static let media: [PermissionType] = [.camera, .microphone, .photoLibrary]
-    static let location: [PermissionType] = [.locationWhenInUse, .notification]
-    static let social: [PermissionType] = [.contacts, .camera, .photoLibrary, .notification]
-    static let fitness: [PermissionType] = [.motion, .health, .locationWhenInUse, .notification]
-    static let all: [PermissionType] = PermissionType.allCases
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+#Preview {
+    ContentView(changes: PermissionManager(permissions: [.notifications]))
+        .environmentObject(PermissionStore(permissions: [.notifications]))
 }

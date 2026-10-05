@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- One usage description per registered permission. Merged with the keys Xcode generates. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Scan documents and record videos in this demo.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record audio with your videos in this demo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Show how full photo library access looks in this demo.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save images to your library in this demo.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Show how contacts access looks in this demo.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Show how calendar access looks in this demo.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Add events to your calendar in this demo.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Show how reminders access looks in this demo.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Show nearby places while you use this demo.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Demonstrate upgrading location access to Always.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Show how Bluetooth access looks in this demo.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Demonstrate the App Tracking Transparency prompt. This demo doesn't track you.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Show how Motion &amp; Fitness access looks in this demo.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Show how speech recognition access looks in this demo.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Unlock the demo's notes with Face ID.</string>
+</dict>
+</plist>

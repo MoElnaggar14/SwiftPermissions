@@ -1,6 +1,3 @@
-// SwiftPermissions - Umbrella Module
-// This module re-exports all functionality from SwiftPermissionsCore and SwiftPermissionsUI
-// allowing users to import just "SwiftPermissions" and get everything
-
+// Umbrella module: `import SwiftPermissions` gives you Core and the SwiftUI components.
 @_exported import SwiftPermissionsCore
 @_exported import SwiftPermissionsUI

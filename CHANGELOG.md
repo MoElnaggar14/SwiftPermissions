@@ -7,14 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] — Unreleased
+
+A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIGRATION.md).
+
 ### Added
-- TBD
+- **One product per framework** (`SwiftPermissionsCamera`, `…Photos`, `…Contacts`, `…Calendar`, `…Location`, `…Bluetooth`, `…Motion`, `…Speech`, `…MediaLibrary`, `…Siri`, `…Tracking`, `…Biometrics`, `…Health`). App Store review asks for the usage description of every permission whose request API is in the binary, so apps link only what they request. Register with `PermissionManager(permissions: [.camera, .photoLibrary])` / `PermissionStore(permissions:)`. CI fails if Core, UI or the umbrella imports a privacy framework.
+- `PermissionError.providerNotRegistered` names the product and registration to add.
+- `canRequest(_:)` on `PermissionRequesting` / `PermissionManager` and `PermissionStore` (plus `requestable`): whether a prompt can still appear, including upgrades. `PermissionRow` shows **Allow More** for an upgrade; "Allow All" still only asks for permissions not yet requested.
+- `PermissionError.cancelled`: cancelling the calling task stops waiting without dismissing the prompt for other callers.
+- `PermissionProvider` strategy protocol and `PermissionProviderRegistry`: add or replace permissions without touching the core.
+- New permissions: `.photoLibraryAddOnly`, `.calendarWriteOnly`, `.bluetooth`, `.speechRecognition`, `.mediaLibrary`, `.siri`; `.health` via `HealthPermissionProvider(share:read:)`.
+- `PermissionStatus.limited` and `.unavailable`.
+- Info.plist usage-description validation before prompting, plus `missingUsageDescriptions(for:)` for tests.
+- Request coalescing: concurrent requests for one permission show one prompt.
+- `updates(for:)` / `changes()` async streams, and `refresh()` for changes made in Settings.
+- **visionOS 1+** is a supported platform, and CI builds for it. On visionOS, `.locationAlways`, `.motion`, `.siri` and `.mediaLibrary` aren't available.
+- **App-extension safe.** Core no longer references `UIApplication.shared`, so every product compiles into widgets and notification extensions. CI builds the package with `APPLICATION_EXTENSION_API_ONLY=YES`. `AppSettings.open` and `PermissionStore.openSettings` are unavailable in extensions. `PermissionPrompt` and `PermissionRow` open Settings with SwiftUI's `openURL`.
+- **Privacy manifest** (`PrivacyInfo.xcprivacy`) in Core: no tracking, no collected data, no required-reason APIs.
+- `PermissionStatus` documents its stability: no new cases in 3.x.
+- `SwiftPermissionsTesting` re-exports `SwiftPermissionsCore`, so `import SwiftPermissionsTesting` is enough in a test file.
+- **Agent skill** for Claude Code (installable as a plugin) and Codex: `plugin/skills/swiftpermissions`. It teaches AI coding agents the right product, registration, Info.plist keys and testing setup, and includes `check_usage_descriptions.py`, which checks the registered permissions against the app's Info.plist. `AGENTS.md` covers contributors.
+- `AppSettings.open(for:)`, with per-permission Privacy panes on macOS and notification settings on iOS 16+.
+- SwiftUI: `PermissionStore`, `PermissionGate`, `PermissionPrompt`, `PermissionRow`, `PermissionsList`, auto-refresh on foreground.
+- `SwiftPermissionsTesting` product with `StubPermissionProvider` and `PermissionManager.stubbed(...)`.
+- DocC catalog.
 
 ### Changed
-- TBD
+- Swift 6 language mode; `PermissionManager` is an actor.
+- Interface segregation: `PermissionStatusReading`, `PermissionRequesting`, `PermissionObserving`.
+- `request(_:)` returns `PermissionStatus` and throws a typed `PermissionError`.
+- CI builds iOS, Mac Catalyst, tvOS and watchOS with Xcode 27, runs tests on the iOS Simulator, and tests on macOS with Swift 6.4, 6.3 and 6.1.
 
 ### Fixed
-- TBD
+- Location requests resolved immediately with `.notDetermined` (the delegate's initial callback) and leaked or overwrote continuations under concurrent requests.
+- The package didn't compile for tvOS and watchOS.
+- Data races in `PermissionManager` (`@unchecked Sendable` with lazy mutable state).
+- `.limited`, `.restricted` and write-only statuses were reported as `.authorized` or `.denied`.
+- `PermissionStatusView` created a new manager on every render.
+
+### Fixed during 3.0 review
+- Declining Contacts (and EventKit/notification requests that report errors) now yields `.denied` instead of `requestFailed`.
+- Upgrade prompts: `PermissionProvider.canRequest(from:)` lets when-in-use → Always location (iOS), write-only → full calendar and provisional → full notifications be requested. The location upgrade resolves even when iOS shows no prompt.
+- Bluetooth requires `NSBluetoothAlwaysUsageDescription` on macOS too (TCC terminates the app without it).
+- `updates(for:)` delivers the initial value exactly once per subscriber, including for unavailable permissions.
+- ATT waits for the app to be active, so it works in batches right after another alert.
+- A late caller can no longer clear a newer in-flight request.
+- Location no longer hangs when requested while the app is in the background (it waits until active) or with Location Services off system-wide (`.unavailable`).
+- HealthKit without the entitlement (or with no data types) reports `.unavailable` instead of `.authorized`.
+- `BiometricsPermissionProvider.authenticate(reason:)` checks `NSFaceIDUsageDescription` on Face ID devices instead of letting iOS terminate the app.
+- Usage descriptions are only required when a prompt can actually appear, so `request(.biometrics)` on a Touch ID device no longer throws.
+- README lists the pre-iOS 17 calendar and reminders keys.
+- macOS opens the Notifications pane for `.notifications`; "Open Settings" is hidden where there's nothing to open (watchOS).
+
+### Removed
+- `PermissionConfig` (unused), `PermissionManagerFactory`, `MockPermissionManager` from the production module, the Combine publisher.
+- `PermissionProviderRegistry.standard`: it linked every privacy framework into every app.
+- Stale 1.x/2.x release notes and announcement drafts.
 
 ## [1.1.0] - 2024-08-11
 

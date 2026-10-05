@@ -2,87 +2,168 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, feature/visual-digrams ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
   workflow_dispatch:
 
-jobs:
-  test:
-    name: Test
-    runs-on: macos-14
-    strategy:
-      matrix:
-        xcode: ['15.4', '16.1']
-        destination: [
-          'platform=iOS Simulator,OS=17.0,name=iPhone 15',
-          'platform=iOS Simulator,OS=17.5,name=iPhone 15 Pro'
-        ]
-    
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: ${{ matrix.xcode }}
-    
-    - name: Cache Swift packages
-      uses: actions/cache@v3
-      with:
-        path: .build
-        key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
-        restore-keys: |
-          ${{ runner.os }}-spm-
-    
-    - name: Build
-      run: swift build -v
-    
-    - name: Run tests
-      run: swift test -v --enable-code-coverage
-    
-    - name: Generate test report
-      run: |
-        xcrun llvm-cov export -format="lcov" .build/debug/SwiftPermissionsPackageTests.xctest/Contents/MacOS/SwiftPermissionsPackageTests -instr-profile .build/debug/codecov/default.profdata > coverage.lcov
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: coverage.lcov
-        fail_ci_if_error: false
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
-  build-example:
-    name: Build Example
-    runs-on: macos-14
-    
+jobs:
+  test-macos:
+    name: Test (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Swift 6.4, Xcode 27
+            runner: xcode-27
+            xcode: '27.0'
+            swift: '6\.([4-9]|[1-9][0-9])'
+          - name: Swift 6.3, Xcode 26.6
+            runner: macos-26
+            xcode: '26.6'
+            swift: '6\.3'
+          - name: Swift 6.1, Xcode 16.4 (oldest supported)
+            runner: macos-15
+            xcode: '16.4'
+            swift: '6\.1'
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: '15.4'
-    
-    - name: Build for iOS
-      run: |
-        swift build -c release
-    
-    - name: Build for macOS
-      run: |
-        swift build -c release --triple arm64-apple-macosx12.0
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode }}
+      - name: Check the toolchain
+        # Fails if the runner image changed and this job no longer tests the Swift it's named after.
+        run: |
+          swift --version
+          swift --version 2>&1 | grep -E "Swift version ${{ matrix.swift }}"
+      - name: Build and test
+        run: swift test --parallel --enable-code-coverage
+
+  test-ios:
+    name: Test (iOS Simulator)
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.0'
+      - name: Pick a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          ios = [d for runtime, ds in devices.items() if "iOS" in runtime for d in ds if d["name"].startswith("iPhone")]
+          print(ios[-1]["udid"])')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+      - name: Test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -scheme SwiftPermissions-Package \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO
+
+  build:
+    name: Build (${{ matrix.destination }})
+    runs-on: xcode-27
+    strategy:
+      fail-fast: false
+      matrix:
+        destination:
+          - generic/platform=iOS
+          - generic/platform=macOS,variant=Mac Catalyst
+          - generic/platform=tvOS
+          - generic/platform=watchOS
+          - generic/platform=visionOS
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.0'
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -scheme SwiftPermissions-Package \
+            -destination "${{ matrix.destination }}" \
+            CODE_SIGNING_ALLOWED=NO
+
+  app-extension:
+    name: Build as app-extension-safe
+    # Widgets and notification extensions compile packages with only extension-safe API.
+    # This build fails if Core, UI or a provider uses API like UIApplication.shared.
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.0'
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -scheme SwiftPermissions-Package \
+            -destination generic/platform=iOS \
+            APPLICATION_EXTENSION_API_ONLY=YES \
+            CODE_SIGNING_ALLOWED=NO
+
+  example:
+    name: Example app (${{ matrix.destination }})
+    runs-on: xcode-27
+    strategy:
+      fail-fast: false
+      matrix:
+        destination:
+          - generic/platform=iOS Simulator
+          - generic/platform=iOS
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.0'
+      - name: Every registered permission has its usage description
+        run: python3 plugin/skills/swiftpermissions/scripts/check_usage_descriptions.py Example
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Example/SwiftPermissionsExample.xcodeproj \
+            -scheme SwiftPermissionsExample \
+            -destination "${{ matrix.destination }}" \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO -quiet
 
   lint:
     name: SwiftLint
-    runs-on: macos-14
-    
+    runs-on: macos-15
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    
-    - name: Install SwiftLint
-      run: brew install swiftlint
-    
-    - name: Run SwiftLint
-      run: swiftlint
+      - uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: which swiftlint || brew install swiftlint
+      - run: swiftlint lint --reporter github-actions-logging
+      - name: Core, UI and the umbrella link no privacy frameworks
+        # App Store review asks for the usage description of every permission whose
+        # request API is in the binary, so those frameworks live in opt-in products.
+        run: |
+          FRAMEWORKS='AVFoundation|Photos|Contacts|EventKit|CoreLocation|CoreBluetooth|CoreMotion|Speech|MediaPlayer|Intents|AppTrackingTransparency|LocalAuthentication|HealthKit'
+          if grep -rnE "^[[:space:]]*(@preconcurrency[[:space:]]+)?import[[:space:]]+($FRAMEWORKS)\b" \
+              Sources/SwiftPermissionsCore Sources/SwiftPermissionsUI Sources/SwiftPermissions; then
+            echo "::error::Move this code into its framework product (Sources/SwiftPermissions<Framework>)."
+            exit 1
+          fi
+      - name: Agent skill covers every framework product
+        # plugin/skills/swiftpermissions teaches AI agents the product and Info.plist key
+        # of each permission; a new product must be added there too.
+        run: |
+          SKILL=plugin/skills/swiftpermissions
+          python3 -m py_compile "$SKILL/scripts/check_usage_descriptions.py"
+          for f in $(sed -n '/^let frameworks/,/^]/p' Package.swift | grep -oE '"[A-Za-z]+"' | tr -d '"'); do
+            for file in "$SKILL/scripts/check_usage_descriptions.py" "$SKILL/references/permissions.md"; do
+              grep -q "SwiftPermissions$f" "$file" || { echo "::error file=$file::SwiftPermissions$f is missing"; exit 1; }
+            done
+          done

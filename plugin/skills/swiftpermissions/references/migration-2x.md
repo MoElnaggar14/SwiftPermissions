@@ -1,6 +1,6 @@
-# Migrating from 2.x to 3.0
+# Migrating from SwiftPermissions 2.x
 
-3.0 is a redesign around a domain model and per-permission providers. Most call sites change mechanically.
+Source of truth: MIGRATION.md in the repository. Apply the mapping mechanically, then go through the 3.0 workflow in SKILL.md (products, registration, Info.plist check).
 
 ## Link only the permissions you use
 

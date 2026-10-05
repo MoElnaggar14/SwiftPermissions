@@ -226,6 +226,30 @@ Task {
 }
 ```
 
+## Use with AI coding agents
+
+The repository ships an [agent skill](plugin/skills/swiftpermissions/SKILL.md) that teaches AI coding agents to integrate SwiftPermissions correctly. It covers which product to add for each permission, registration, the Info.plist keys for each OS version, handling every status, upgrades and testing with stubs. It also includes a script that checks your registered permissions against your Info.plist and build settings:
+
+```bash
+python3 plugin/skills/swiftpermissions/scripts/check_usage_descriptions.py path/to/YourApp
+```
+
+**Claude Code**: install it as a plugin:
+
+```
+/plugin marketplace add MoElnaggar14/SwiftPermissions
+/plugin install swiftpermissions@swiftpermissions
+```
+
+**Codex and other agents that read `SKILL.md`**: copy the skill into your app's repository:
+
+```bash
+git clone --depth 1 https://github.com/MoElnaggar14/SwiftPermissions /tmp/SwiftPermissions
+mkdir -p .agents/skills && cp -R /tmp/SwiftPermissions/plugin/skills/swiftpermissions .agents/skills/
+```
+
+(Use `.claude/skills/` instead of `.agents/skills/` to give it to Claude Code without the plugin.) Agents working on this repository itself read [AGENTS.md](AGENTS.md).
+
 ## Requirements
 
 Xcode 16+ (Swift 6.0+). iOS 15, macOS 12, tvOS 15, watchOS 9.

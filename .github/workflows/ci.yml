@@ -110,3 +110,14 @@ jobs:
             echo "::error::Move this code into its framework product (Sources/SwiftPermissions<Framework>)."
             exit 1
           fi
+      - name: Agent skill covers every framework product
+        # plugin/skills/swiftpermissions teaches AI agents the product and Info.plist key
+        # of each permission; a new product must be added there too.
+        run: |
+          SKILL=plugin/skills/swiftpermissions
+          python3 -m py_compile "$SKILL/scripts/check_usage_descriptions.py"
+          for f in $(sed -n '/^let frameworks/,/^]/p' Package.swift | grep -oE '"[A-Za-z]+"' | tr -d '"'); do
+            for file in "$SKILL/scripts/check_usage_descriptions.py" "$SKILL/references/permissions.md"; do
+              grep -q "SwiftPermissions$f" "$file" || { echo "::error file=$file::SwiftPermissions$f is missing"; exit 1; }
+            done
+          done

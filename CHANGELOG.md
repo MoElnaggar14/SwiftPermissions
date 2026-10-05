@@ -22,6 +22,7 @@ A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIG
 - Info.plist usage-description validation before prompting, plus `missingUsageDescriptions(for:)` for tests.
 - Request coalescing: concurrent requests for one permission show one prompt.
 - `updates(for:)` / `changes()` async streams, and `refresh()` for changes made in Settings.
+- **Agent skill** for Claude Code (installable as a plugin) and Codex: `plugin/skills/swiftpermissions`. It teaches AI coding agents the right product, registration, Info.plist keys and testing setup, and includes `check_usage_descriptions.py`, which checks the registered permissions against the app's Info.plist. `AGENTS.md` covers contributors.
 - `AppSettings.open(for:)`, with per-permission Privacy panes on macOS and notification settings on iOS 16+.
 - SwiftUI: `PermissionStore`, `PermissionGate`, `PermissionPrompt`, `PermissionRow`, `PermissionsList`, auto-refresh on foreground.
 - `SwiftPermissionsTesting` product with `StubPermissionProvider` and `PermissionManager.stubbed(...)`.

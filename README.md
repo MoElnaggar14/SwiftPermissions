@@ -183,6 +183,21 @@ func testScannerShowsSettingsHintWhenDenied() async {
 }
 ```
 
+With Swift Testing, the same stubs work with `#expect`:
+
+```swift
+import Testing
+import SwiftPermissionsTesting
+
+@Test func scannerAsksOnce() async throws {
+    let camera = StubPermissionProvider(.camera, onRequest: .deny)
+    let permissions = PermissionManager.stubbed(camera)
+
+    #expect(try await permissions.request(.camera) == .denied)
+    #expect(await camera.requestCount == 1)
+}
+```
+
 Catch a missing Info.plist key in CI rather than in App Review:
 
 ```swift

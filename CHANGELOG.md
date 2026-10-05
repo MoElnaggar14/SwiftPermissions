@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- A four-part [article series](Articles) on the design: the domain model, the `PermissionManager` actor, modular products and App Review, and SwiftUI and testing.
+
 ## [3.0.0] — 2026-10-05
 
 A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIGRATION.md).

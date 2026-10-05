@@ -14,8 +14,10 @@ public struct PermissionsList: View {
         self.store = store
     }
 
+    /// Permissions that haven't been asked yet. Upgrades (e.g. to Always location)
+    /// are offered per row instead, so "Allow All" never asks for more than people expect.
     private var requestable: [Permission] {
-        permissions.filter { store[$0]?.canRequest == true }
+        permissions.filter { store[$0] == .notDetermined && store.canRequest($0) }
     }
 
     public var body: some View {

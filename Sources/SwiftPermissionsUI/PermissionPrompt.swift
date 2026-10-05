@@ -58,7 +58,7 @@ public struct PermissionPrompt: View {
     }
 
     @ViewBuilder private var action: some View {
-        if status.canRequest {
+        if store.canRequest(permission) {
             Button("Continue") {
                 Task { await store.request(permission) }
             }

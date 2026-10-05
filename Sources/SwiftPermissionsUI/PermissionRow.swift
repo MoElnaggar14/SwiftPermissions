@@ -37,8 +37,8 @@ public struct PermissionRow: View {
     @ViewBuilder private var action: some View {
         if store.isPending(permission) {
             ProgressView()
-        } else if let status, status.canRequest {
-            Button("Allow") {
+        } else if let status, store.canRequest(permission) {
+            Button(status == .notDetermined ? "Allow" : "Allow More") {
                 Task { await store.request(permission) }
             }
             .buttonStyle(.borderedProminent)

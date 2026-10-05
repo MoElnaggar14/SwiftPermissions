@@ -14,6 +14,7 @@ A redesign around a domain model and pluggable providers. See [MIGRATION.md](MIG
 ### Added
 - **One product per framework** (`SwiftPermissionsCamera`, `…Photos`, `…Contacts`, `…Calendar`, `…Location`, `…Bluetooth`, `…Motion`, `…Speech`, `…MediaLibrary`, `…Siri`, `…Tracking`, `…Biometrics`, `…Health`). App Store review asks for the usage description of every permission whose request API is in the binary, so apps link only what they request. Register with `PermissionManager(permissions: [.camera, .photoLibrary])` / `PermissionStore(permissions:)`. CI fails if Core, UI or the umbrella imports a privacy framework.
 - `PermissionError.providerNotRegistered` names the product and registration to add.
+- `canRequest(_:)` on `PermissionRequesting` / `PermissionManager` and `PermissionStore` (plus `requestable`): whether a prompt can still appear, including upgrades. `PermissionRow` shows **Allow More** for an upgrade; "Allow All" still only asks for permissions not yet requested.
 - `PermissionError.cancelled`: cancelling the calling task stops waiting without dismissing the prompt for other callers.
 - `PermissionProvider` strategy protocol and `PermissionProviderRegistry`: add or replace permissions without touching the core.
 - New permissions: `.photoLibraryAddOnly`, `.calendarWriteOnly`, `.bluetooth`, `.speechRecognition`, `.mediaLibrary`, `.siri`; `.health` via `HealthPermissionProvider(share:read:)`.

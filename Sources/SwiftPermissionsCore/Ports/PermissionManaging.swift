@@ -8,6 +8,20 @@ public protocol PermissionRequesting: Sendable {
     /// Shows the system prompt if the permission is ``PermissionStatus/notDetermined``,
     /// otherwise returns the current status without prompting.
     func request(_ permission: Permission) async throws(PermissionError) -> PermissionStatus
+
+    /// Whether ``request(_:)`` can still show a prompt: the permission hasn't been
+    /// asked yet, or the provider supports an upgrade from its partial status
+    /// (when-in-use → Always location, write-only → full calendar, provisional →
+    /// full notifications). The status alone can't tell: `.limited` location can be
+    /// upgraded, `.limited` photos can't.
+    func canRequest(_ permission: Permission) async -> Bool
+}
+
+public extension PermissionRequesting where Self: PermissionStatusReading {
+    /// Without provider knowledge, only a permission that hasn't been asked yet can prompt.
+    func canRequest(_ permission: Permission) async -> Bool {
+        await status(of: permission).canRequest
+    }
 }
 
 /// Streams permission status changes.

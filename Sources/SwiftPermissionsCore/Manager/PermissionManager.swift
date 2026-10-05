@@ -121,6 +121,11 @@ public actor PermissionManager: PermissionManaging {
         return status
     }
 
+    public func canRequest(_ permission: Permission) async -> Bool {
+        guard let provider = registry.provider(for: permission) else { return false }
+        return provider.canRequest(from: await currentStatus(of: permission))
+    }
+
     private func makeRequestTask(
         for permission: Permission
     ) throws(PermissionError) -> (id: UUID, task: Task<PermissionStatus, any Error>) {

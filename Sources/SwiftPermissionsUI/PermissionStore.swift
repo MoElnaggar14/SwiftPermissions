@@ -23,6 +23,9 @@ public final class PermissionStore: ObservableObject {
     @Published public private(set) var statuses: [Permission: PermissionStatus] = [:]
     /// Permissions whose system prompt is currently showing.
     @Published public private(set) var pending: Set<Permission> = []
+    /// Permissions whose system prompt can still be shown, including upgrades from a
+    /// partial status (see ``PermissionRequesting/canRequest(_:)``).
+    @Published public private(set) var requestable: Set<Permission> = []
     /// The most recent request failure, e.g. a missing usage description.
     @Published public var lastError: PermissionError?
 
@@ -39,7 +42,7 @@ public final class PermissionStore: ObservableObject {
         let changes = manager.changes()
         observation = Task { [weak self] in
             for await change in changes {
-                self?.statuses[change.permission] = change.status
+                await self?.record(change.status, for: change.permission)
             }
         }
     }
@@ -60,10 +63,25 @@ public final class PermissionStore: ObservableObject {
         pending.contains(permission)
     }
 
+    /// Whether requesting `permission` can show a prompt, including an upgrade
+    /// (for example when-in-use → Always location).
+    public func canRequest(_ permission: Permission) -> Bool {
+        requestable.contains(permission)
+    }
+
+    private func record(_ status: PermissionStatus, for permission: Permission) async {
+        statuses[permission] = status
+        if await manager.canRequest(permission) {
+            requestable.insert(permission)
+        } else {
+            requestable.remove(permission)
+        }
+    }
+
     /// Reads the current status of each permission without prompting.
     public func load(_ permissions: some Sequence<Permission>) async {
         for permission in permissions {
-            statuses[permission] = await manager.status(of: permission)
+            await record(await manager.status(of: permission), for: permission)
         }
     }
 
@@ -82,7 +100,7 @@ public final class PermissionStore: ObservableObject {
         defer { pending.remove(permission) }
         do throws(PermissionError) {
             let status = try await manager.request(permission)
-            statuses[permission] = status
+            await record(status, for: permission)
             return status
         } catch {
             lastError = error
@@ -96,7 +114,9 @@ public final class PermissionStore: ObservableObject {
         pending.formUnion(permissions)
         defer { pending.subtract(permissions) }
         let result = await manager.request(permissions)
-        statuses.merge(result.statuses) { _, new in new }
+        for (permission, status) in result.statuses {
+            await record(status, for: permission)
+        }
         if let failure = result.failures.values.first {
             lastError = failure
         }

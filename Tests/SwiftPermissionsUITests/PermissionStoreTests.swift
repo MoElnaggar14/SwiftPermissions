@@ -27,6 +27,27 @@ final class PermissionStoreTests: XCTestCase {
         XCTAssertTrue(store.pending.isEmpty)
     }
 
+    func testUpgradableStatusIsRequestable() async {
+        let location = StubPermissionProvider(.locationAlways, status: .limited, upgradableFrom: [.limited])
+        let photos = StubPermissionProvider(.photoLibrary, status: .limited)
+        let store = PermissionStore(manager: PermissionManager.stubbed(location, photos))
+
+        await store.load([.locationAlways, .photoLibrary])
+
+        XCTAssertTrue(store.canRequest(.locationAlways), "when-in-use can be upgraded to Always")
+        XCTAssertFalse(store.canRequest(.photoLibrary), "limited photos can't be upgraded with a prompt")
+    }
+
+    func testGrantedPermissionIsNoLongerRequestable() async {
+        let store = PermissionStore(manager: PermissionManager.stubbed([.camera: .notDetermined]))
+        await store.load([.camera])
+        XCTAssertTrue(store.canRequest(.camera))
+
+        await store.request(.camera)
+
+        XCTAssertFalse(store.canRequest(.camera))
+    }
+
     func testFailedRequestSetsLastError() async {
         let store = PermissionStore(manager: PermissionManager.stubbed())
 

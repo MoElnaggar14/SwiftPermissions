@@ -38,7 +38,7 @@ Suggest the alternative when it fits; ask the user if unsure.
 ])
 ```
 
-In an Xcode project, add the same products under the target's "Frameworks, Libraries, and Embedded Content". Use `SwiftPermissionsCore` instead of `SwiftPermissions` when the target must not import SwiftUI. Add `SwiftPermissionsTesting` only to test targets and previews.
+In an Xcode project, add the same products under the target's "Frameworks, Libraries, and Embedded Content". Use `SwiftPermissionsCore` instead of `SwiftPermissions` when the target must not import SwiftUI. Every product also links into app extensions such as widgets. There, use `openURL(AppSettings.url(for:))` instead of `AppSettings.open`, which is unavailable in extensions. Add `SwiftPermissionsTesting` only to test targets and previews.
 
 The table of permissions, products, platforms and Info.plist keys is in [references/permissions.md](references/permissions.md). Read it whenever you add or remove a permission.
 

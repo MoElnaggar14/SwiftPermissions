@@ -1,0 +1,83 @@
+name: Release
+
+# Push a semver tag (e.g. v3.0.0) from main after the release/* PR is merged.
+# The GitHub release body is that version's section of CHANGELOG.md, so curate it there.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: read
+
+jobs:
+  notes:
+    name: Release notes from CHANGELOG
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" =~ (alpha|beta|rc) ]]; then echo "prerelease=true"; else echo "prerelease=false"; fi >> "$GITHUB_OUTPUT"
+      - name: Extract the CHANGELOG section
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { found = 1; header = $0; next }
+            found && /^## \[/ { exit }
+            found { print }
+            END { if (!found) exit 1; if (header ~ /Unreleased/) exit 2 }
+          ' CHANGELOG.md > release_notes.md || {
+            echo "::error file=CHANGELOG.md::Add a dated '## [$VERSION] — YYYY-MM-DD' section (not 'Unreleased') before tagging."
+            exit 1
+          }
+          {
+            echo
+            echo "## Install"
+            echo
+            echo '```swift'
+            echo ".package(url: \"https://github.com/MoElnaggar14/SwiftPermissions\", from: \"$VERSION\")"
+            echo '```'
+          } >> release_notes.md
+          cat release_notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release_notes.md
+
+  test:
+    name: Test the tagged commit
+    runs-on: xcode-27
+    needs: notes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.0'
+      - run: swift --version
+      - run: swift build --build-tests
+      - run: swift test
+
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    needs: [notes, test]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: SwiftPermissions ${{ needs.notes.outputs.version }}
+          body_path: release_notes.md
+          prerelease: ${{ needs.notes.outputs.prerelease == 'true' }}

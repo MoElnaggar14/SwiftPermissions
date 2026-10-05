@@ -1,0 +1,10 @@
+{
+  "name": "swiftpermissions",
+  "description": "Teaches Claude to integrate SwiftPermissions 3.x: pick the right product per permission, register it, add and verify Info.plist usage descriptions, handle every status and test with stubs.",
+  "version": "3.0.0",
+  "author": { "name": "Mohammed Elnaggar", "url": "https://github.com/MoElnaggar14" },
+  "homepage": "https://github.com/MoElnaggar14/SwiftPermissions",
+  "repository": "https://github.com/MoElnaggar14/SwiftPermissions",
+  "license": "MIT",
+  "keywords": ["swift", "ios", "permissions", "swiftui", "privacy"]
+}

@@ -1,0 +1,340 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E0249F5C322A9ED8DF1BC885 /* SwiftPermissions in Frameworks */ = {isa = PBXBuildFile; productRef = 6BE73B665EE6174458A9A4C7 /* SwiftPermissions */; };
+		19EA347D7670550E035FC4DE /* SwiftPermissionsBiometrics in Frameworks */ = {isa = PBXBuildFile; productRef = 457C581AEC66D2F620415BF6 /* SwiftPermissionsBiometrics */; };
+		75D1194B895443B98E6E74D8 /* SwiftPermissionsBluetooth in Frameworks */ = {isa = PBXBuildFile; productRef = 961C8C29F34836B9FFAA9FD9 /* SwiftPermissionsBluetooth */; };
+		62A13EE19D4DF68D5C6B70EB /* SwiftPermissionsCalendar in Frameworks */ = {isa = PBXBuildFile; productRef = 58D852298DFB3CA7AC4B9221 /* SwiftPermissionsCalendar */; };
+		D16C0C0AA42A17D09A83A226 /* SwiftPermissionsCamera in Frameworks */ = {isa = PBXBuildFile; productRef = D20CE8F46382EC73CDDDD0D1 /* SwiftPermissionsCamera */; };
+		363AF514CEE9F706D7BBEAA1 /* SwiftPermissionsContacts in Frameworks */ = {isa = PBXBuildFile; productRef = 9C560C05B97634DF014B06DC /* SwiftPermissionsContacts */; };
+		42681DC59D04B0671103D3D9 /* SwiftPermissionsLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 0E2F239432D61821FEB55B3B /* SwiftPermissionsLocation */; };
+		9518DE6564A257DD04DF3E9C /* SwiftPermissionsMotion in Frameworks */ = {isa = PBXBuildFile; productRef = AA6BB2F63C34DA3D5320737B /* SwiftPermissionsMotion */; };
+		EAC9C6E1528964C393AF679F /* SwiftPermissionsPhotos in Frameworks */ = {isa = PBXBuildFile; productRef = 1761DA1D48594997458B30AB /* SwiftPermissionsPhotos */; };
+		D0F40E8574F21DE7446B7CEB /* SwiftPermissionsSpeech in Frameworks */ = {isa = PBXBuildFile; productRef = B64BAB1641A66CBB6046B509 /* SwiftPermissionsSpeech */; };
+		95D425C8D07409623B2A82AA /* SwiftPermissionsTracking in Frameworks */ = {isa = PBXBuildFile; productRef = E0B19419BD301AA8BCF04ED2 /* SwiftPermissionsTracking */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		D2A57DC1D883FD21FB995169 /* SwiftPermissionsExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftPermissionsExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		707A1B8AA6F495C9BF6658C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		D8DBA3F9900DD17689CA0C4D /* SwiftPermissionsExample */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SwiftPermissionsExample;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E0249F5C322A9ED8DF1BC885 /* SwiftPermissions in Frameworks */,
+				19EA347D7670550E035FC4DE /* SwiftPermissionsBiometrics in Frameworks */,
+				75D1194B895443B98E6E74D8 /* SwiftPermissionsBluetooth in Frameworks */,
+				62A13EE19D4DF68D5C6B70EB /* SwiftPermissionsCalendar in Frameworks */,
+				D16C0C0AA42A17D09A83A226 /* SwiftPermissionsCamera in Frameworks */,
+				363AF514CEE9F706D7BBEAA1 /* SwiftPermissionsContacts in Frameworks */,
+				42681DC59D04B0671103D3D9 /* SwiftPermissionsLocation in Frameworks */,
+				9518DE6564A257DD04DF3E9C /* SwiftPermissionsMotion in Frameworks */,
+				EAC9C6E1528964C393AF679F /* SwiftPermissionsPhotos in Frameworks */,
+				D0F40E8574F21DE7446B7CEB /* SwiftPermissionsSpeech in Frameworks */,
+				95D425C8D07409623B2A82AA /* SwiftPermissionsTracking in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FAD58DE7366495DB4650CFEF = {
+			isa = PBXGroup;
+			children = (
+				707A1B8AA6F495C9BF6658C2 /* Info.plist */,
+				D8DBA3F9900DD17689CA0C4D /* SwiftPermissionsExample */,
+				86024CAD1E83101D97359D73 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		86024CAD1E83101D97359D73 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D2A57DC1D883FD21FB995169 /* SwiftPermissionsExample.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		42AEFBAE01D2DFD981F7DA7D /* SwiftPermissionsExample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B96B5D8575283A646261690A /* Build configuration list for PBXNativeTarget "SwiftPermissionsExample" */;
+			buildPhases = (
+				F2AB5FB218DA8B84623F4557 /* Sources */,
+				4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */,
+				55B558C7EF820E6E00E5993B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D8DBA3F9900DD17689CA0C4D /* SwiftPermissionsExample */,
+			);
+			name = SwiftPermissionsExample;
+			packageProductDependencies = (
+				6BE73B665EE6174458A9A4C7 /* SwiftPermissions */,
+				457C581AEC66D2F620415BF6 /* SwiftPermissionsBiometrics */,
+				961C8C29F34836B9FFAA9FD9 /* SwiftPermissionsBluetooth */,
+				58D852298DFB3CA7AC4B9221 /* SwiftPermissionsCalendar */,
+				D20CE8F46382EC73CDDDD0D1 /* SwiftPermissionsCamera */,
+				9C560C05B97634DF014B06DC /* SwiftPermissionsContacts */,
+				0E2F239432D61821FEB55B3B /* SwiftPermissionsLocation */,
+				AA6BB2F63C34DA3D5320737B /* SwiftPermissionsMotion */,
+				1761DA1D48594997458B30AB /* SwiftPermissionsPhotos */,
+				B64BAB1641A66CBB6046B509 /* SwiftPermissionsSpeech */,
+				E0B19419BD301AA8BCF04ED2 /* SwiftPermissionsTracking */,
+			);
+			productName = SwiftPermissionsExample;
+			productReference = D2A57DC1D883FD21FB995169 /* SwiftPermissionsExample.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		46F86FAA6BBF9AC94A7E4595 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					42AEFBAE01D2DFD981F7DA7D = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 9873F885523C5B8D7C91F5AE /* Build configuration list for PBXProject "SwiftPermissionsExample" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FAD58DE7366495DB4650CFEF;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				00399ED3B3FA2FCA129B1CCE /* XCLocalSwiftPackageReference ".." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 86024CAD1E83101D97359D73 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				42AEFBAE01D2DFD981F7DA7D /* SwiftPermissionsExample */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		55B558C7EF820E6E00E5993B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F2AB5FB218DA8B84623F4557 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		6F0B85FC643AF9C218F627EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9E54625B130519BC1DA1AA0A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CB8FE7DDB06B8A28E578DE77 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Permissions;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.moelnaggar.SwiftPermissionsExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B5F5F0F8F7A394DCD8474A02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Permissions;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.moelnaggar.SwiftPermissionsExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9873F885523C5B8D7C91F5AE /* Build configuration list for PBXProject "SwiftPermissionsExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F0B85FC643AF9C218F627EA /* Debug */,
+				9E54625B130519BC1DA1AA0A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B96B5D8575283A646261690A /* Build configuration list for PBXNativeTarget "SwiftPermissionsExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB8FE7DDB06B8A28E578DE77 /* Debug */,
+				B5F5F0F8F7A394DCD8474A02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		00399ED3B3FA2FCA129B1CCE /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6BE73B665EE6174458A9A4C7 /* SwiftPermissions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissions;
+		};
+		457C581AEC66D2F620415BF6 /* SwiftPermissionsBiometrics */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsBiometrics;
+		};
+		961C8C29F34836B9FFAA9FD9 /* SwiftPermissionsBluetooth */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsBluetooth;
+		};
+		58D852298DFB3CA7AC4B9221 /* SwiftPermissionsCalendar */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsCalendar;
+		};
+		D20CE8F46382EC73CDDDD0D1 /* SwiftPermissionsCamera */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsCamera;
+		};
+		9C560C05B97634DF014B06DC /* SwiftPermissionsContacts */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsContacts;
+		};
+		0E2F239432D61821FEB55B3B /* SwiftPermissionsLocation */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsLocation;
+		};
+		AA6BB2F63C34DA3D5320737B /* SwiftPermissionsMotion */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsMotion;
+		};
+		1761DA1D48594997458B30AB /* SwiftPermissionsPhotos */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsPhotos;
+		};
+		B64BAB1641A66CBB6046B509 /* SwiftPermissionsSpeech */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsSpeech;
+		};
+		E0B19419BD301AA8BCF04ED2 /* SwiftPermissionsTracking */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsTracking;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+}

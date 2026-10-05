@@ -92,6 +92,32 @@ jobs:
             -destination "${{ matrix.destination }}" \
             CODE_SIGNING_ALLOWED=NO
 
+  example:
+    name: Example app (${{ matrix.destination }})
+    runs-on: xcode-27
+    strategy:
+      fail-fast: false
+      matrix:
+        destination:
+          - generic/platform=iOS Simulator
+          - generic/platform=iOS
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.0'
+      - name: Every registered permission has its usage description
+        run: python3 plugin/skills/swiftpermissions/scripts/check_usage_descriptions.py Example
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Example/SwiftPermissionsExample.xcodeproj \
+            -scheme SwiftPermissionsExample \
+            -destination "${{ matrix.destination }}" \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO -quiet
+
   lint:
     name: SwiftLint
     runs-on: macos-15

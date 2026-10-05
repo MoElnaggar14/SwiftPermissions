@@ -22,6 +22,8 @@ case .restricted, .unavailable, .notDetermined, .provisional:
 }
 ```
 
+Try it: open [`Example/SwiftPermissionsExample.xcodeproj`](Example) and run it on a simulator or your iPhone.
+
 ## Why
 
 Every framework has its own authorization enum, its own request API (async, callback, delegate, or "just touch the data"), and its own Info.plist key. If a key is missing, the app crashes. SwiftPermissions handles all of that behind one model:

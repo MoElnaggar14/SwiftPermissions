@@ -81,7 +81,7 @@ Then run the bundled checker from the app's repository root:
 python3 <skill-dir>/scripts/check_usage_descriptions.py .
 ```
 
-It finds the registrations in the Swift sources and the keys in Info.plist files, `INFOPLIST_KEY_*` build settings and `.xcconfig` files. It reports missing keys, products imported but never registered (dead weight that App Review still scans), and registrations whose product is never imported. It exits non-zero when something is missing, so it can also run in CI. Pass `--ios-deployment-target 16` when the target is below 17, so it requires the legacy calendar keys.
+It finds the registrations in the Swift sources and the keys in Info.plist files, `INFOPLIST_KEY_*` build settings and `.xcconfig` files. It reads registrations from `PermissionManager(permissions: [...])`, `PermissionStore(permissions: [...])` and `[PermissionRegistration] = [...]` literals. It reports missing keys, products imported but never registered (dead weight that App Review still scans), and registrations whose product is never imported. It exits non-zero when something is missing, so it can also run in CI. Pass `--ios-deployment-target 16` when the target is below 17, so it requires the legacy calendar keys.
 
 Also suggest a unit test that runs on every build. See "Testing" below.
 

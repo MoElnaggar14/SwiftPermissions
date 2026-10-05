@@ -1,24 +1,20 @@
 import SwiftPermissions
-import SwiftPermissionsCamera
-import SwiftPermissionsContacts
-import SwiftPermissionsLocation
-import SwiftPermissionsPhotos
+import SwiftPermissionsBiometrics
 import SwiftUI
 
-/// Demonstrates the three common ways to use SwiftPermissions in SwiftUI.
+/// Tours the ways to use SwiftPermissions in SwiftUI: gating a feature, upgrades,
+/// a custom multi-permission flow, an onboarding list and a live change log.
 ///
-/// Link the products for the permissions you use (SwiftPermissionsCamera, …) and add
-/// their usage descriptions (NSCameraUsageDescription, …) to the app's Info.plist.
-/// Missing keys surface as an alert instead of a crash.
+/// Every usage description is in `Example/Info.plist`. Remove one to see the
+/// `missingUsageDescription` alert instead of a crash.
 struct ContentView: View {
-    @StateObject private var permissions = PermissionStore(permissions: [
-        .camera, .microphone, .photoLibrary, .contacts, .locationWhenInUse, .notifications
-    ])
+    let changes: any PermissionObserving
+    @EnvironmentObject private var permissions: PermissionStore
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
-                Section("Gate a feature") {
+                Section {
                     NavigationLink("Camera") {
                         PermissionGate(.camera, message: "Scan documents with your camera.", store: permissions) {
                             Label("Camera is ready", systemImage: "camera.viewfinder")
@@ -26,25 +22,49 @@ struct ContentView: View {
                         }
                         .navigationTitle("Camera")
                     }
+                } header: {
+                    Text("Gate a feature")
+                } footer: {
+                    Text("PermissionGate shows its content once granted, and the right prompt until then.")
                 }
 
-                Section("Onboarding / privacy settings") {
+                Section {
+                    PermissionRow(.locationWhenInUse, store: permissions)
+                    PermissionRow(.locationAlways, store: permissions)
+                    PermissionRow(.calendar, store: permissions)
+                } header: {
+                    Text("Upgrades")
+                } footer: {
+                    Text("Allow location while using first, then Always: the row offers Allow More while an upgrade prompt can still appear.")
+                }
+
+                Section("Custom flows") {
+                    RecordButton(store: permissions)
+                    BiometricsButton()
+                }
+
+                Section {
                     NavigationLink("All permissions") {
                         PermissionsList(
-                            [.camera, .microphone, .photoLibrary, .contacts, .locationWhenInUse, .notifications],
+                            ExamplePermissions.all,
                             footer: "You can change these at any time in Settings.",
                             store: permissions
                         )
                         .navigationTitle("Permissions")
                     }
-                }
-
-                Section("Custom flow") {
-                    RecordButton(store: permissions)
+                    NavigationLink("Live changes") {
+                        ChangeLog(changes: changes)
+                            .navigationTitle("Live changes")
+                    }
+                } header: {
+                    Text("Onboarding and diagnostics")
+                } footer: {
+                    Text("Change a permission in Settings and come back: the list refreshes and the change log records it.")
                 }
             }
             .navigationTitle("SwiftPermissions")
         }
+        .refreshesPermissions(permissions)
         .alert(
             "Can't request permission",
             isPresented: Binding(
@@ -67,7 +87,7 @@ private struct RecordButton: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            Button("Record a video") {
+            Button("Record a video (camera + microphone)") {
                 Task {
                     let result = await store.request([.camera, .microphone])
                     outcome = result.allGranted
@@ -82,6 +102,54 @@ private struct RecordButton: View {
     }
 }
 
+/// Biometrics never prompts from `request(_:)`: the prompt is the authentication itself.
+private struct BiometricsButton: View {
+    @State private var outcome = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Button("Unlock with Face ID / Touch ID") {
+                Task {
+                    do {
+                        let success = try await BiometricsPermissionProvider().authenticate(reason: "Unlock your notes")
+                        outcome = success ? "Unlocked" : "Not recognised"
+                    } catch {
+                        outcome = "\(error)"
+                    }
+                }
+            }
+            if !outcome.isEmpty {
+                Text(outcome).font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// Every status change the manager publishes, newest first.
+private struct ChangeLog: View {
+    let changes: any PermissionObserving
+    @State private var events: [String] = []
+
+    var body: some View {
+        List {
+            if events.isEmpty {
+                Text("No changes yet. Grant or deny something, or change it in Settings.")
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(Array(events.enumerated().reversed()), id: \.offset) { _, event in
+                Text(event).font(.callout.monospaced())
+            }
+        }
+        .task {
+            for await change in changes.changes() {
+                let time = Date.now.formatted(date: .omitted, time: .standard)
+                events.append("\(time)  \(change.permission.displayName): \(change.status)")
+            }
+        }
+    }
+}
+
 #Preview {
-    ContentView()
+    ContentView(changes: PermissionManager(permissions: [.notifications]))
+        .environmentObject(PermissionStore(permissions: [.notifications]))
 }

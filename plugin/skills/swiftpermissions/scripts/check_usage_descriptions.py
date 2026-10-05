@@ -46,8 +46,15 @@ CORE_PRODUCTS = {"SwiftPermissions", "SwiftPermissionsCore", "SwiftPermissionsUI
 SKIP_DIRS = {".build", "build", "DerivedData", "Pods", "Carthage", ".git", "SourcePackages", "checkouts"}
 
 IMPORT_RE = re.compile(r"^\s*(?:@\w+\s+)*import\s+(SwiftPermissions\w*)", re.M)
-# The argument list of PermissionManager(permissions: [...]) / PermissionStore(permissions: [...]).
-REGISTRATION_LIST_RE = re.compile(r"\b(?:PermissionManager|PermissionStore)\s*\(\s*permissions\s*:\s*\[", re.S)
+# Array literals that hold registrations: PermissionManager(permissions: [...]),
+# PermissionStore(permissions: [...]), PermissionProviderRegistry(registering: [...]) and
+# `let registrations: [PermissionRegistration] = [...]`.
+REGISTRATION_LIST_RE = re.compile(
+    r"\b(?:PermissionManager|PermissionStore)\s*\(\s*permissions\s*:\s*\["
+    r"|\bPermissionProviderRegistry\s*\(\s*registering\s*:\s*\["
+    r"|\[\s*PermissionRegistration\s*\]\s*=\s*\[",
+    re.S,
+)
 MEMBER_RE = re.compile(r"(?<![\w)\]])\.(\w+)")
 
 
@@ -138,8 +145,8 @@ def main():
     for line in errors:
         print(f"error: {line}")
     if not registered:
-        print("note: no PermissionManager(permissions:) / PermissionStore(permissions:) call found; "
-              "registrations built elsewhere (e.g. a variable) aren't detected")
+        print("note: no registrations found. The checker reads PermissionManager(permissions: [...]), "
+              "PermissionStore(permissions: [...]) and `[PermissionRegistration] = [...]` literals")
     if not errors:
         print("OK: every registered permission has its usage description.")
     return 1 if errors else 0

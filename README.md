@@ -167,6 +167,21 @@ func testInfoPlistDeclaresEveryPermissionWeUse() {
 }
 ```
 
+## Observability
+
+`changes()` streams every status change, so piping them into your logger or analytics takes a few lines. With [SwiftMoLogger](https://github.com/MoElnaggar14/SwiftMoLogger):
+
+```swift
+Task {
+    for await change in permissions.changes() {
+        log.info("Permission changed", tag: .security, metadata: [
+            "permission": .string(change.permission.rawValue),
+            "status": .string(change.status.rawValue)
+        ])
+    }
+}
+```
+
 ## Requirements
 
 Xcode 16+ (Swift 6). iOS 15, macOS 12, tvOS 15, watchOS 9.

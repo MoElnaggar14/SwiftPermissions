@@ -8,7 +8,7 @@ import PackageDescription
 let frameworks = [
     "Camera", "Photos", "Contacts", "Calendar", "Location", "Bluetooth", "Motion",
     "Speech", "MediaLibrary", "Siri", "Tracking", "Biometrics", "Health", "Alarms",
-    "ScreenRecording", "Accessibility", "InputMonitoring"
+    "ScreenRecording", "Accessibility", "InputMonitoring", "LocalNetwork"
 ]
 
 let package = Package(
@@ -40,8 +40,8 @@ let package = Package(
             dependencies: [
                 "SwiftPermissionsCore", "SwiftPermissionsTesting",
                 "SwiftPermissionsAlarms", "SwiftPermissionsBluetooth", "SwiftPermissionsCamera",
-                "SwiftPermissionsLocation", "SwiftPermissionsAccessibility", "SwiftPermissionsInputMonitoring",
-                "SwiftPermissionsScreenRecording"
+                "SwiftPermissionsLocalNetwork", "SwiftPermissionsLocation", "SwiftPermissionsAccessibility",
+                "SwiftPermissionsInputMonitoring", "SwiftPermissionsScreenRecording"
             ]
         ),
         .testTarget(

@@ -25,6 +25,7 @@ public extension Permission {
         case .screenRecording: "record.circle"
         case .accessibility: "accessibility"
         case .inputMonitoring: "keyboard"
+        case .localNetwork: "network"
         default: "lock.shield.fill"
         }
     }

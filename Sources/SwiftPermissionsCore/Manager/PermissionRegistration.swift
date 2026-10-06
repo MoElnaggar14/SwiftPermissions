@@ -65,6 +65,7 @@ extension Permission {
         case .screenRecording: ("SwiftPermissionsScreenRecording", ".screenRecording")
         case .accessibility: ("SwiftPermissionsAccessibility", ".accessibility")
         case .inputMonitoring: ("SwiftPermissionsInputMonitoring", ".inputMonitoring")
+        case .localNetwork: ("SwiftPermissionsLocalNetwork", ".localNetwork")
         default: nil
         }
     }

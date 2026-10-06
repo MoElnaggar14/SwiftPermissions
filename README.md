@@ -228,6 +228,52 @@ Task {
 }
 ```
 
+### Permission funnels in Amplitude, Google Analytics or Mixpanel
+
+Product teams usually want two numbers per permission: how often the prompt is answered with Allow, and how often people change their mind in Settings. Neither needs a dependency here; give this type your SDK's track call:
+
+```swift
+/// Sends permission funnel events to any analytics SDK.
+struct PermissionAnalytics: Sendable {
+    let permissions: any PermissionManaging
+    let track: @Sendable (_ event: String, _ properties: [String: String]) -> Void
+
+    /// Requests `permission`, recording the answer when a system prompt was actually shown.
+    func request(_ permission: Permission, from screen: String) async throws(PermissionError) -> PermissionStatus {
+        let showsPrompt = await permissions.canRequest(permission)
+        let status = try await permissions.request(permission)
+        if showsPrompt {
+            track("permission_prompt_answered", [
+                "permission": permission.rawValue, "status": status.rawValue, "screen": screen
+            ])
+        }
+        return status
+    }
+
+    /// Records changes made outside the app, e.g. in Settings. Run it for the app's lifetime.
+    func trackSettingsChanges() async {
+        var known: [Permission: PermissionStatus] = [:]
+        for await change in permissions.changes() {
+            // The first status seen is a baseline, and leaving .notDetermined is a prompt
+            // answer that request(_:from:) already tracked.
+            if let previous = known[change.permission], previous != change.status, previous != .notDetermined {
+                track("permission_changed", [
+                    "permission": change.permission.rawValue,
+                    "from": previous.rawValue, "to": change.status.rawValue
+                ])
+            }
+            known[change.permission] = change.status
+        }
+    }
+}
+
+let analytics = PermissionAnalytics(permissions: permissions) { event, properties in
+    Amplitude.instance.track(eventType: event, eventProperties: properties)
+}
+```
+
+Upgrade prompts (when-in-use → Always) show up as `permission_changed` too. Statuses aren't personal data, but analytics still needs whatever consent your privacy policy and App Store privacy details promise.
+
 ## Use with AI coding agents
 
 The repository ships an [agent skill](plugin/skills/swiftpermissions/SKILL.md) that teaches AI coding agents to integrate SwiftPermissions correctly. It covers which product to add for each permission, registration, the Info.plist keys for each OS version, handling every status, upgrades and testing with stubs. It also includes a script that checks your registered permissions against your Info.plist and build settings:

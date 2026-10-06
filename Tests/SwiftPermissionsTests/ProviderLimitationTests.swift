@@ -20,9 +20,15 @@ import HealthKit
 /// The reason each provider works out for `.limited`. 4.0 puts it in the status.
 @Suite("Provider limitations")
 struct ProviderLimitationTests {
+    // `authorizedWhenInUse` is unavailable on macOS, which only has Always.
+    #if !os(macOS)
     @Test func locationAlwaysGrantedWhenInUseIsWhenInUse() {
         #expect(LocationPermissionProvider.mapLimitation(.authorizedWhenInUse, wantsAlways: true) == .whenInUse)
         #expect(LocationPermissionProvider.mapLimitation(.authorizedWhenInUse, wantsAlways: false) == nil)
+    }
+    #endif
+
+    @Test func otherLocationStatusesHaveNoLimitation() {
         #expect(LocationPermissionProvider.mapLimitation(.authorizedAlways, wantsAlways: true) == nil)
         #expect(LocationPermissionProvider.mapLimitation(.denied, wantsAlways: true) == nil)
     }

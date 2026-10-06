@@ -351,13 +351,15 @@ A third-party `PermissionProvider` that returns `.limited` today must pick a rea
 - **`Limitation` as an `OptionSet`**, so location can be `[.whenInUse, .reducedAccuracy]`. It models accuracy, but `case .limited(.selectedItems)` no longer pattern-matches cleanly and most combinations are impossible. Rejected; accuracy stays outside the status.
 - **Store the reason under a separate key** (`{"status":"limited","limitation":"selectedItems"}`). 3.x readers would decode it unchanged, but the history's defaults value stops being a single string and the outcome JSON gets deeper. The single-string format plus a tolerant 3.6 decoder gets the same rollback safety.
 
-## 9. Open questions
+## 9. Decisions
 
-1. **`whenInUse` or `whileInUse`?** This doc uses `whenInUse` to match `Permission.locationWhenInUse` and Core Location. The issue used `whileInUse` (iOS's "While Using the App").
-2. **Keep `.provisional` as its own case?** Recommended yes. Folding it into `.limited(.quietDelivery)` is the alternative.
-3. **Should `PermissionRow` offer Settings for a limited grant** once no prompt or picker is available (`.whenInUse`, `.writeOnly`, `.selectedItems` without `onSelectMore`)? `PermissionPrompt` does today; the row shows nothing.
-4. **Labels:** keep `title` as "Limited" and add `Limitation.title` ("Selected Items", "While Using", "Write Only", "Partial"), or have `title` name the reason directly?
-5. **3.6 shim:** does `static func limited(_ limitation: Limitation) -> PermissionStatus` next to `case limited` compile on Swift 6.1 through 6.4? If not, 3.6 ships only `isLimited` and stubs change in 4.0.
-6. **Deprecate `rawValue` in 3.6** by writing `RawRepresentable` by hand, or let it break in 4.0 with a MIGRATION.md note?
-7. **`description` in 4.0:** `"limited.selectedItems"` (same as storage, better for analytics breakdowns) or `"limited"` (same as 3.x dashboards)?
-8. **Health `.partial`:** HealthKit hides read authorization, so `.partial` only reflects share types. Is that worth a doc note, or should Health with only read types keep reporting `.authorized` as it does now?
+Decided by the maintainer on 2026-10-06.
+
+1. **`whenInUse`**, matching `Permission.locationWhenInUse` and Core Location.
+2. **`.provisional` stays its own case.** It's a different kind of grant, not a reduced one.
+3. **`PermissionRow` offers Open Settings for a limited grant** when no prompt or picker is available, as `PermissionPrompt` already does.
+4. **`title` stays "Limited"**, and `Limitation.title` names the reason ("Selected Items", "While Using", "Write Only", "Partial").
+5. **3.6 tries the `static func limited(_:)` shim.** If it doesn't compile on Swift 6.1 through 6.4, 3.6 ships only `isLimited` and stubs change in 4.0.
+6. **3.6 deprecates `rawValue`** with a hand-written `RawRepresentable`, so callers get a warning before 4.0.
+7. **`description` in 4.0 is `"limited.selectedItems"`**, the same as the stored form.
+8. **Health `.partial` gets a doc note** that HealthKit hides read authorization, so it reflects share types only. Behaviour is unchanged.

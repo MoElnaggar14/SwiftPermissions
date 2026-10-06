@@ -62,6 +62,18 @@ public struct PermissionFlowState: Sendable, Equatable {
     /// Whether every step has an outcome.
     public var isFinished: Bool { firstPendingStep == nil }
 
+    /// How the flow ended, or `nil` while a step is waiting for the user.
+    public var result: PermissionFlowResult? {
+        switch phase {
+        case .step:
+            return nil
+        case let .paused(step):
+            return PermissionFlowResult(reason: .paused(at: step.permission), statuses: statuses)
+        case .finished:
+            return PermissionFlowResult(reason: .completed, statuses: statuses)
+        }
+    }
+
     /// Steps that don't have an outcome yet, in order.
     public var pendingSteps: [PermissionFlowStep] {
         steps.filter { progress[$0.permission] == nil }

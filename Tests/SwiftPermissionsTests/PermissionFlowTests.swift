@@ -18,6 +18,7 @@ struct PermissionFlowStateTests {
         #expect(!flow.isFinished)
         #expect(flow.pendingSteps == steps)
         #expect(flow.statuses.isEmpty)
+        #expect(flow.result == nil)
     }
 
     @Test func noStepsIsFinishedAtOnce() {
@@ -25,6 +26,7 @@ struct PermissionFlowStateTests {
 
         #expect(flow.phase == .finished)
         #expect(flow.currentStep == nil)
+        #expect(flow.result == PermissionFlowResult(reason: .completed, statuses: [:]))
     }
 
     @Test func duplicatePermissionsKeepTheFirstStep() {
@@ -120,6 +122,8 @@ struct PermissionFlowStateTests {
         #expect(flow.phase == .paused(steps[0]))
         #expect(flow.currentStep == nil)
         #expect(flow.progress[.notifications] == nil)
+        #expect(flow.result == PermissionFlowResult(reason: .paused(at: .notifications), statuses: [:]))
+        #expect(flow.result?.isCompleted == false)
     }
 
     @Test func pausedFlowIgnoresTransitionsUntilResumed() {
@@ -156,6 +160,9 @@ struct PermissionFlowStateTests {
         #expect(
             flow.statuses == [.notifications: .authorized, .locationWhenInUse: .denied, .photoLibrary: .notDetermined]
         )
+        #expect(flow.result?.reason == .completed)
+        #expect(flow.result?.isCompleted == true)
+        #expect(flow.result?.statuses == flow.statuses)
     }
 
     @Test func resumesFromSavedProgress() {

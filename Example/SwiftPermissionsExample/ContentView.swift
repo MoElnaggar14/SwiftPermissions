@@ -331,7 +331,7 @@ private struct ChangeLog: View {
 private struct OnboardingScreen: View {
     @ObservedObject var store: PermissionStore
     @AppStorage("onboardingPermissions") private var progress = PermissionFlowProgress()
-    @State private var summary: [Permission: PermissionStatus]?
+    @State private var summary: PermissionFlowResult?
 
     private let steps: [PermissionFlowStep] = [
         .init(.notifications, title: "Stay in the loop", message: "Get a ping when your order ships."),
@@ -342,11 +342,11 @@ private struct OnboardingScreen: View {
     var body: some View {
         Group {
             if let summary {
-                let finished = PermissionFlowState(steps: steps, progress: progress).isFinished
+                let finished = summary.isCompleted
                 List {
                     Section(finished ? "Done" : "Paused") {
                         ForEach(steps) { step in
-                            LabeledContent(step.permission.displayName, value: summary[step.permission]?.title ?? "Not asked")
+                            LabeledContent(step.permission.displayName, value: summary.statuses[step.permission]?.title ?? "Not asked")
                         }
                     }
                     if !finished {
@@ -358,8 +358,8 @@ private struct OnboardingScreen: View {
                     }
                 }
             } else {
-                PermissionFlow(store: store, steps: steps, progress: $progress) { statuses in
-                    summary = statuses
+                PermissionFlow(store: store, steps: steps, progress: $progress) { result in
+                    summary = result
                 }
             }
         }

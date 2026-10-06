@@ -62,6 +62,7 @@ let status = try await permissions.request(.camera)
 - ``PermissionFlowStep``
 - ``PermissionFlowStepOutcome``
 - ``PermissionFlowProgress``
+- ``PermissionFlowResult``
 
 ### Results
 

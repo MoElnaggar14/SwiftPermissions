@@ -11,7 +11,7 @@ import SwiftUI
 ///     .init(.notifications, title: "Stay in the loop", message: "Get a ping when your order ships."),
 ///     .init(.locationWhenInUse, title: "Find stores near you", message: "See what's in stock nearby."),
 ///     .init(.photoLibrary, title: "Share your receipts", message: "Attach photos of receipts.", optional: true),
-/// ], progress: $progress) { statuses in
+/// ], progress: $progress) { result in
 ///     showingOnboarding = false
 /// }
 /// ```
@@ -30,7 +30,7 @@ public struct PermissionFlow: View {
     private let steps: [PermissionFlowStep]
     private let externalProgress: Binding<PermissionFlowProgress>?
     private let onSelectMore: ((Permission) -> Void)?
-    private let onFinish: ([Permission: PermissionStatus]) -> Void
+    private let onFinish: (PermissionFlowResult) -> Void
     @ObservedObject private var store: PermissionStore
     @State private var localProgress = PermissionFlowProgress()
     @State private var isPaused = false
@@ -50,15 +50,16 @@ public struct PermissionFlow: View {
     ///     When `nil`, progress lasts as long as the view.
     ///   - onSelectMore: Called when the user taps **Select More…**, offered while a
     ///     step's access is limited. Present the system's limited-access picker from it.
-    ///   - onFinish: Called when the flow ends, with the last known status of each step:
-    ///     every step has an outcome, or the user paused on a required step. To tell
-    ///     them apart, check `PermissionFlowState(steps:progress:).isFinished`.
+    ///   - onFinish: Called when the flow ends, with why it ended and the last known
+    ///     status of each step: ``PermissionFlowResult/Reason/completed`` once every step
+    ///     has an outcome, or ``PermissionFlowResult/Reason/paused(at:)`` when the user
+    ///     tapped **Not Now** on a required step.
     public init(
         store: PermissionStore,
         steps: [PermissionFlowStep],
         progress: Binding<PermissionFlowProgress>? = nil,
         onSelectMore: ((Permission) -> Void)? = nil,
-        onFinish: @escaping ([Permission: PermissionStatus]) -> Void
+        onFinish: @escaping (PermissionFlowResult) -> Void
     ) {
         self.store = store
         self.steps = steps
@@ -104,10 +105,11 @@ public struct PermissionFlow: View {
 
     /// Reads the current step's status and skips it when no prompt can appear.
     private func checkCurrentStep() async {
+        let state = self.state
         guard let step = state.currentStep else {
-            if !reportedEnd {
+            if !reportedEnd, let result = state.result {
                 reportedEnd = true
-                onFinish(state.statuses)
+                onFinish(result)
             }
             return
         }

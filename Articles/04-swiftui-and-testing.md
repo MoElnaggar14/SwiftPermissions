@@ -91,6 +91,19 @@ PermissionsList([.camera, .locationWhenInUse, .notifications],
                 store: permissions)
 ```
 
+For onboarding, **`PermissionFlow`** asks for several permissions in turn, each with a priming screen. It skips steps that are already decided, and **Not Now** pauses on a required step. Its state machine, `PermissionFlowState`, is a plain value in Core, tested with stubs like everything else, and its progress is a small `Codable` value the app persists:
+
+```swift
+@AppStorage("onboardingPermissions") private var progress = PermissionFlowProgress()
+
+PermissionFlow(store: permissions, steps: [
+    .init(.notifications, title: "Stay in the loop", message: "Get a ping when your order ships."),
+    .init(.photoLibrary, title: "Share your receipts", optional: true),
+], progress: $progress) { statuses in
+    showingOnboarding = false
+}
+```
+
 The built-in views open Settings with SwiftUI's `openURL(AppSettings.url(for:))`, so they compile inside app extensions too (Part 3).
 
 ## Coming back from Settings

@@ -22,7 +22,7 @@ case .restricted, .unavailable, .notDetermined, .provisional:
 }
 ```
 
-Try it: open [`Example/SwiftPermissionsExample.xcodeproj`](Example) and run it on a simulator or your iPhone.
+Try it: open [`Example/SwiftPermissionsExample.xcodeproj`](Example) and run it on a simulator or your iPhone. To learn how it's designed, read the [article series](Articles).
 
 ## Why
 

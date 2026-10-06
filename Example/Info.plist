@@ -23,6 +23,11 @@
 	<string>Show nearby places while you use this demo.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Demonstrate upgrading location access to Always.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>NearbyPlaces</key>
+		<string>Find the closest places to you, not just ones in your area.</string>
+	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Show how Bluetooth access looks in this demo.</string>
 	<key>NSUserTrackingUsageDescription</key>

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Location accuracy.** `LocationPermissionProvider.accuracy()` returns `.full` or `.reduced` once location is authorized, so apps can tell that the user turned off Precise; `PermissionStatus` is unchanged. `requestTemporaryFullAccuracy(purposeKey:)` asks for precise location for the session, after checking the purpose string in `NSLocationTemporaryUsageDescriptionDictionary`. The example app shows both. ([#6](https://github.com/MoElnaggar14/SwiftPermissions/issues/6))
+
 ## [3.1.0] — 2026-10-06
 
 A Not Now option for pre-permission prompts, notification settings that explain "allowed but silent", and an article series on the design. Additive; no API changes.

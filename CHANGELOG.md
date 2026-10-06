@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Bluetooth with AccessorySetupKit.** On iOS 18+, when Info.plist lists `Bluetooth` under `NSAccessorySetupKitSupports`, iOS never shows the Bluetooth prompt and `CBManager.authorization` stays `.notDetermined`, even after pairing. `.bluetooth` now reports `.unavailable` in such an app, and `request(.bluetooth)` returns at once instead of waiting for a prompt that never appears. A `.denied`, `.restricted` or `.allowedAlways` from Core Bluetooth is still reported as before. The README and the agent skill explain the behaviour. ([#10](https://github.com/MoElnaggar14/SwiftPermissions/issues/10))
+
 ## [3.2.0] — 2026-10-06
 
 Precise vs approximate location and the iOS 26 AlarmKit permission. Additive; no API changes.

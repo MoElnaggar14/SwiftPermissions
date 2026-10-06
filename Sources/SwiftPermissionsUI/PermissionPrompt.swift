@@ -8,18 +8,39 @@ import SwiftUI
 /// Show it before the system prompt as a "pre-permission" screen. The system prompt can
 /// only be shown once, so asking when the user already understands the value is what
 /// moves acceptance rates.
+///
+/// Pass `onDefer` to also offer **Not Now**, so users can decline without spending the
+/// system prompt. The package stores nothing: your app decides when to ask again.
+///
+/// ```swift
+/// @AppStorage("cameraDeferredAt") private var deferredAt: Double = 0
+///
+/// PermissionPrompt(.camera, message: "Scan receipts.", store: permissions) {
+///     deferredAt = Date().timeIntervalSince1970   // ask again in a week, say
+/// }
+/// ```
 public struct PermissionPrompt: View {
     private let permission: Permission
     private let message: String?
+    private let onDefer: (() -> Void)?
     @ObservedObject private var store: PermissionStore
     // openURL rather than AppSettings.open, so the view also compiles in app extensions.
     @Environment(\.openURL) private var openURL
 
-    /// - Parameter message: Why your app needs this permission. Shown while it can still be requested.
-    public init(_ permission: Permission, message: String? = nil, store: PermissionStore) {
+    /// - Parameters:
+    ///   - message: Why your app needs this permission. Shown while it can still be requested.
+    ///   - onDefer: Called when the user taps **Not Now**. When `nil`, there's no such button.
+    ///     The button only appears while a prompt can still be shown.
+    public init(
+        _ permission: Permission,
+        message: String? = nil,
+        store: PermissionStore,
+        onDefer: (() -> Void)? = nil
+    ) {
         self.permission = permission
         self.message = message
         self.store = store
+        self.onDefer = onDefer
     }
 
     private var status: PermissionStatus { store[permission] ?? .notDetermined }
@@ -59,18 +80,66 @@ public struct PermissionPrompt: View {
         }
     }
 
+    private var actions: PromptActions {
+        PromptActions(
+            status: status,
+            canRequest: store.canRequest(permission),
+            hasSettingsURL: AppSettings.url(for: permission) != nil,
+            canDefer: onDefer != nil
+        )
+    }
+
     @ViewBuilder private var action: some View {
-        if store.canRequest(permission) {
+        let decision = actions
+        switch decision.primary {
+        case .request:
             Button("Continue") {
                 Task { await store.request(permission) }
             }
             .buttonStyle(.borderedProminent)
             .disabled(store.isPending(permission))
-        } else if status.requiresSettings || status == .limited, let settings = AppSettings.url(for: permission) {
-            Button("Open Settings") {
-                openURL(settings)
+        case .openSettings:
+            if let settings = AppSettings.url(for: permission) {
+                Button("Open Settings") {
+                    openURL(settings)
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
+        case .nothing:
+            EmptyView()
         }
+        if decision.offersDefer, let onDefer {
+            Button("Not Now", action: onDefer)
+                .disabled(store.isPending(permission))
+        }
+    }
+}
+
+/// Which buttons a ``PermissionPrompt`` shows. Kept separate from the view so the
+/// decision can be unit tested.
+struct PromptActions: Equatable {
+    enum Primary: Equatable {
+        /// Show the system prompt (or the upgrade prompt).
+        case request
+        /// Only Settings can change the status.
+        case openSettings
+        /// Nothing the user can do: restricted, unavailable, or already granted.
+        case nothing
+    }
+
+    let primary: Primary
+    /// Whether to offer **Not Now** next to the primary action.
+    let offersDefer: Bool
+
+    init(status: PermissionStatus, canRequest: Bool, hasSettingsURL: Bool, canDefer: Bool) {
+        if canRequest {
+            primary = .request
+        } else if (status.requiresSettings || status == .limited) && hasSettingsURL {
+            primary = .openSettings
+        } else {
+            primary = .nothing
+        }
+        // Deferring only makes sense while the prompt hasn't been spent.
+        offersDefer = canDefer && primary == .request
     }
 }

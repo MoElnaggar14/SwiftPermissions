@@ -128,8 +128,8 @@ if status.isGranted { startCapture() } else if status.requiresSettings { showSet
 
 ### 6. SwiftUI components (optional)
 
-- `PermissionGate(.camera, message: "…", store: store) { Content() }` shows the content once granted. Until then it shows a prompt with the right action (Continue, Open Settings, or nothing). A `fallback: { status in … }` closure replaces the built-in prompt.
-- `PermissionPrompt(.x, message:store:)` is the prompt card on its own. `PermissionRow(.x, store:)` is one row, with an "Allow More" button when an upgrade is possible.
+- `PermissionGate(.camera, message: "…", store: store) { Content() }` shows the content once granted. Until then it shows a prompt with the right action (Continue, Open Settings, or nothing). A `fallback: { status in … }` closure replaces the built-in prompt. Pass `onDefer: { … }` to add a **Not Now** button that doesn't spend the system prompt; the app decides when to ask again (for example, a date in `@AppStorage`).
+- `PermissionPrompt(.x, message:store:onDefer:)` is the prompt card on its own. `PermissionRow(.x, store:)` is one row, with an "Allow More" button when an upgrade is possible.
 - `PermissionsList([...], footer:store:)` is a list for onboarding or a privacy settings screen. "Allow All" asks only for permissions that are still undetermined.
 - `.refreshesPermissions(store)` makes your own view refresh when the user returns from Settings.
 

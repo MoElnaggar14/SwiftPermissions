@@ -103,6 +103,18 @@ struct ScannerScreen: View {
 }
 ```
 
+To let people decline without spending the one-time system prompt, pass `onDefer`. The prompt then shows **Not Now** while the permission can still be requested. The package stores nothing; your app decides when to ask again:
+
+```swift
+@AppStorage("scannerDeferredAt") private var deferredAt: Double = 0
+
+PermissionGate(.camera, message: "Scan receipts with your camera.", store: permissions, onDefer: {
+    deferredAt = Date().timeIntervalSince1970   // e.g. ask again after a week
+}) {
+    ScannerView()
+}
+```
+
 You can provide your own fallback UI:
 
 ```swift

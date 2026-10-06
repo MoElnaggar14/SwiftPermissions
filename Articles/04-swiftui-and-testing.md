@@ -69,7 +69,7 @@ struct ScannerScreen: View {
 }
 ```
 
-The prompt picks its action from the status: **Continue** when a prompt can appear, **Open Settings** when `.denied` (or `.limited` with no upgrade left), and no button when `.restricted` or `.unavailable`, because neither the user nor Settings can help. Asking with a pre-permission screen first is what Apple's Human Interface Guidelines recommend: the user learns *why* before iOS asks *whether*.
+The prompt picks its action from the status: **Continue** when a prompt can appear, **Open Settings** when `.denied` (or `.limited` with no upgrade left), and no button when `.restricted` or `.unavailable`, because neither the user nor Settings can help. Asking with a pre-permission screen first is what Apple's Human Interface Guidelines recommend: the user learns *why* before iOS asks *whether*. Pass `onDefer:` and the prompt also offers **Not Now**, so a user who isn't ready can leave without spending the one-time system prompt; your app decides when to ask again.
 
 Bring your own fallback when the design calls for it:
 

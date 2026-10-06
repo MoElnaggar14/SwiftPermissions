@@ -49,7 +49,8 @@ public struct PermissionFlow: View {
     ///     `@AppStorage`, to continue from where the flow stopped on the next launch.
     ///     When `nil`, progress lasts as long as the view.
     ///   - onSelectMore: Called when the user taps **Select More…**, offered while a
-    ///     step's access is limited. Present the system's limited-access picker from it.
+    ///     step's access is limited to selected photos or contacts. Present the system's
+    ///     limited-access picker from it.
     ///   - onFinish: Called when the flow ends, with why it ended and the last known
     ///     status of each step: ``PermissionFlowResult/Reason/completed`` once every step
     ///     has an outcome, or ``PermissionFlowResult/Reason/paused(at:)`` when the user
@@ -169,7 +170,8 @@ public struct PermissionFlow: View {
             canRequest: store.canRequest(permission),
             hasSettingsURL: AppSettings.url(for: permission) != nil,
             canDefer: true,
-            canSelectMore: onSelectMore != nil
+            canSelectMore: onSelectMore != nil,
+            limitation: status.limitation(for: permission)
         )
         switch decision.primary {
         case .request:

@@ -69,7 +69,7 @@ struct ScannerScreen: View {
 }
 ```
 
-The prompt picks its action from the status: **Continue** when a prompt can appear, **Open Settings** when `.denied` (or `.limited` with no upgrade left and no `onSelectMore:` picker), and no button when `.restricted` or `.unavailable`, because neither the user nor Settings can help. Asking with a pre-permission screen first is what Apple's Human Interface Guidelines recommend: the user learns *why* before iOS asks *whether*. Pass `onDefer:` and the prompt also offers **Not Now**, so a user who isn't ready can leave without spending the one-time system prompt; your app decides when to ask again.
+The prompt picks its action from the status: **Continue** when a prompt can appear, **Open Settings** when `.denied` (or `.limited` with no upgrade left and no `onSelectMore:` picker, except partial HealthKit access, which Settings can't widen), and no button when `.restricted` or `.unavailable`, because neither the user nor Settings can help. Asking with a pre-permission screen first is what Apple's Human Interface Guidelines recommend: the user learns *why* before iOS asks *whether*. Pass `onDefer:` and the prompt also offers **Not Now**, so a user who isn't ready can leave without spending the one-time system prompt; your app decides when to ask again.
 
 Bring your own fallback when the design calls for it:
 
@@ -83,7 +83,7 @@ PermissionGate(.microphone, store: permissions) {
 }
 ```
 
-**`PermissionRow`** and **`PermissionsList`** build a privacy screen. A row shows the icon, name and status, plus the next action. Its button says **Allow** for `.notDetermined` and **Allow More** when an upgrade is possible, using `store.canRequest(_:)` rather than the status. That's Part 2's `canRequest(from:)` reaching the UI: `.limited` location gets an Allow More button, `.limited` photos doesn't. For photos and contacts, pass `onSelectMore:` and the row offers **Select More…** instead, which presents the system picker from the Photos or Contacts product.
+**`PermissionRow`** and **`PermissionsList`** build a privacy screen. A row shows the icon, name and status, plus the next action. Its button says **Allow** for `.notDetermined` and **Allow More** when an upgrade is possible, using `store.canRequest(_:)` rather than the status. That's Part 2's `canRequest(from:)` reaching the UI: `.limited` location gets an Allow More button, `.limited` photos doesn't. For photos and contacts, pass `onSelectMore:` and the row offers **Select More…** instead, which presents the system picker from the Photos or Contacts product. Only selected items get it: when-in-use location whose upgrade prompt is spent, or write-only calendar, gets **Settings**.
 
 ```swift
 PermissionsList([.camera, .locationWhenInUse, .notifications],
@@ -143,9 +143,9 @@ import SwiftPermissionsTesting
 | Want to test | Stub it like this |
 | --- | --- |
 | The user allows / declines | `onRequest: .grant` / `.deny` |
-| Partial access | `onRequest: .status(.limited)` |
+| Partial access | `onRequest: .status(.limited(.selectedItems))` |
 | Framework failure | `onRequest: .fail(MyError())` |
-| An upgrade prompt | `status: .limited, upgradableFrom: [.limited]` |
+| An upgrade prompt | `status: .limited(.whenInUse), upgradableFrom: [.limited(.whenInUse)]` |
 | Concurrent callers | `requestDelay: 0.2` |
 | User changes it in Settings | `await stub.setStatus(.denied)`, then `refresh()` |
 | Prompt count, status reads | `requestCount`, `statusReadCount` |
@@ -157,7 +157,11 @@ The store is just as testable, because it takes `any PermissionManaging`:
 ```swift
 @MainActor
 @Test func rowOffersUpgradeFromWhenInUse() async {
-    let location = StubPermissionProvider(.locationAlways, status: .limited, upgradableFrom: [.limited])
+    let location = StubPermissionProvider(
+        .locationAlways,
+        status: .limited(.whenInUse),
+        upgradableFrom: [.limited(.whenInUse)]
+    )
     let store = PermissionStore(manager: PermissionManager.stubbed(location))
 
     await store.load([.locationAlways])

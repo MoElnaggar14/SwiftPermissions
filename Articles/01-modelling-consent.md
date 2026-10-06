@@ -47,7 +47,7 @@ Identity is the raw value only. The display name is presentation, so two `Permis
 ### `PermissionStatus`: seven cases, nothing lost
 
 ```swift
-public enum PermissionStatus: String, Sendable, Codable, CaseIterable {
+public enum PermissionStatus: Sendable, Hashable, Codable, CaseIterable {
     case notDetermined   // never asked: a request shows the prompt
     case denied          // the user said no: only Settings can change it
     case restricted      // a policy said no: the user can't change it
@@ -76,6 +76,13 @@ status.requiresSettings  // .denied: send them to Settings
 ```
 
 The case list is frozen for every 3.x release, so you can switch exhaustively without a `default`. A new permission maps onto these seven cases; a new case only arrives in a major version.
+
+`.limited` is the one case that hides a choice. Selected photos, when-in-use location for an Always request, write-only calendar and some HealthKit types are four different grants, and the right button differs for each. `Limitation` names them (`.selectedItems`, `.whenInUse`, `.writeOnly`, `.partial`), and the UI picks its action from it, so only selected items get **Select More…**. In 4.0 the case carries it, `limited(Limitation)`; until then, `status.isLimited` and `.limited(.selectedItems)` are spelled the way 4.0 will need them:
+
+```swift
+if status.isLimited { … }                 // compiles on 3.6 and 4.0; status == .limited won't
+let stub: PermissionStatus = .limited(.selectedItems)   // .limited in 3.x
+```
 
 ### `PermissionError`: the developer's problems, typed
 

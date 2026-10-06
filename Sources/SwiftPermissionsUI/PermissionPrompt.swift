@@ -21,8 +21,8 @@ import SwiftUI
 /// ```
 ///
 /// Pass `onSelectMore` for permissions with a limited-access picker (photos, contacts):
-/// while access is ``PermissionStatus/limited`` the prompt offers **Select More…** instead
-/// of **Open Settings**. The framework products provide the pickers.
+/// while only selected items are shared (``Limitation/selectedItems``) the prompt offers
+/// **Select More…** instead of **Open Settings**. The framework products provide the pickers.
 public struct PermissionPrompt: View {
     private let permission: Permission
     private let message: String?
@@ -37,8 +37,9 @@ public struct PermissionPrompt: View {
     ///   - onDefer: Called when the user taps **Not Now**. When `nil`, there's no such button.
     ///     The button only appears while a prompt can still be shown.
     ///   - onSelectMore: Called when the user taps **Select More…**, shown instead of
-    ///     **Open Settings** while access is limited. Present the system's limited-access
-    ///     picker from it. When `nil`, limited access offers **Open Settings**.
+    ///     **Open Settings** while only selected photos or contacts are shared. Present the
+    ///     system's limited-access picker from it. When `nil`, limited access offers
+    ///     **Open Settings**.
     public init(
         _ permission: Permission,
         message: String? = nil,
@@ -96,7 +97,8 @@ public struct PermissionPrompt: View {
             canRequest: store.canRequest(permission),
             hasSettingsURL: AppSettings.url(for: permission) != nil,
             canDefer: onDefer != nil,
-            canSelectMore: onSelectMore != nil
+            canSelectMore: onSelectMore != nil,
+            limitation: status.limitation(for: permission)
         )
     }
 
@@ -137,9 +139,9 @@ struct PromptActions: Equatable {
     enum Primary: Equatable {
         /// Show the system prompt (or the upgrade prompt).
         case request
-        /// Access is limited: show the app's limited-access picker.
+        /// Only selected items are shared: show the app's limited-access picker.
         case selectMore
-        /// Only Settings can change the status.
+        /// Only Settings can change the status, or widen a limited grant.
         case openSettings
         /// Nothing the user can do: restricted, unavailable, or already granted.
         case nothing
@@ -149,18 +151,25 @@ struct PromptActions: Equatable {
     /// Whether to offer **Not Now** next to the primary action.
     let offersDefer: Bool
 
+    /// - Parameter limitation: Why access is limited, when `status` is `.limited`.
+    ///   `nil` reads as ``Limitation/partial``.
     init(
         status: PermissionStatus,
         canRequest: Bool,
         hasSettingsURL: Bool,
         canDefer: Bool,
-        canSelectMore: Bool = false
+        canSelectMore: Bool = false,
+        limitation: Limitation? = nil
     ) {
         if canRequest {
             primary = .request
-        } else if status == .limited && canSelectMore {
-            primary = .selectMore
-        } else if (status.requiresSettings || status == .limited) && hasSettingsURL {
+        } else if status.isLimited {
+            switch LimitedAction(limitation ?? .partial, canSelectMore: canSelectMore, hasSettingsURL: hasSettingsURL) {
+            case .selectMore: primary = .selectMore
+            case .openSettings: primary = .openSettings
+            case .nothing: primary = .nothing
+            }
+        } else if status.requiresSettings && hasSettingsURL {
             primary = .openSettings
         } else {
             primary = .nothing

@@ -121,6 +121,7 @@ if status.isGranted { startCapture() } else if status.requiresSettings { showSet
 
 - The manager's `request(_:)` throws `PermissionError` (typed throws). `.cancelled` means the calling task was cancelled; the prompt stays up for other callers.
 - `isGranted` is true for `.authorized`, `.limited` and `.provisional`.
+- **Limited, and why.** `.limited` covers four grants, named by `Limitation`: `.selectedItems` (photos, contacts), `.whenInUse` (`.locationAlways` granted when in use), `.writeOnly` (`.calendar`), `.partial` (some HealthKit share types, custom providers). In 4.0 the case becomes `limited(Limitation)`. Write code that compiles on both: `switch` with `case .limited:`, test with `status.isLimited` (never `status == .limited`), build values with `.limited(.selectedItems)`, and log `status.description` (`rawValue` is deprecated). Don't use `PermissionStatus.allCases` in app code.
 - **Upgrades.** `request(_:)` also upgrades a partial grant: when-in-use → Always, write-only → full calendar, provisional → full notifications. A status alone can't tell you whether another prompt can appear (`.limited` location can be upgraded, `.limited` photos can't), so call `await permissions.canRequest(.x)` or `store.canRequest(.x)` before you show an "Allow" button.
 - Requests made while the app is in the background wait until it is active. Location reports `.unavailable` when Location Services are off system-wide.
 - Biometrics never prompts from `request(_:)`. Call `BiometricsPermissionProvider().authenticate(reason:)` when the user authenticates.
@@ -130,7 +131,7 @@ if status.isGranted { startCapture() } else if status.requiresSettings { showSet
 
 - `PermissionGate(.camera, message: "…", store: store) { Content() }` shows the content once granted. Until then it shows a prompt with the right action (Continue, Open Settings, or nothing). A `fallback: { status in … }` closure replaces the built-in prompt. Pass `onDefer: { … }` to add a **Not Now** button that doesn't spend the system prompt; the app decides when to ask again (for example, a date in `@AppStorage`).
 - `PermissionPrompt(.x, message:store:onDefer:onSelectMore:)` is the prompt card on its own. `PermissionRow(.x, store:onSelectMore:)` is one row, with an "Allow More" button when an upgrade is possible.
-- **Limited photos and contacts.** Pass `onSelectMore: { … }` to `PermissionRow` or `PermissionPrompt` to show **Select More…** while the status is `.limited`. Present the picker from the framework product: `await PhotoLibraryPermissionProvider.readWrite.presentLimitedLibraryPicker(from: viewController)` (iOS, Mac Catalyst), or `.limitedContactsPicker(isPresented: $flag)` from `SwiftPermissionsContacts` (iOS 18, not Mac Catalyst; wrap in `if #available(iOS 18, *)`). Never import Photos or Contacts in UI-only modules.
+- **Limited photos and contacts.** Pass `onSelectMore: { … }` to `PermissionRow` or `PermissionPrompt` to show **Select More…** while only selected items are shared (other limited grants offer **Settings**). Present the picker from the framework product: `await PhotoLibraryPermissionProvider.readWrite.presentLimitedLibraryPicker(from: viewController)` (iOS, Mac Catalyst), or `.limitedContactsPicker(isPresented: $flag)` from `SwiftPermissionsContacts` (iOS 18, not Mac Catalyst; wrap in `if #available(iOS 18, *)`). Never import Photos or Contacts in UI-only modules.
 - **Onboarding with several permissions.** Use `PermissionFlow(store:steps:progress:onSelectMore:onFinish:)` instead of chaining prompts by hand. Steps are `PermissionFlowStep(.x, title:message:optional:)`. Decided, restricted and unavailable steps are skipped; **Not Now** defers an optional step and pauses on a required one. `onFinish` receives a `PermissionFlowResult`: `reason` is `.completed` or `.paused(at:)`, and `statuses` has each step's last status. Bind `progress:` to `@AppStorage("…") var progress = PermissionFlowProgress()` so the flow resumes next launch; `progress.forget(.x)` asks again for a deferred step. Outside SwiftUI, or in tests, drive `PermissionFlowState` from Core with `await flow.advance(using: manager)` and `await flow.requestCurrent(using: manager)`.
 - `PermissionsList([...], footer:store:)` is a list for onboarding or a privacy settings screen. "Allow All" asks only for permissions that are still undetermined.
 - `.refreshesPermissions(store)` makes your own view refresh when the user returns from Settings.
@@ -153,7 +154,7 @@ import SwiftPermissionsTesting
 ```
 
 - `onRequest:` takes `.grant`, `.deny`, `.status(...)` or `.fail(error)`.
-- `upgradableFrom: [.limited]` simulates an upgrade prompt, and `requestDelay:` simulates a slow prompt for concurrency tests.
+- `upgradableFrom: [.limited(.whenInUse)]` simulates an upgrade prompt, and `requestDelay:` simulates a slow prompt for concurrency tests.
 - For a SwiftUI app built around the store, inject a stubbed manager: `PermissionStore(manager: PermissionManager.stubbed(camera))`. For previews, use `PermissionStore(manager: PermissionManager.stubbed([.camera: .denied]))`.
 - `import SwiftPermissionsTesting` also brings in `PermissionManager` and `Permission`.
 

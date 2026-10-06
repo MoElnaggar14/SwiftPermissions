@@ -37,9 +37,14 @@ public struct PhotoLibraryPermissionProvider: PermissionProvider {
         case .denied: .denied
         case .restricted: .restricted
         case .authorized: .authorized
-        case .limited: .limited
+        case .limited: .limited(.selectedItems)
         @unknown default: .denied
         }
+    }
+
+    /// Why ``map(_:)`` reports `.limited`, or `nil` when it doesn't. 4.0 puts it in the status.
+    static func mapLimitation(_ status: PHAuthorizationStatus) -> Limitation? {
+        map(status).isLimited ? .selectedItems : nil
     }
 }
 

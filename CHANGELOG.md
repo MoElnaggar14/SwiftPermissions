@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Why access is limited.** A `Limitation` enum in Core (`.selectedItems`, `.whenInUse`, `.writeOnly`, `.partial`) names the four grants that `.limited` covers, with a `title` in `SwiftPermissionsUI` ("Selected Items", "While Using", "Write Only", "Partial"). `PermissionStatus.title` stays "Limited". This prepares 4.0, where the case becomes `limited(Limitation)`. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+- **Ready for 4.0.** `PermissionStatus.isLimited` replaces `status == .limited`, and `PermissionStatus.limited(_:)` builds `.limited` from a reason (`StubPermissionProvider(.photoLibrary, status: .limited(.selectedItems))`), so code written against 3.6 compiles unchanged on 4.0. In 3.x the reason is dropped. The built-in providers work out their reason internally. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+- **Rollback-safe storage.** `PermissionStatus` decoding, `PermissionFlowProgress` and `UserDefaultsRequestHistory` read the 4.0 form of a limited status (`"limited.selectedItems"`, …) as `.limited`, so an app rolled back from 4.0 keeps its saved data. What 3.x writes is unchanged. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+
+### Changed
+- **One rule for limited grants in the UI.** `PermissionRow`, `PermissionPrompt` and `PermissionFlow` pick the action from the reason: **Select More…** for selected photos and contacts (with `onSelectMore`), **Settings** for selected items without a picker, when-in-use location and write-only calendar, and nothing for `.partial` (HealthKit and custom providers), which has no Settings pane to widen it. `PermissionRow` now offers **Settings** for a limited grant when no prompt or picker is available, as `PermissionPrompt` already did; `PermissionPrompt` no longer offers **Open Settings** for limited HealthKit access. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+
+### Deprecated
+- `PermissionStatus.rawValue` and `PermissionStatus.init(rawValue:)`. `PermissionStatus` loses its raw values in 4.0, because a case with a payload can't have one. Use `description` for logging and `Codable` for storage; both produce the same strings as before. `RawRepresentable` is now written by hand, and `CaseIterable`, `Codable` and the stored values are unchanged. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+
+### Fixed
+- **Select More… only for selected items.** A `PermissionRow` or `PermissionPrompt` with `onSelectMore` offered **Select More…** for any limited status, including when-in-use location after the Always upgrade prompt was spent and write-only calendar. It now offers **Settings** there, and **Select More…** only for selected photos and contacts. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+
 ## [3.5.0] — 2026-10-06
 
 `PermissionFlow`: several permissions in sequence, with a priming screen per step and progress that survives relaunches. Additive; no API changes.

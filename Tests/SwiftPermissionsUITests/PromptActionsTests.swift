@@ -19,7 +19,9 @@ final class PromptActionsTests: XCTestCase {
 
     func testUpgradeCanBeDeferredToo() {
         // When-in-use location asking for Always: still requestable, so "Not Now" makes sense.
-        let actions = PromptActions(status: .limited, canRequest: true, hasSettingsURL: true, canDefer: true)
+        let actions = PromptActions(
+            status: .limited(.whenInUse), canRequest: true, hasSettingsURL: true, canDefer: true, limitation: .whenInUse
+        )
 
         XCTAssertEqual(actions.primary, .request)
         XCTAssertTrue(actions.offersDefer)
@@ -34,7 +36,13 @@ final class PromptActionsTests: XCTestCase {
 
     func testLimitedWithoutUpgradeOffersSettings() {
         // Limited photos can't be upgraded with a prompt.
-        let actions = PromptActions(status: .limited, canRequest: false, hasSettingsURL: true, canDefer: true)
+        let actions = PromptActions(
+            status: .limited(.selectedItems),
+            canRequest: false,
+            hasSettingsURL: true,
+            canDefer: true,
+            limitation: .selectedItems
+        )
 
         XCTAssertEqual(actions.primary, .openSettings)
         XCTAssertFalse(actions.offersDefer)
@@ -42,7 +50,12 @@ final class PromptActionsTests: XCTestCase {
 
     func testLimitedWithPickerOffersSelectMoreInsteadOfSettings() {
         let actions = PromptActions(
-            status: .limited, canRequest: false, hasSettingsURL: true, canDefer: true, canSelectMore: true
+            status: .limited(.selectedItems),
+            canRequest: false,
+            hasSettingsURL: true,
+            canDefer: true,
+            canSelectMore: true,
+            limitation: .selectedItems
         )
 
         XCTAssertEqual(actions.primary, .selectMore)
@@ -51,10 +64,45 @@ final class PromptActionsTests: XCTestCase {
 
     func testUpgradeWinsOverSelectMore() {
         let actions = PromptActions(
-            status: .limited, canRequest: true, hasSettingsURL: true, canDefer: false, canSelectMore: true
+            status: .limited(.selectedItems),
+            canRequest: true,
+            hasSettingsURL: true,
+            canDefer: false,
+            canSelectMore: true,
+            limitation: .selectedItems
         )
 
         XCTAssertEqual(actions.primary, .request)
+    }
+
+    func testOnlySelectedItemsOfferSelectMore() {
+        // When-in-use location after the Always prompt was spent used to offer Select More….
+        for limitation in [Limitation.whenInUse, .writeOnly] {
+            let actions = PromptActions(
+                status: .limited(limitation),
+                canRequest: false,
+                hasSettingsURL: true,
+                canDefer: true,
+                canSelectMore: true,
+                limitation: limitation
+            )
+
+            XCTAssertEqual(actions.primary, .openSettings, "\(limitation)")
+        }
+    }
+
+    func testPartialOffersNothing() {
+        // Health: no Settings pane for the app, and no upgrade prompt.
+        let actions = PromptActions(
+            status: .limited(.partial),
+            canRequest: false,
+            hasSettingsURL: true,
+            canDefer: true,
+            canSelectMore: true,
+            limitation: .partial
+        )
+
+        XCTAssertEqual(actions.primary, .nothing)
     }
 
     func testSelectMoreOnlyWhenLimited() {

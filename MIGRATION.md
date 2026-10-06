@@ -1,3 +1,16 @@
+# Preparing for 4.0
+
+In 4.0, `PermissionStatus.limited` carries the reason access is limited: `case limited(Limitation)`. 3.6 adds the replacements first, so you can move before upgrading. Nothing breaks in 3.6; `rawValue` only gets a deprecation warning.
+
+| Breaks in 4.0 | 3.6 replacement |
+| --- | --- |
+| `status == .limited` | `status.isLimited` |
+| `.limited` built as a value, e.g. `StubPermissionProvider(.photoLibrary, status: .limited)` | `.limited(.selectedItems)` (in 3.x it builds `.limited`) |
+| `status.rawValue`, `PermissionStatus(rawValue:)` | `status.description` for logging, `Codable` for storage |
+| `PermissionStatus.allCases` | none; list the statuses you need |
+
+`case .limited:` in a `switch` compiles unchanged in 4.0. A custom `PermissionProvider` that returns `.limited` should return `.limited(.partial)` (or a more specific reason), and compare with `status.isLimited` in `canRequest(from:)`.
+
 # Migrating from 2.x to 3.0
 
 3.0 is a redesign around a domain model and per-permission providers. Most call sites change mechanically.

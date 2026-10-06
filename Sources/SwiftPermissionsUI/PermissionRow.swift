@@ -4,8 +4,8 @@ import SwiftUI
 /// A list row with the permission's icon, name, status and the next action.
 ///
 /// Pass `onSelectMore` for permissions with a limited-access picker (photos, contacts).
-/// While the status is ``PermissionStatus/limited`` the row then offers **Select More…**
-/// instead of nothing. The framework products provide the pickers:
+/// While only selected items are shared (``Limitation/selectedItems``) the row then offers
+/// **Select More…** instead of **Settings**. The framework products provide the pickers:
 ///
 /// ```swift
 /// PermissionRow(.photoLibrary, store: permissions) {
@@ -20,8 +20,9 @@ public struct PermissionRow: View {
     @Environment(\.openURL) private var openURL
 
     /// - Parameter onSelectMore: Called when the user taps **Select More…**, shown while
-    ///   access is limited and no upgrade prompt is available. Present the system's
-    ///   limited-access picker from it. When `nil`, there's no such button.
+    ///   only selected photos or contacts are shared and no upgrade prompt is available.
+    ///   Present the system's limited-access picker from it. When `nil`, the row offers
+    ///   **Settings** instead.
     public init(_ permission: Permission, store: PermissionStore, onSelectMore: (() -> Void)? = nil) {
         self.permission = permission
         self.store = store
@@ -57,7 +58,8 @@ public struct PermissionRow: View {
             isPending: store.isPending(permission),
             canRequest: store.canRequest(permission),
             hasSettingsURL: AppSettings.url(for: permission) != nil,
-            canSelectMore: onSelectMore != nil
+            canSelectMore: onSelectMore != nil,
+            limitation: status?.limitation(for: permission)
         ) {
         case .progress:
             ProgressView()
@@ -91,14 +93,23 @@ enum RowAction: Equatable {
     case progress
     /// Show the system prompt. `upgrade` is `true` when something is already granted.
     case request(upgrade: Bool)
-    /// Access is limited: show the app's limited-access picker.
+    /// Only selected items are shared: show the app's limited-access picker.
     case selectMore
-    /// Only Settings can change the status.
+    /// Only Settings can change the status, or widen a limited grant.
     case openSettings
     /// Nothing to offer: not loaded yet, granted, restricted or unavailable.
     case nothing
 
-    init(status: PermissionStatus?, isPending: Bool, canRequest: Bool, hasSettingsURL: Bool, canSelectMore: Bool) {
+    /// - Parameter limitation: Why access is limited, when `status` is `.limited`.
+    ///   `nil` reads as ``Limitation/partial``.
+    init(
+        status: PermissionStatus?,
+        isPending: Bool,
+        canRequest: Bool,
+        hasSettingsURL: Bool,
+        canSelectMore: Bool,
+        limitation: Limitation? = nil
+    ) {
         guard !isPending else {
             self = .progress
             return
@@ -109,8 +120,12 @@ enum RowAction: Equatable {
         }
         if canRequest {
             self = .request(upgrade: status != .notDetermined)
-        } else if status == .limited && canSelectMore {
-            self = .selectMore
+        } else if status.isLimited {
+            switch LimitedAction(limitation ?? .partial, canSelectMore: canSelectMore, hasSettingsURL: hasSettingsURL) {
+            case .selectMore: self = .selectMore
+            case .openSettings: self = .openSettings
+            case .nothing: self = .nothing
+            }
         } else if status.requiresSettings && hasSettingsURL {
             self = .openSettings
         } else {

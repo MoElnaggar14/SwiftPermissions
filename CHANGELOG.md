@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **macOS permissions.** `SwiftPermissionsScreenRecording`, `SwiftPermissionsAccessibility` and `SwiftPermissionsInputMonitoring` products with `.screenRecording`, `.accessibility` and `.inputMonitoring` registrations, backed by `CGPreflightScreenCaptureAccess` / `CGRequestScreenCaptureAccess`, `AXIsProcessTrustedWithOptions` and `IOHIDCheckAccess` / `IOHIDRequestAccess`. None needs a usage description. Screen Recording and Accessibility read `.notDetermined` until the provider has asked in the current launch, then `.denied`, because macOS doesn't say whether the user declined. `AppSettings` opens their Privacy & Security panes. The products are empty on other platforms, Mac Catalyst included. ([#11](https://github.com/MoElnaggar14/SwiftPermissions/issues/11))
+
 ### Fixed
 - **Bluetooth with AccessorySetupKit.** On iOS 18+, when Info.plist lists `Bluetooth` under `NSAccessorySetupKitSupports`, iOS never shows the Bluetooth prompt and `CBManager.authorization` stays `.notDetermined`, even after pairing. `.bluetooth` now reports `.unavailable` in such an app, and `request(.bluetooth)` returns at once instead of waiting for a prompt that never appears. A `.denied`, `.restricted` or `.allowedAlways` from Core Bluetooth is still reported as before. The README and the agent skill explain the behaviour. ([#10](https://github.com/MoElnaggar14/SwiftPermissions/issues/10))
 

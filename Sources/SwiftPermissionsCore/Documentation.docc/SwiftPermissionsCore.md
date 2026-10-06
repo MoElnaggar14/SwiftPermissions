@@ -50,6 +50,12 @@ let status = try await permissions.request(.camera)
 - ``UsageDescriptionSource``
 - ``InfoPlist``
 
+### Remembering requests
+
+- ``PermissionRequestHistory``
+- ``InMemoryRequestHistory``
+- ``UserDefaultsRequestHistory``
+
 ### Results
 
 - ``PermissionBatchResult``

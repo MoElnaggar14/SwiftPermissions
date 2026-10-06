@@ -35,14 +35,16 @@ private func makeProvider(
     probe: any LocalNetworkProbing,
     platform: LocalNetworkPlatform = .prompts,
     serviceType: String = LocalNetworkPermissionProvider.defaultServiceType,
-    infoPlist: InfoPlist = fullInfoPlist
+    infoPlist: InfoPlist = fullInfoPlist,
+    history: any PermissionRequestHistory = InMemoryRequestHistory()
 ) -> LocalNetworkPermissionProvider {
     LocalNetworkPermissionProvider(
         serviceType: serviceType,
         timeout: 1,
         usageDescriptions: infoPlist,
         probe: probe,
-        platform: platform
+        platform: platform,
+        history: history
     )
 }
 
@@ -154,6 +156,57 @@ struct LocalNetworkPermissionTests {
         #expect(await manager.status(of: .localNetwork) == .notDetermined)
         #expect(try await manager.request(.localNetwork) == .authorized)
         #expect(await manager.status(of: .localNetwork) == .authorized)
+    }
+
+    // MARK: History
+
+    @Test func theDefaultHistoryForgetsOnRelaunch() async throws {
+        #expect(try await makeProvider(probe: FakeProbe(.denied)).request() == .denied)
+        // A relaunch builds a new provider with a new in-memory history.
+        #expect(await makeProvider(probe: FakeProbe()).status() == .notDetermined)
+    }
+
+    @Test func requestsAreRecordedInTheHistory() async throws {
+        let history = InMemoryRequestHistory()
+        #expect(try await makeProvider(probe: FakeProbe(.authorized), history: history).request() == .authorized)
+        #expect(history.hasRequested(.localNetwork))
+        #expect(history.lastResult(.localNetwork) == .authorized)
+    }
+
+    @Test func timeoutsAndFailuresAreNotRecorded() async throws {
+        let history = InMemoryRequestHistory()
+        let provider = makeProvider(probe: FakeProbe(.timedOut, .failed("boom")), history: history)
+        #expect(try await provider.request() == .notDetermined)
+        _ = try? await provider.request()
+        #expect(history.lastResult(.localNetwork) == nil)
+    }
+
+    @Test func aPersistentHistoryKeepsTheLastResultAcrossRelaunches() async throws {
+        let scratch = try ScratchDefaults()
+        defer { scratch.remove() }
+
+        let before = makeProvider(
+            probe: FakeProbe(.denied),
+            history: UserDefaultsRequestHistory(defaults: scratch.defaults)
+        )
+        #expect(try await before.request() == .denied)
+
+        // A relaunch: a new provider and a new history over the same defaults.
+        let probe = FakeProbe()
+        let after = makeProvider(probe: probe, history: UserDefaultsRequestHistory(defaults: scratch.defaults))
+        let status = await after.status()
+        #expect(status == .denied)
+        #expect(!after.canRequest(from: status))
+        #expect(await probe.probedServiceTypes.isEmpty)
+    }
+
+    @Test func aNewRequestReplacesThePersistedResult() async throws {
+        let history = InMemoryRequestHistory()
+        history.recordResult(.denied, for: .localNetwork)
+        let provider = makeProvider(probe: FakeProbe(.authorized), history: history)
+        #expect(await provider.status() == .denied)
+        #expect(try await provider.request() == .authorized)
+        #expect(await provider.status() == .authorized)
     }
 
     @Test func dnsServiceErrorCodes() {

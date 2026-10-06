@@ -41,7 +41,7 @@ Every framework has its own authorization enum, its own request API (async, call
 ## Installation
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.3.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.4.0")
 ```
 
 Add `SwiftPermissions` (or just `SwiftPermissionsCore` without SwiftUI), plus one product per framework you request:
@@ -94,9 +94,9 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 
 `.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
 
-`.screenRecording`, `.accessibility` and `.inputMonitoring` are macOS only (not Mac Catalyst); elsewhere their products are empty. They have no usage description: a request shows a system alert that sends the user to System Settings, and `AppSettings.open(for:)` opens the matching Privacy & Security pane. macOS only says whether Screen Recording and Accessibility are granted, so they read `.notDetermined` until the provider has asked in the current launch, and `.denied` after that. Input Monitoring reports all three states.
+`.screenRecording`, `.accessibility` and `.inputMonitoring` are macOS only (not Mac Catalyst); elsewhere their products are empty. They have no usage description: a request shows a system alert that sends the user to System Settings, and `AppSettings.open(for:)` opens the matching Privacy & Security pane. macOS only says whether Screen Recording and Accessibility are granted, so they read `.notDetermined` until the provider has asked, and `.denied` after that. By default that's remembered for the current launch only; see [Remembering requests across launches](#remembering-requests-across-launches). Input Monitoring reports all three states.
 
-`.localNetwork` has no system API to read or request it. `request` runs a short Bonjour probe (advertise and browse `_swiftperms._tcp`), which shows the prompt the first time: finding itself means `.authorized`, a policy-denied error after the prompt closed means `.denied`, and no answer within the timeout leaves `.notDetermined`. `status` is `.notDetermined` until a request has run, then the last result; after a relaunch, request again (no prompt if the user already answered). To probe a service type your app already declares, register `.localNetwork(serviceType: "_myapp._tcp")`. On tvOS and macOS before 15 nothing gates the local network, so it reads `.authorized`.
+`.localNetwork` has no system API to read or request it. `request` runs a short Bonjour probe (advertise and browse `_swiftperms._tcp`), which shows the prompt the first time: finding itself means `.authorized`, a policy-denied error after the prompt closed means `.denied`, and no answer within the timeout leaves `.notDetermined`. `status` is `.notDetermined` until a request has run, then the last result; after a relaunch, request again (no prompt if the user already answered), or keep the result in a [persistent history](#remembering-requests-across-launches). To probe a service type your app already declares, register `.localNetwork(serviceType: "_myapp._tcp")`. On tvOS and macOS before 15 nothing gates the local network, so it reads `.authorized`.
 
 Some features need no permission at all, so don't add a product for them: `PhotosPicker` / `PHPickerViewController` (picking photos), `LocationButton` / `CLLocationButton` (one-time location), and `ContactAccessButton` on iOS 18.
 
@@ -279,6 +279,27 @@ settings.alertStyle         // .off / .banner / .alert
 
 Fields a platform doesn't have read `.notSupported` (tvOS only has badges). Critical alerts need Apple's critical-alerts entitlement.
 
+### Remembering requests across launches
+
+Screen Recording and Accessibility only say whether access is granted, and the local network has no status API at all. Their providers keep a `PermissionRequestHistory` to tell "never asked" from "declined". The default is in memory, so after a relaunch these permissions read `.notDetermined` again, and the UI offers **Allow** where it should offer **Open Settings**. Pass a `UserDefaultsRequestHistory` to remember across launches:
+
+```swift
+let history = UserDefaultsRequestHistory()   // UserDefaults.standard, keys prefixed "SwiftPermissions."
+
+let permissions = PermissionManager(permissions: [
+    .screenRecording(history: history),
+    .accessibility(history: history),
+    .localNetwork(serviceType: "_myapp._tcp", history: history)
+])
+```
+
+A declined Screen Recording or Accessibility request then still reads `.denied` after a relaunch, and the local network reads its last result. The providers take a `history:` argument too, and you can write your own history (Keychain, iCloud) by conforming to the protocol.
+
+- **A grant always wins.** If the system reports access, the status is `.authorized` whatever the history says.
+- **`tccutil reset` isn't seen.** Resetting a permission with `tccutil` (or reinstalling a Mac app that keeps its defaults) clears the system's state but not the history, so the permission keeps reading `.denied`. Call `history.forget(.screenRecording)` to start over.
+- **Settings changes to the local network aren't seen** until the next request. Calling `request()` on the provider directly shows no prompt once the user has answered and records the current answer.
+- **Privacy manifest.** `UserDefaults` is a required-reason API, so Core's privacy manifest declares `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`. If you pass an app group's `UserDefaults(suiteName:)`, declare `1C8F.1` in your app's manifest.
+
 ## Testing
 
 ```swift
@@ -416,7 +437,7 @@ Xcode 16+ (Swift 6.0+). iOS 15, macOS 12, tvOS 15, watchOS 9, visionOS 1. On vis
 CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 16.4), and runs the test suite on the newest iOS Simulator. It also builds for Mac Catalyst, tvOS, watchOS and visionOS, and builds the whole package as app-extension-safe.
 
 - **App extensions.** Every product compiles into widgets and notification extensions. Requests skip the "wait until the app is active" step there. `AppSettings.open` and `PermissionStore.openSettings` are unavailable in extensions. The SwiftUI views open Settings through SwiftUI's `openURL` action, so they work everywhere.
-- **Privacy manifest.** Core ships a `PrivacyInfo.xcprivacy` declaring no tracking, no collected data and no required-reason APIs. Your app still declares what it does with the data each permission unlocks.
+- **Privacy manifest.** Core ships a `PrivacyInfo.xcprivacy` declaring no tracking and no collected data, and `UserDefaults` access with reason `CA92.1` for `UserDefaultsRequestHistory`. Your app still declares what it does with the data each permission unlocks.
 - **Stable statuses.** `PermissionStatus` won't gain cases in 3.x, so exhaustive `switch`es stay valid. New permissions map onto the existing cases.
 
 Upgrading from 2.x? See [MIGRATION.md](MIGRATION.md).

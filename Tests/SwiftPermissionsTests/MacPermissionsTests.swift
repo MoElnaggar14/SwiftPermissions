@@ -88,6 +88,67 @@ struct MacPermissionsTests {
         #expect(AccessibilityPermissionProvider.map(trusted: true, requested: false) == .authorized)
     }
 
+    // MARK: Request history
+
+    @Test func declinedScreenRecordingReadsDeniedAfterARelaunch() async throws {
+        let scratch = try ScratchDefaults()
+        defer { scratch.remove() }
+
+        let before = ScreenRecordingPermissionProvider(
+            access: StubScreenCapture(),
+            history: UserDefaultsRequestHistory(defaults: scratch.defaults)
+        )
+        #expect(try await before.request() == .denied)
+
+        let after = ScreenRecordingPermissionProvider(
+            access: StubScreenCapture(),
+            history: UserDefaultsRequestHistory(defaults: scratch.defaults)
+        )
+        #expect(await after.status() == .denied)
+    }
+
+    @Test func declinedAccessibilityReadsDeniedAfterARelaunch() async throws {
+        let scratch = try ScratchDefaults()
+        defer { scratch.remove() }
+
+        let before = AccessibilityPermissionProvider(
+            trust: StubAccessibilityTrust(),
+            history: UserDefaultsRequestHistory(defaults: scratch.defaults)
+        )
+        #expect(try await before.request() == .denied)
+
+        let after = AccessibilityPermissionProvider(
+            trust: StubAccessibilityTrust(),
+            history: UserDefaultsRequestHistory(defaults: scratch.defaults)
+        )
+        #expect(await after.status() == .denied)
+    }
+
+    @Test func theDefaultHistoryForgetsOnRelaunch() async throws {
+        #expect(try await ScreenRecordingPermissionProvider(access: StubScreenCapture()).request() == .denied)
+        #expect(await ScreenRecordingPermissionProvider(access: StubScreenCapture()).status() == .notDetermined)
+        #expect(try await AccessibilityPermissionProvider(trust: StubAccessibilityTrust()).request() == .denied)
+        #expect(await AccessibilityPermissionProvider(trust: StubAccessibilityTrust()).status() == .notDetermined)
+    }
+
+    @Test func aGrantWinsOverTheHistory() async {
+        let history = InMemoryRequestHistory()
+        history.recordRequest(.screenRecording)
+        history.recordRequest(.accessibility)
+        let screen = ScreenRecordingPermissionProvider(access: StubScreenCapture(granted: true), history: history)
+        let trust = AccessibilityPermissionProvider(trust: StubAccessibilityTrust(trusted: true), history: history)
+        #expect(await screen.status() == .authorized)
+        #expect(await trust.status() == .authorized)
+    }
+
+    @Test func forgettingTheHistoryAllowsAskingAgain() async throws {
+        let history = InMemoryRequestHistory()
+        let provider = ScreenRecordingPermissionProvider(access: StubScreenCapture(), history: history)
+        #expect(try await provider.request() == .denied)
+        history.forget(.screenRecording)
+        #expect(await provider.status() == .notDetermined)
+    }
+
     // MARK: Input Monitoring
 
     @Test func inputMonitoringAccessMapsOntoPermissionStatus() {

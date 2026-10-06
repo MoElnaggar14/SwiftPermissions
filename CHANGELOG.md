@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.4.0] — 2026-10-06
+
+Screen Recording, Accessibility and Local Network can remember across launches that the app already asked. Additive; apps that don't opt in behave as before.
 
 ### Added
 - **Remember requests across launches.** A `PermissionRequestHistory` port in Core, with `InMemoryRequestHistory` (the default, unchanged behaviour) and `UserDefaultsRequestHistory(defaults:keyPrefix:)`. The Screen Recording, Accessibility and Local Network providers take a `history:` argument, and register with `.screenRecording(history:)`, `.accessibility(history:)` and `.localNetwork(serviceType:history:)`. With a persistent history, a declined Screen Recording or Accessibility request still reads `.denied` after a relaunch, and the local network reads its last result. A grant reported by the system always wins. `tccutil reset` clears the system's state but not the history; call `forget(_:)` to start over. Core's privacy manifest now declares `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`. ([#36](https://github.com/MoElnaggar14/SwiftPermissions/issues/36))

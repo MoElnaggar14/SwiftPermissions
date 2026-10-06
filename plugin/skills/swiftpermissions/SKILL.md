@@ -30,7 +30,7 @@ Suggest the alternative when it fits; ask the user if unsure.
 ### 2. Add one product per framework
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.3.0"),
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.4.0"),
 
 .target(name: "App", dependencies: [
     .product(name: "SwiftPermissions", package: "SwiftPermissions"),        // Core + SwiftUI

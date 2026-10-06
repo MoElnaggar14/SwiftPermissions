@@ -85,8 +85,13 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 | `.biometrics` | `SwiftPermissionsBiometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS) |
 | `.health(share:read:)` | `SwiftPermissionsHealth` | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` + HealthKit capability |
 | `.alarms` | `SwiftPermissionsAlarms` | ✓ (26+) | | | | `NSAlarmKitUsageDescription` |
+| `.screenRecording` | `SwiftPermissionsScreenRecording` | | ✓ | | | none |
+| `.accessibility` | `SwiftPermissionsAccessibility` | | ✓ | | | none |
+| `.inputMonitoring` | `SwiftPermissionsInputMonitoring` | | ✓ | | | none |
 
 `.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
+
+`.screenRecording`, `.accessibility` and `.inputMonitoring` are macOS only (not Mac Catalyst); elsewhere their products are empty. They have no usage description: a request shows a system alert that sends the user to System Settings, and `AppSettings.open(for:)` opens the matching Privacy & Security pane. macOS only says whether Screen Recording and Accessibility are granted, so they read `.notDetermined` until the provider has asked in the current launch, and `.denied` after that. Input Monitoring reports all three states.
 
 Some features need no permission at all, so don't add a product for them: `PhotosPicker` / `PHPickerViewController` (picking photos), `LocationButton` / `CLLocationButton` (one-time location), and `ContactAccessButton` on iOS 18.
 

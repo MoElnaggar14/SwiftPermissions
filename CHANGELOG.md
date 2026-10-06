@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **macOS permissions.** `SwiftPermissionsScreenRecording`, `SwiftPermissionsAccessibility` and `SwiftPermissionsInputMonitoring` products with `.screenRecording`, `.accessibility` and `.inputMonitoring` registrations, backed by `CGPreflightScreenCaptureAccess` / `CGRequestScreenCaptureAccess`, `AXIsProcessTrustedWithOptions` and `IOHIDCheckAccess` / `IOHIDRequestAccess`. None needs a usage description. Screen Recording and Accessibility read `.notDetermined` until the provider has asked in the current launch, then `.denied`, because macOS doesn't say whether the user declined. `AppSettings` opens their Privacy & Security panes. The products are empty on other platforms, Mac Catalyst included. ([#11](https://github.com/MoElnaggar14/SwiftPermissions/issues/11))
+
 ## [3.2.0] — 2026-10-06
 
 Precise vs approximate location and the iOS 26 AlarmKit permission. Additive; no API changes.

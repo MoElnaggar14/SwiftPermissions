@@ -1,5 +1,6 @@
 import SwiftPermissions
 import SwiftPermissionsBiometrics
+import SwiftPermissionsLocation
 import SwiftUI
 
 /// Tours the ways to use SwiftPermissions in SwiftUI: gating a feature, upgrades,
@@ -27,11 +28,12 @@ struct ContentView: View {
                 Section {
                     PermissionRow(.locationWhenInUse, store: permissions)
                     PermissionRow(.locationAlways, store: permissions)
+                    PreciseLocationRow(store: permissions)
                     PermissionRow(.calendar, store: permissions)
                 } header: {
                     Text("Upgrades")
                 } footer: {
-                    Text("Allow location while using first, then Always: the row offers Allow More while an upgrade prompt can still appear.")
+                    Text("Allow location while using first, then Always: the row offers Allow More while an upgrade prompt can still appear. Turn off Precise when allowing location to see Ask Once.")
                 }
 
                 Section("Custom flows") {
@@ -94,6 +96,46 @@ private struct RecordButton: View {
             if !outcome.isEmpty {
                 Text(outcome).font(.footnote).foregroundStyle(.secondary)
             }
+        }
+    }
+}
+
+/// Location can be authorized with Precise turned off. The status stays `.authorized`;
+/// the accuracy says how exact the coordinates are, and Ask Once requests precise
+/// location for this session.
+private struct PreciseLocationRow: View {
+    @ObservedObject var store: PermissionStore
+    @State private var accuracy: LocationAccuracy?
+    @State private var outcome = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                Text("Precise location")
+                Spacer()
+                switch accuracy {
+                case .full?: Text("Precise").foregroundStyle(.secondary)
+                case .reduced?:
+                    Button("Ask Once") {
+                        Task {
+                            do {
+                                accuracy = try await LocationPermissionProvider.whenInUse
+                                    .requestTemporaryFullAccuracy(purposeKey: "NearbyPlaces")
+                            } catch {
+                                outcome = "\(error)"
+                            }
+                        }
+                    }
+                case nil: Text("Allow location first").foregroundStyle(.secondary)
+                }
+            }
+            if !outcome.isEmpty {
+                Text(outcome).font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        // Re-read whenever a location status changes, e.g. after Settings.
+        .task(id: [store[.locationWhenInUse], store[.locationAlways]]) {
+            accuracy = await LocationPermissionProvider.whenInUse.accuracy()
         }
     }
 }

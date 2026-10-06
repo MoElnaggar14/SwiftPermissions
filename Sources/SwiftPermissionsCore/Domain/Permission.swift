@@ -69,12 +69,14 @@ public extension Permission {
     static let biometrics = Permission("biometrics", displayName: "Biometrics")
     /// HealthKit. Requires a ``HealthPermissionProvider`` configured with the data types you need.
     static let health = Permission("health", displayName: "Health")
+    /// AlarmKit alarms and timers that sound through Silent mode and Focus (iOS 26+).
+    static let alarms = Permission("alarms", displayName: "Alarms & Timers")
 
     /// Every permission the library knows about, whether or not it is available on the current platform.
     static let builtIn: [Permission] = [
         .camera, .microphone, .photoLibrary, .photoLibraryAddOnly, .contacts,
         .calendar, .calendarWriteOnly, .reminders, .locationWhenInUse, .locationAlways,
         .notifications, .motion, .tracking, .bluetooth, .speechRecognition,
-        .mediaLibrary, .siri, .biometrics, .health
+        .mediaLibrary, .siri, .biometrics, .health, .alarms
     ]
 }

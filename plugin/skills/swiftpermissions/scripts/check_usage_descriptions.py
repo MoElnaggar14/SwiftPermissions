@@ -40,6 +40,7 @@ PERMISSIONS = {
     "mediaLibrary": ("SwiftPermissionsMediaLibrary", ["NSAppleMusicUsageDescription"], []),
     "biometrics": ("SwiftPermissionsBiometrics", ["NSFaceIDUsageDescription"], []),
     "health": ("SwiftPermissionsHealth", ["NSHealthShareUsageDescription"], []),
+    "alarms": ("SwiftPermissionsAlarms", ["NSAlarmKitUsageDescription"], []),
 }
 # Products that also contain or re-export Core.
 CORE_PRODUCTS = {"SwiftPermissions", "SwiftPermissionsCore", "SwiftPermissionsUI"}

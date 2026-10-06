@@ -41,7 +41,7 @@ Every framework has its own authorization enum, its own request API (async, call
 ## Installation
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.1.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.2.0")
 ```
 
 Add `SwiftPermissions` (or just `SwiftPermissionsCore` without SwiftUI), plus one product per framework you request:
@@ -84,6 +84,9 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 | `.mediaLibrary` | `SwiftPermissionsMediaLibrary` | ✓ | | | | `NSAppleMusicUsageDescription` |
 | `.biometrics` | `SwiftPermissionsBiometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS) |
 | `.health(share:read:)` | `SwiftPermissionsHealth` | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` + HealthKit capability |
+| `.alarms` | `SwiftPermissionsAlarms` | ✓ (26+) | | | | `NSAlarmKitUsageDescription` |
+
+`.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
 
 Some features need no permission at all, so don't add a product for them: `PhotosPicker` / `PHPickerViewController` (picking photos), `LocationButton` / `CLLocationButton` (one-time location), and `ContactAccessButton` on iOS 18.
 
@@ -179,6 +182,20 @@ let permissions = PermissionManager(permissions: [
 ```
 
 Without the HealthKit capability the status is `.unavailable`. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
+
+### Precise or approximate location
+
+Users can allow location with **Precise** turned off. The status is still `.authorized`, but the coordinates are only accurate to an area several kilometres wide, so navigation, delivery and fitness apps need to know. `accuracy()` tells you, and `requestTemporaryFullAccuracy(purposeKey:)` asks for precise location for this session:
+
+```swift
+let location = LocationPermissionProvider.whenInUse
+
+if await location.accuracy() == .reduced {   // nil until location is authorized
+    let accuracy = try await location.requestTemporaryFullAccuracy(purposeKey: "Navigation")
+}
+```
+
+The purpose key names an entry in the `NSLocationTemporaryUsageDescriptionDictionary` Info.plist dictionary, and the system shows that string as the reason. A missing entry throws `.missingUsageDescription` before anything is shown. Reduced accuracy is never reported as `.limited`, which for location means "when in use". tvOS has no temporary request.
 
 ### Notifications that are allowed but silent
 

@@ -71,12 +71,22 @@ public extension Permission {
     static let health = Permission("health", displayName: "Health")
     /// AlarmKit alarms and timers that sound through Silent mode and Focus (iOS 26+).
     static let alarms = Permission("alarms", displayName: "Alarms & Timers")
+    /// Capturing the screen or other apps' windows (macOS). Granted in System Settings.
+    static let screenRecording = Permission("screenRecording", displayName: "Screen Recording")
+    /// Observing and controlling other apps through the Accessibility API (macOS). Granted in System Settings.
+    static let accessibility = Permission("accessibility", displayName: "Accessibility")
+    /// Receiving keyboard and other input events while other apps are in front (macOS). Granted in System Settings.
+    static let inputMonitoring = Permission("inputMonitoring", displayName: "Input Monitoring")
+    /// Devices on the local network, found through Bonjour or reached directly (iOS 14+, macOS 15+).
+    /// No system API reads this status; see ``LocalNetworkPermissionProvider``.
+    static let localNetwork = Permission("localNetwork", displayName: "Local Network")
 
     /// Every permission the library knows about, whether or not it is available on the current platform.
     static let builtIn: [Permission] = [
         .camera, .microphone, .photoLibrary, .photoLibraryAddOnly, .contacts,
         .calendar, .calendarWriteOnly, .reminders, .locationWhenInUse, .locationAlways,
         .notifications, .motion, .tracking, .bluetooth, .speechRecognition,
-        .mediaLibrary, .siri, .biometrics, .health, .alarms
+        .mediaLibrary, .siri, .biometrics, .health, .alarms,
+        .screenRecording, .accessibility, .inputMonitoring, .localNetwork
     ]
 }

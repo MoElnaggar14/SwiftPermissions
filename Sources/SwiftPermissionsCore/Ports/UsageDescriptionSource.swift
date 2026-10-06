@@ -14,8 +14,16 @@ public struct InfoPlist: UsageDescriptionSource, Equatable {
         self.values = values
     }
 
+    /// Reads the bundle's string values. An array of strings, such as `NSBonjourServices`,
+    /// is kept as its elements joined by newlines.
     public init(bundle: Bundle) {
-        self.init((bundle.infoDictionary ?? [:]).compactMapValues { $0 as? String })
+        self.init((bundle.infoDictionary ?? [:]).compactMapValues(Self.stringValue))
+    }
+
+    static func stringValue(_ value: Any) -> String? {
+        if let string = value as? String { return string }
+        if let strings = value as? [String] { return strings.joined(separator: "\n") }
+        return nil
     }
 
     /// The main bundle's Info.plist.

@@ -7,7 +7,8 @@ import PackageDescription
 /// app should link only the permissions it actually requests.
 let frameworks = [
     "Camera", "Photos", "Contacts", "Calendar", "Location", "Bluetooth", "Motion",
-    "Speech", "MediaLibrary", "Siri", "Tracking", "Biometrics", "Health", "Alarms"
+    "Speech", "MediaLibrary", "Siri", "Tracking", "Biometrics", "Health", "Alarms",
+    "ScreenRecording", "Accessibility", "InputMonitoring", "LocalNetwork"
 ]
 
 let package = Package(
@@ -38,7 +39,9 @@ let package = Package(
             name: "SwiftPermissionsTests",
             dependencies: [
                 "SwiftPermissionsCore", "SwiftPermissionsTesting",
-                "SwiftPermissionsAlarms", "SwiftPermissionsBluetooth", "SwiftPermissionsCamera", "SwiftPermissionsLocation"
+                "SwiftPermissionsAlarms", "SwiftPermissionsBluetooth", "SwiftPermissionsCamera",
+                "SwiftPermissionsLocalNetwork", "SwiftPermissionsLocation", "SwiftPermissionsAccessibility",
+                "SwiftPermissionsInputMonitoring", "SwiftPermissionsScreenRecording"
             ]
         ),
         .testTarget(

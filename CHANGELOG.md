@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] — 2026-10-06
+
+New permissions for the Mac and the local network, iOS 18 location service sessions, and Select More for limited Photos and Contacts access, plus a fix for Bluetooth in AccessorySetupKit apps. Additive; no API changes.
+
+### Added
+- **macOS permissions.** `SwiftPermissionsScreenRecording`, `SwiftPermissionsAccessibility` and `SwiftPermissionsInputMonitoring` products with `.screenRecording`, `.accessibility` and `.inputMonitoring` registrations, backed by `CGPreflightScreenCaptureAccess` / `CGRequestScreenCaptureAccess`, `AXIsProcessTrustedWithOptions` and `IOHIDCheckAccess` / `IOHIDRequestAccess`. None needs a usage description. Screen Recording and Accessibility read `.notDetermined` until the provider has asked in the current launch, then `.denied`, because macOS doesn't say whether the user declined. `AppSettings` opens their Privacy & Security panes. The products are empty on other platforms, Mac Catalyst included. ([#11](https://github.com/MoElnaggar14/SwiftPermissions/issues/11))
+- **Select more photos and contacts.** With limited access, `PermissionRow` and `PermissionPrompt` can offer **Select More…** through a new optional `onSelectMore` closure, instead of nothing (row) or **Open Settings** (prompt). The framework products supply the pickers: `PhotoLibraryPermissionProvider.presentLimitedLibraryPicker(from:)` (iOS and Mac Catalyst) returns the identifiers of newly selected assets, and the `limitedContactsPicker(isPresented:onSelection:)` view modifier in `SwiftPermissionsContacts` presents the iOS 18 contact access picker. Existing initialisers are unchanged, and the UI module still imports no privacy framework. ([#7](https://github.com/MoElnaggar14/SwiftPermissions/issues/7))
+- **Local network.** A `SwiftPermissionsLocalNetwork` product with `.localNetwork` and `.localNetwork(serviceType:)` registrations. iOS has no API for this permission, so `request()` runs a short Bonjour probe (`NWListener` + `NWBrowser`) that shows the prompt and maps the outcome: finding its own service is `.authorized`, `PolicyDenied` after the prompt closed is `.denied`, and a timeout leaves `.notDetermined`. `status()` is `.notDetermined` until a request has run, then the last result. It needs `NSLocalNetworkUsageDescription` and the probe's service type (`_swiftperms._tcp` by default) in `NSBonjourServices`. On tvOS and macOS before 15 the status is `.authorized`; on watchOS `.unavailable`. ([#4](https://github.com/MoElnaggar14/SwiftPermissions/issues/4))
+- **Location service sessions.** On iOS 18, watchOS 11, tvOS 18 and visionOS 2, `LocationPermissionProvider.startServiceSession(fullAccuracyPurposeKey:)` starts a `CLServiceSession` at the provider's level and returns a `LocationServiceSession` that the app owns: the session lasts until `invalidate()` or until the handle is released. Its `updates` stream maps each `CLServiceSession.Diagnostic` onto `PermissionStatus` and includes the diagnostic as a `LocationSessionDiagnostic`. `request(_:)` through `CLLocationManager` stays the default. The example app shows a session. ([#9](https://github.com/MoElnaggar14/SwiftPermissions/issues/9))
+
+### Changed
+- `InfoPlist(bundle:)` also reads arrays of strings, such as `NSBonjourServices`, as their entries joined by newlines, so `requiredUsageDescriptionKeys` can name them.
+
+### Fixed
+- **Bluetooth with AccessorySetupKit.** On iOS 18+, when Info.plist lists `Bluetooth` under `NSAccessorySetupKitSupports`, iOS never shows the Bluetooth prompt and `CBManager.authorization` stays `.notDetermined`, even after pairing. `.bluetooth` now reports `.unavailable` in such an app, and `request(.bluetooth)` returns at once instead of waiting for a prompt that never appears. A `.denied`, `.restricted` or `.allowedAlways` from Core Bluetooth is still reported as before. The README and the agent skill explain the behaviour. ([#10](https://github.com/MoElnaggar14/SwiftPermissions/issues/10))
+
 ## [3.2.0] — 2026-10-06
 
 Precise vs approximate location and the iOS 26 AlarmKit permission. Additive; no API changes.

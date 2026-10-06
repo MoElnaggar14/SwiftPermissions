@@ -41,7 +41,7 @@ Every framework has its own authorization enum, its own request API (async, call
 ## Installation
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.2.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.3.0")
 ```
 
 Add `SwiftPermissions` (or just `SwiftPermissionsCore` without SwiftUI), plus one product per framework you request:
@@ -85,8 +85,18 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 | `.biometrics` | `SwiftPermissionsBiometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS) |
 | `.health(share:read:)` | `SwiftPermissionsHealth` | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` + HealthKit capability |
 | `.alarms` | `SwiftPermissionsAlarms` | ✓ (26+) | | | | `NSAlarmKitUsageDescription` |
+| `.screenRecording` | `SwiftPermissionsScreenRecording` | | ✓ | | | none |
+| `.accessibility` | `SwiftPermissionsAccessibility` | | ✓ | | | none |
+| `.inputMonitoring` | `SwiftPermissionsInputMonitoring` | | ✓ | | | none |
+| `.localNetwork` | `SwiftPermissionsLocalNetwork` | ✓ | ✓ (15+) | | | `NSLocalNetworkUsageDescription` + `_swiftperms._tcp` in `NSBonjourServices` |
+
+`.bluetooth` in an AccessorySetupKit app: on iOS 18+, an app whose Info.plist lists `Bluetooth` under `NSAccessorySetupKitSupports` never sees the Bluetooth prompt. The user grants access to each accessory in the AccessorySetupKit picker, and `CBManager.authorization` stays `.notDetermined` before and after pairing. In such an app `.bluetooth` reports `.unavailable` instead of a `.notDetermined` that no prompt can resolve, and `request(.bluetooth)` shows nothing and returns at once. Use `ASAccessorySession.accessories` to see which accessories the app can reach. A real `.denied` or `.restricted` is still reported. Keep `NSBluetoothAlwaysUsageDescription` if you also support iOS 17, where the normal prompt still appears.
 
 `.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
+
+`.screenRecording`, `.accessibility` and `.inputMonitoring` are macOS only (not Mac Catalyst); elsewhere their products are empty. They have no usage description: a request shows a system alert that sends the user to System Settings, and `AppSettings.open(for:)` opens the matching Privacy & Security pane. macOS only says whether Screen Recording and Accessibility are granted, so they read `.notDetermined` until the provider has asked in the current launch, and `.denied` after that. Input Monitoring reports all three states.
+
+`.localNetwork` has no system API to read or request it. `request` runs a short Bonjour probe (advertise and browse `_swiftperms._tcp`), which shows the prompt the first time: finding itself means `.authorized`, a policy-denied error after the prompt closed means `.denied`, and no answer within the timeout leaves `.notDetermined`. `status` is `.notDetermined` until a request has run, then the last result; after a relaunch, request again (no prompt if the user already answered). To probe a service type your app already declares, register `.localNetwork(serviceType: "_myapp._tcp")`. On tvOS and macOS before 15 nothing gates the local network, so it reads `.authorized`.
 
 Some features need no permission at all, so don't add a product for them: `PhotosPicker` / `PHPickerViewController` (picking photos), `LocationButton` / `CLLocationButton` (one-time location), and `ContactAccessButton` on iOS 18.
 
@@ -127,6 +137,30 @@ PermissionGate(.microphone, store: permissions) {
     MicrophoneOnboarding(status: status) { Task { await permissions.request(.microphone) } }
 }
 ```
+
+### Limited photos and contacts
+
+With limited access, people can share more photos (or, on iOS 18, contacts) without going to Settings. Pass `onSelectMore` to `PermissionRow` or `PermissionPrompt` and they show **Select More…** while the status is `.limited`. The pickers live in the framework products, so the UI module never links Photos or Contacts:
+
+```swift
+import SwiftPermissionsContacts
+import SwiftPermissionsPhotos
+
+// Photos (iOS and Mac Catalyst): a UIKit picker, so present it from a view controller.
+PermissionRow(.photoLibrary, store: permissions) {
+    Task { await PhotoLibraryPermissionProvider.readWrite.presentLimitedLibraryPicker(from: controller) }
+}
+
+// Contacts (iOS 18): a SwiftUI modifier.
+@State private var pickingContacts = false
+
+PermissionRow(.contacts, store: permissions) { pickingContacts = true }
+    .limitedContactsPicker(isPresented: $pickingContacts) { identifiers in
+        // newly shared contact identifiers
+    }
+```
+
+Both return only the newly selected identifiers. The status stays `.limited`.
 
 For an onboarding or privacy screen: `PermissionsList([.camera, .microphone, .notifications], store: permissions)`.
 
@@ -196,6 +230,37 @@ if await location.accuracy() == .reduced {   // nil until location is authorized
 ```
 
 The purpose key names an entry in the `NSLocationTemporaryUsageDescriptionDictionary` Info.plist dictionary, and the system shows that string as the reason. A missing entry throws `.missingUsageDescription` before anything is shown. Reduced accuracy is never reported as `.limited`, which for location means "when in use". tvOS has no temporary request.
+
+### Location service sessions (iOS 18)
+
+iOS 18 added `CLServiceSession`, which tells Core Location that the app needs location at a given level. While a session is alive, Core Location shows the prompt when the app is in use and the user hasn't decided, and reports diagnostics that explain why location isn't arriving. Apps that set `NSLocationRequireExplicitServiceSession` in Info.plist get location updates only while they hold one. `startServiceSession(fullAccuracyPurposeKey:)` starts a session and hands it to you:
+
+```swift
+@available(iOS 18.0, *)
+@MainActor final class MapModel {
+    private var session: LocationServiceSession?
+
+    func start() async throws {
+        let session = try await LocationPermissionProvider.whenInUse.startServiceSession()
+        self.session = session                       // keep it while the map needs location
+        for await update in session.updates {
+            show(update.status)                      // .denied, .restricted, .unavailable, ...
+            if update.diagnostic.insufficientlyInUse { /* ask again once the app is in use */ }
+        }
+    }
+
+    func stop() {
+        session?.invalidate()                        // or let the model go
+        session = nil
+    }
+}
+```
+
+`request(_:)` through `CLLocationManager` stays the default; the session is opt-in. Use `LocationPermissionProvider.always` for an Always session, and pass `fullAccuracyPurposeKey` to ask for precise location as well. Missing usage descriptions or purpose strings throw `.missingUsageDescription` before anything is shown.
+
+**You own the session.** It lasts until you call `invalidate()` or release the `LocationServiceSession`, so keep it in the object whose lifetime matches the feature (a screen's model, a workout), not in a local that goes out of scope. The package never keeps one alive for you: a hidden session would tell Core Location that the app still needs location after the feature has gone. `updates` has one consumer and finishes when the session ends.
+
+Each update carries the `PermissionStatus` and the raw `LocationSessionDiagnostic`. Restricted maps to `.restricted`, denied to `.denied`, and Location Services off to `.unavailable` (or `.denied` once the user has decided). Otherwise the status is the one `status()` reports, so a prompt in progress or an app that isn't in use enough reads `.notDetermined`. When an Always session gets When In Use, the status is `.limited`. Reduced accuracy is never a status; check `diagnostic.fullAccuracyDenied`. Sessions are available on iOS 18, Mac Catalyst 18, tvOS 18, watchOS 11 and visionOS 2, not on macOS.
 
 ### Notifications that are allowed but silent
 

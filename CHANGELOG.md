@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.5.0] — 2026-10-06
+
+`PermissionFlow`: several permissions in sequence, with a priming screen per step and progress that survives relaunches. Additive; no API changes.
 
 ### Added
 - **Permission flows.** `PermissionFlow` in `SwiftPermissionsUI` asks for several permissions in sequence, with a priming screen per step built from `PermissionPrompt`'s actions (Continue, Not Now, Open Settings, Select More…). Steps whose permission can't prompt (already decided, restricted or unavailable) are skipped. **Not Now** defers an optional step and pauses the flow on a required one. `onFinish` receives a `PermissionFlowResult`: why the flow ended (`.completed` or `.paused(at:)`) and each step's last status. The logic is a pure `PermissionFlowState` in Core, with `PermissionFlowStep`, `PermissionFlowStepOutcome` and a persistable `PermissionFlowProgress` (`Codable`, and `RawRepresentable` for `@AppStorage`), so the flow resumes where it stopped on the next launch while the package stores nothing. `advance(using:)` and `requestCurrent(using:)` drive any `PermissionManaging` without UI; a cancelled request leaves its step pending. The example app's onboarding uses the flow. ([#37](https://github.com/MoElnaggar14/SwiftPermissions/issues/37))

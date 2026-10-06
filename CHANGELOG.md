@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Select more photos and contacts.** With limited access, `PermissionRow` and `PermissionPrompt` can offer **Select More…** through a new optional `onSelectMore` closure, instead of nothing (row) or **Open Settings** (prompt). The framework products supply the pickers: `PhotoLibraryPermissionProvider.presentLimitedLibraryPicker(from:)` (iOS and Mac Catalyst) returns the identifiers of newly selected assets, and the `limitedContactsPicker(isPresented:onSelection:)` view modifier in `SwiftPermissionsContacts` presents the iOS 18 contact access picker. Existing initialisers are unchanged, and the UI module still imports no privacy framework. ([#7](https://github.com/MoElnaggar14/SwiftPermissions/issues/7))
+
 ## [3.2.0] — 2026-10-06
 
 Precise vs approximate location and the iOS 26 AlarmKit permission. Additive; no API changes.

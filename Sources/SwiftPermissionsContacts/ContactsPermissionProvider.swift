@@ -37,4 +37,38 @@ public extension PermissionRegistration {
     /// Contacts. Needs `NSContactsUsageDescription`.
     static var contacts: PermissionRegistration { PermissionRegistration(ContactsPermissionProvider()) }
 }
+
+#if os(iOS) && !targetEnvironment(macCatalyst)
+import ContactsUI
+import SwiftUI
+
+@available(iOS 18.0, *)
+public extension View {
+    /// Presents the system picker where people with ``PermissionStatus/limited`` contacts
+    /// access can share more contacts with your app.
+    ///
+    /// Drive it from the "Select More…" action of a `PermissionRow` or `PermissionPrompt`:
+    ///
+    /// ```swift
+    /// @State private var pickingContacts = false
+    ///
+    /// PermissionRow(.contacts, store: permissions, onSelectMore: { pickingContacts = true })
+    ///     .limitedContactsPicker(isPresented: $pickingContacts)
+    /// ```
+    ///
+    /// The status stays `.limited`; only the selection changes. iOS only (not Mac Catalyst).
+    ///
+    /// - Parameters:
+    ///   - isPresented: Whether the picker is showing. Reset to `false` when it closes.
+    ///   - onSelection: Called with the identifiers of the contacts the user newly shared.
+    ///     Contacts the user removed aren't listed.
+    @MainActor
+    func limitedContactsPicker(
+        isPresented: Binding<Bool>,
+        onSelection: @escaping ([String]) -> Void = { _ in }
+    ) -> some View {
+        contactAccessPicker(isPresented: isPresented, completionHandler: onSelection)
+    }
+}
+#endif
 #endif

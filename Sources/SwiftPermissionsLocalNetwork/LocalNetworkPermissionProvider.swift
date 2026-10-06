@@ -13,11 +13,17 @@ import SwiftPermissionsCore
 ///   the prompt has closed means ``PermissionStatus/denied``. If neither happens within
 ///   ``timeout``, the status stays ``PermissionStatus/notDetermined``.
 /// - ``status()`` can't be read without probing, so it's ``PermissionStatus/notDetermined``
-///   until a request has run on this provider, and then the result of the last request.
-///   After a relaunch it's `.notDetermined` again. Requesting then shows no prompt if the
-///   user already answered, and returns the answer in a moment.
+///   until a request has run, and then the result of the last request, as kept by the
+///   provider's ``PermissionRequestHistory``.
 ///
-/// Changes made in Settings while the app runs are seen on the next launch.
+/// The default history is in memory, so after a relaunch the status is `.notDetermined`
+/// again. Requesting then shows no prompt if the user already answered, and returns the
+/// answer in a moment. Changes made in Settings are seen on the next launch.
+///
+/// With a ``UserDefaultsRequestHistory`` the status after a relaunch is the last result.
+/// The history can't see changes made in Settings: call ``request()`` on the provider
+/// directly (it shows no prompt once the user has answered) to read the current answer, or
+/// ``PermissionRequestHistory/forget(_:)`` to start over.
 ///
 /// The prompt exists on iOS 14+, visionOS and macOS 15+. On tvOS and older macOS versions
 /// nothing gates the local network, so the status is ``PermissionStatus/authorized``. On
@@ -45,7 +51,7 @@ public struct LocalNetworkPermissionProvider: PermissionProvider {
     private let usageDescriptions: any UsageDescriptionSource
     private let probe: any LocalNetworkProbing
     private let platform: LocalNetworkPlatform
-    private let lastResult = LastProbeResult()
+    private let history: any PermissionRequestHistory
 
     /// - Parameters:
     ///   - serviceType: The Bonjour service type to probe, such as `_myapp._tcp`. Use one
@@ -53,17 +59,21 @@ public struct LocalNetworkPermissionProvider: PermissionProvider {
     ///   - timeout: How long a request waits for the user's answer, in seconds.
     ///   - usageDescriptions: Where ``request()`` checks that `NSBonjourServices` lists
     ///     `serviceType`. Defaults to the main bundle.
+    ///   - history: Keeps the last result. Defaults to an in-memory history that's lost
+    ///     when the app quits.
     public init(
         serviceType: String = LocalNetworkPermissionProvider.defaultServiceType,
         timeout: TimeInterval = 60,
-        usageDescriptions: any UsageDescriptionSource = InfoPlist.main
+        usageDescriptions: any UsageDescriptionSource = InfoPlist.main,
+        history: any PermissionRequestHistory = InMemoryRequestHistory()
     ) {
         self.init(
             serviceType: serviceType,
             timeout: timeout,
             usageDescriptions: usageDescriptions,
             probe: BonjourLocalNetworkProbe(),
-            platform: .current
+            platform: .current,
+            history: history
         )
     }
 
@@ -72,13 +82,15 @@ public struct LocalNetworkPermissionProvider: PermissionProvider {
         timeout: TimeInterval,
         usageDescriptions: any UsageDescriptionSource,
         probe: any LocalNetworkProbing,
-        platform: LocalNetworkPlatform
+        platform: LocalNetworkPlatform,
+        history: any PermissionRequestHistory = InMemoryRequestHistory()
     ) {
         self.serviceType = serviceType
         self.timeout = timeout
         self.usageDescriptions = usageDescriptions
         self.probe = probe
         self.platform = platform
+        self.history = history
     }
 
     /// `NSBonjourServices` is an array; ``InfoPlist`` reads it as its entries joined by newlines.
@@ -88,7 +100,7 @@ public struct LocalNetworkPermissionProvider: PermissionProvider {
 
     public func status() async -> PermissionStatus {
         switch platform {
-        case .prompts: return await lastResult.value ?? .notDetermined
+        case .prompts: return history.lastResult(permission) ?? .notDetermined
         case .unrestricted: return .authorized
         case .unsupported: return .unavailable
         }
@@ -109,16 +121,21 @@ public struct LocalNetworkPermissionProvider: PermissionProvider {
         }
         switch try await probe.probe(serviceType: serviceType, timeout: timeout) {
         case .authorized:
-            await lastResult.set(.authorized)
+            record(.authorized)
             return .authorized
         case .denied:
-            await lastResult.set(.denied)
+            record(.denied)
             return .denied
         case .timedOut:
             return await status()
         case let .failed(reason):
             throw PermissionError.requestFailed(permission, reason: reason)
         }
+    }
+
+    private func record(_ status: PermissionStatus) {
+        history.recordRequest(permission)
+        history.recordResult(status, for: permission)
     }
 
     /// Whether the `NSBonjourServices` entries in `source` include `serviceType`.
@@ -158,15 +175,6 @@ enum LocalNetworkPlatform: Sendable, Equatable {
     }
 }
 
-/// The outcome of the last probe, shared by copies of the provider.
-private actor LastProbeResult {
-    private(set) var value: PermissionStatus?
-
-    func set(_ status: PermissionStatus) {
-        value = status
-    }
-}
-
 public extension PermissionRegistration {
     /// Local network access, found out with a Bonjour probe. Needs `NSLocalNetworkUsageDescription`
     /// and `_swiftperms._tcp` in `NSBonjourServices`.
@@ -178,5 +186,14 @@ public extension PermissionRegistration {
     /// `NSBonjourServices` must list `serviceType`.
     static func localNetwork(serviceType: String) -> PermissionRegistration {
         PermissionRegistration(LocalNetworkPermissionProvider(serviceType: serviceType))
+    }
+
+    /// Local network access, probing `serviceType` and keeping the last result in `history`, for
+    /// example a ``UserDefaultsRequestHistory`` so the answer is still known after a relaunch.
+    static func localNetwork(
+        serviceType: String = LocalNetworkPermissionProvider.defaultServiceType,
+        history: any PermissionRequestHistory
+    ) -> PermissionRegistration {
+        PermissionRegistration(LocalNetworkPermissionProvider(serviceType: serviceType, history: history))
     }
 }

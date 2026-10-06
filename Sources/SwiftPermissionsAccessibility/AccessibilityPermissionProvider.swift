@@ -8,29 +8,34 @@ import Foundation
 /// There's no usage description. ``request()`` shows the system alert that sends the user
 /// to System Settings > Privacy & Security > Accessibility, and returns before they
 /// decide. macOS only says whether the app is trusted, so the status is
-/// ``PermissionStatus/notDetermined`` until this provider has asked in the current
-/// launch, and ``PermissionStatus/denied`` after that, until the user turns it on.
+/// ``PermissionStatus/notDetermined`` until the provider's ``PermissionRequestHistory``
+/// has a request on record, and ``PermissionStatus/denied`` after that, until the user
+/// turns it on. The default history is in memory, so that's per launch; pass a
+/// ``UserDefaultsRequestHistory`` to remember across launches.
 public struct AccessibilityPermissionProvider: PermissionProvider {
     public let permission = Permission.accessibility
 
     private let trust: any AccessibilityTrust
-    private let requested = RequestedFlag()
+    private let history: any PermissionRequestHistory
 
-    public init() {
-        self.init(trust: SystemAccessibilityTrust())
+    /// - Parameter history: Remembers that the provider asked. Defaults to an in-memory
+    ///   history that's lost when the app quits.
+    public init(history: any PermissionRequestHistory = InMemoryRequestHistory()) {
+        self.init(trust: SystemAccessibilityTrust(), history: history)
     }
 
-    init(trust: any AccessibilityTrust) {
+    init(trust: any AccessibilityTrust, history: any PermissionRequestHistory = InMemoryRequestHistory()) {
         self.trust = trust
+        self.history = history
     }
 
     public func status() async -> PermissionStatus {
-        Self.map(trusted: trust.isTrusted(), requested: requested.isSet)
+        Self.map(trusted: trust.isTrusted(), requested: history.hasRequested(permission))
     }
 
     public func request() async throws -> PermissionStatus {
         let trusted = trust.promptForTrust()
-        requested.set()
+        history.recordRequest(permission)
         return Self.map(trusted: trusted, requested: true)
     }
 
@@ -63,6 +68,12 @@ public extension PermissionRegistration {
     /// Accessibility (macOS). No usage description; the user grants it in System Settings.
     static var accessibility: PermissionRegistration {
         PermissionRegistration(AccessibilityPermissionProvider())
+    }
+
+    /// Accessibility (macOS), remembering requests in `history`, for example a
+    /// ``UserDefaultsRequestHistory`` so a declined request still reads `.denied` after a relaunch.
+    static func accessibility(history: any PermissionRequestHistory) -> PermissionRegistration {
+        PermissionRegistration(AccessibilityPermissionProvider(history: history))
     }
 }
 #endif

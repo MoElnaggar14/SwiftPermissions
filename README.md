@@ -183,6 +183,20 @@ let permissions = PermissionManager(permissions: [
 
 Without the HealthKit capability the status is `.unavailable`. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
 
+### Precise or approximate location
+
+Users can allow location with **Precise** turned off. The status is still `.authorized`, but the coordinates are only accurate to an area several kilometres wide, so navigation, delivery and fitness apps need to know. `accuracy()` tells you, and `requestTemporaryFullAccuracy(purposeKey:)` asks for precise location for this session:
+
+```swift
+let location = LocationPermissionProvider.whenInUse
+
+if await location.accuracy() == .reduced {   // nil until location is authorized
+    let accuracy = try await location.requestTemporaryFullAccuracy(purposeKey: "Navigation")
+}
+```
+
+The purpose key names an entry in the `NSLocationTemporaryUsageDescriptionDictionary` Info.plist dictionary, and the system shows that string as the reason. A missing entry throws `.missingUsageDescription` before anything is shown. Reduced accuracy is never reported as `.limited`, which for location means "when in use". tvOS has no temporary request.
+
 ### Notifications that are allowed but silent
 
 A user can allow notifications and still never see them: alerts off, banners set to None, the lock screen and Notification Center hidden. `settings()` reads the details without prompting:

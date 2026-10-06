@@ -89,6 +89,8 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 | `.accessibility` | `SwiftPermissionsAccessibility` | | ✓ | | | none |
 | `.inputMonitoring` | `SwiftPermissionsInputMonitoring` | | ✓ | | | none |
 
+`.bluetooth` in an AccessorySetupKit app: on iOS 18+, an app whose Info.plist lists `Bluetooth` under `NSAccessorySetupKitSupports` never sees the Bluetooth prompt. The user grants access to each accessory in the AccessorySetupKit picker, and `CBManager.authorization` stays `.notDetermined` before and after pairing. In such an app `.bluetooth` reports `.unavailable` instead of a `.notDetermined` that no prompt can resolve, and `request(.bluetooth)` shows nothing and returns at once. Use `ASAccessorySession.accessories` to see which accessories the app can reach. A real `.denied` or `.restricted` is still reported. Keep `NSBluetoothAlwaysUsageDescription` if you also support iOS 17, where the normal prompt still appears.
+
 `.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
 
 `.screenRecording`, `.accessibility` and `.inputMonitoring` are macOS only (not Mac Catalyst); elsewhere their products are empty. They have no usage description: a request shows a system alert that sends the user to System Settings, and `AppSettings.open(for:)` opens the matching Privacy & Security pane. macOS only says whether Screen Recording and Accessibility are granted, so they read `.notDetermined` until the provider has asked in the current launch, and `.denied` after that. Input Monitoring reports all three states.

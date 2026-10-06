@@ -50,9 +50,19 @@ public extension LocationPermissionProvider {
         if diagnostic.authorizationDenied { return .denied }
         let status = map(authorization, wantsAlways: wantsAlways)
         if wantsAlways && diagnostic.alwaysAuthorizationDenied && status == .authorized {
-            return .limited
+            return .limited(.whenInUse)
         }
         return status
+    }
+
+    /// Why ``map(_:authorization:wantsAlways:)`` reports `.limited`, or `nil` when it
+    /// doesn't. 4.0 puts it in the status.
+    internal static func mapLimitation(
+        _ diagnostic: LocationSessionDiagnostic,
+        authorization: CLAuthorizationStatus,
+        wantsAlways: Bool
+    ) -> Limitation? {
+        map(diagnostic, authorization: authorization, wantsAlways: wantsAlways).isLimited ? .whenInUse : nil
     }
 }
 

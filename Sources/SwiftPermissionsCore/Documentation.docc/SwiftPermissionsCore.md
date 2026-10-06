@@ -30,6 +30,7 @@ let status = try await permissions.request(.camera)
 - ``PermissionManager``
 - ``Permission``
 - ``PermissionStatus``
+- ``Limitation``
 - ``PermissionError``
 
 ### Depending on abstractions

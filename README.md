@@ -41,7 +41,7 @@ Every framework has its own authorization enum, its own request API (async, call
 ## Installation
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.5.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.6.0")
 ```
 
 Add `SwiftPermissions` (or just `SwiftPermissionsCore` without SwiftUI), plus one product per framework you request:
@@ -140,7 +140,7 @@ PermissionGate(.microphone, store: permissions) {
 
 ### Limited photos and contacts
 
-With limited access, people can share more photos (or, on iOS 18, contacts) without going to Settings. Pass `onSelectMore` to `PermissionRow` or `PermissionPrompt` and they show **Select More…** while the status is `.limited`. The pickers live in the framework products, so the UI module never links Photos or Contacts:
+With limited access, people can share more photos (or, on iOS 18, contacts) without going to Settings. Pass `onSelectMore` to `PermissionRow` or `PermissionPrompt` and they show **Select More…** while only selected items are shared. Without it they offer **Settings**. The pickers live in the framework products, so the UI module never links Photos or Contacts:
 
 ```swift
 import SwiftPermissionsContacts
@@ -161,6 +161,27 @@ PermissionRow(.contacts, store: permissions) { pickingContacts = true }
 ```
 
 Both return only the newly selected identifiers. The status stays `.limited`.
+
+### Why access is limited
+
+`.limited` covers four different grants. `Limitation` names them:
+
+| `Limitation` | Meaning | Reported by | What the UI offers once no prompt can appear |
+| --- | --- | --- | --- |
+| `.selectedItems` | Only the photos or contacts the user picked | `.photoLibrary`, `.contacts` (iOS 18) | **Select More…** with `onSelectMore`, else **Settings** |
+| `.whenInUse` | When-in-use location when Always was asked for | `.locationAlways`, location service sessions | **Settings** (after the one-time upgrade prompt) |
+| `.writeOnly` | Write-only calendar when full access was asked for | `.calendar` (iOS 17+) | **Settings** (after the upgrade prompt) |
+| `.partial` | Some of the requested items, e.g. some HealthKit share types | `.health`, and custom providers | nothing |
+
+In 3.x the status doesn't carry the reason yet; 4.0 changes the case to `limited(Limitation)`. `case .limited:` in a `switch` compiles in both. Get ready for the rest now:
+
+```swift
+if status.isLimited { … }                                     // not status == .limited
+StubPermissionProvider(.photoLibrary, status: .limited(.selectedItems))   // in 3.x, this builds .limited
+log.info("status: \(status)")                                  // description, not the deprecated rawValue
+```
+
+`Limitation.title` gives a short label for the reason ("Selected Items", "While Using", "Write Only", "Partial"); `PermissionStatus.title` stays "Limited".
 
 ### Onboarding flows
 
@@ -250,7 +271,7 @@ let permissions = PermissionManager(permissions: [
 ])
 ```
 
-Without the HealthKit capability the status is `.unavailable`. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
+Without the HealthKit capability the status is `.unavailable`. When some share types are allowed and others aren't, the status is `.limited` (`Limitation.partial`). HealthKit hides read authorization, so this only ever reflects the share types. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
 
 ### Precise or approximate location
 
@@ -389,7 +410,7 @@ Task {
     for await change in permissions.changes() {
         log.info("Permission changed", tag: .security, metadata: [
             "permission": .string(change.permission.rawValue),
-            "status": .string(change.status.rawValue)
+            "status": .string(change.status.description)
         ])
     }
 }
@@ -411,7 +432,7 @@ struct PermissionAnalytics: Sendable {
         let status = try await permissions.request(permission)
         if showsPrompt {
             track("permission_prompt_answered", [
-                "permission": permission.rawValue, "status": status.rawValue, "screen": screen
+                "permission": permission.rawValue, "status": status.description, "screen": screen
             ])
         }
         return status
@@ -426,7 +447,7 @@ struct PermissionAnalytics: Sendable {
             if let previous = known[change.permission], previous != change.status, previous != .notDetermined {
                 track("permission_changed", [
                     "permission": change.permission.rawValue,
-                    "from": previous.rawValue, "to": change.status.rawValue
+                    "from": previous.description, "to": change.status.description
                 ])
             }
             known[change.permission] = change.status

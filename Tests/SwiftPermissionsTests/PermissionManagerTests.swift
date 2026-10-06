@@ -49,12 +49,12 @@ final class PermissionManagerTests: XCTestCase {
     }
 
     func testRequestKeepsLimitedAccess() async throws {
-        let photos = StubPermissionProvider(.photoLibrary, onRequest: .status(.limited))
+        let photos = StubPermissionProvider(.photoLibrary, onRequest: .status(.limited(.selectedItems)))
         let manager = PermissionManager.stubbed(photos)
 
         let status = try await manager.request(.photoLibrary)
 
-        XCTAssertEqual(status, .limited)
+        XCTAssertEqual(status, .limited(.selectedItems))
         XCTAssertTrue(status.isGranted)
     }
 
@@ -246,7 +246,11 @@ final class PermissionManagerTests: XCTestCase {
     }
 
     func testAreAllGranted() async {
-        let manager = PermissionManager.stubbed([.camera: .authorized, .photoLibrary: .limited, .microphone: .denied])
+        let manager = PermissionManager.stubbed([
+            .camera: .authorized,
+            .photoLibrary: .limited(.selectedItems),
+            .microphone: .denied
+        ])
         let mediaGranted = await manager.areAllGranted([.camera, .photoLibrary])
         let allGranted = await manager.areAllGranted([.camera, .microphone])
         XCTAssertTrue(mediaGranted)
@@ -258,9 +262,9 @@ final class PermissionManagerTests: XCTestCase {
     func testUpgradablePartialStatusIsRequested() async throws {
         let location = StubPermissionProvider(
             .locationAlways,
-            status: .limited,
+            status: .limited(.whenInUse),
             onRequest: .grant,
-            upgradableFrom: [.limited]
+            upgradableFrom: [.limited(.whenInUse)]
         )
         let manager = PermissionManager.stubbed(location)
 
@@ -272,12 +276,12 @@ final class PermissionManagerTests: XCTestCase {
     }
 
     func testNonUpgradablePartialStatusIsNotRequested() async throws {
-        let photos = StubPermissionProvider(.photoLibrary, status: .limited, onRequest: .grant)
+        let photos = StubPermissionProvider(.photoLibrary, status: .limited(.selectedItems), onRequest: .grant)
         let manager = PermissionManager.stubbed(photos)
 
         let status = try await manager.request(.photoLibrary)
 
-        XCTAssertEqual(status, .limited)
+        XCTAssertEqual(status, .limited(.selectedItems))
         let requestCount = await photos.requestCount
         XCTAssertEqual(requestCount, 0)
     }

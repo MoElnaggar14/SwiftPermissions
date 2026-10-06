@@ -125,11 +125,11 @@ public final class UserDefaultsRequestHistory: PermissionRequestHistory, @unchec
     }
 
     public func lastResult(_ permission: Permission) -> PermissionStatus? {
-        defaults.string(forKey: resultKey(permission)).flatMap(PermissionStatus.init(rawValue:))
+        defaults.string(forKey: resultKey(permission)).flatMap(PermissionStatus.init(storageValue:))
     }
 
     public func recordResult(_ status: PermissionStatus, for permission: Permission) {
-        defaults.set(status.rawValue, forKey: resultKey(permission))
+        defaults.set(status.storageValue, forKey: resultKey(permission))
     }
 
     public func forget(_ permission: Permission) {

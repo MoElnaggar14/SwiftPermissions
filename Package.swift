@@ -41,7 +41,9 @@ let package = Package(
                 "SwiftPermissionsCore", "SwiftPermissionsTesting",
                 "SwiftPermissionsAlarms", "SwiftPermissionsBluetooth", "SwiftPermissionsCamera",
                 "SwiftPermissionsLocalNetwork", "SwiftPermissionsLocation", "SwiftPermissionsAccessibility",
-                "SwiftPermissionsInputMonitoring", "SwiftPermissionsScreenRecording"
+                "SwiftPermissionsInputMonitoring", "SwiftPermissionsScreenRecording",
+                "SwiftPermissionsCalendar", "SwiftPermissionsContacts", "SwiftPermissionsHealth",
+                "SwiftPermissionsPhotos"
             ]
         ),
         .testTarget(

@@ -64,7 +64,7 @@ struct LocationServiceSessionTests {
             authorization: .authorizedWhenInUse,
             wantsAlways: true
         )
-        #expect(status == .limited)
+        #expect(status == .limited(.whenInUse))
         // When In Use is all the when-in-use provider asks for.
         #expect(map({ $0.alwaysAuthorizationDenied = true }, authorization: .authorizedWhenInUse) == .authorized)
     }
@@ -72,6 +72,6 @@ struct LocationServiceSessionTests {
 
     @Test func alwaysDeniedOverridesAStaleAlwaysStatus() {
         let status = map({ $0.alwaysAuthorizationDenied = true }, authorization: .authorizedAlways, wantsAlways: true)
-        #expect(status == .limited)
+        #expect(status == .limited(.whenInUse))
     }
 }

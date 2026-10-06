@@ -21,6 +21,7 @@ public extension Permission {
         case .siri: "mic.circle.fill"
         case .biometrics: "faceid"
         case .health: "heart.fill"
+        case .alarms: "alarm.fill"
         default: "lock.shield.fill"
         }
     }

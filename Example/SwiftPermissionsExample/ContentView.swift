@@ -57,6 +57,9 @@ struct ContentView: View {
                 }
 
                 Section {
+                    NavigationLink("Onboarding flow") {
+                        OnboardingScreen(store: permissions)
+                    }
                     NavigationLink("All permissions") {
                         PermissionsList(
                             ExamplePermissions.all,
@@ -72,7 +75,7 @@ struct ContentView: View {
                 } header: {
                     Text("Onboarding and diagnostics")
                 } footer: {
-                    Text("Change a permission in Settings and come back: the list refreshes and the change log records it.")
+                    Text("The onboarding flow asks for notifications, location and photos in turn, skipping any already decided, and remembers where it stopped. Change a permission in Settings and come back: the list refreshes and the change log records it.")
                 }
             }
             .navigationTitle("SwiftPermissions")
@@ -320,6 +323,47 @@ private struct ChangeLog: View {
                 events.append("\(time)  \(change.permission.displayName): \(change.status)")
             }
         }
+    }
+}
+
+/// A multi-step onboarding built with PermissionFlow. Progress lives in `@AppStorage`,
+/// so leaving with Not Now on a required step and coming back continues from that step.
+private struct OnboardingScreen: View {
+    @ObservedObject var store: PermissionStore
+    @AppStorage("onboardingPermissions") private var progress = PermissionFlowProgress()
+    @State private var summary: [Permission: PermissionStatus]?
+
+    private let steps: [PermissionFlowStep] = [
+        .init(.notifications, title: "Stay in the loop", message: "Get a ping when your order ships."),
+        .init(.locationWhenInUse, title: "Find stores near you", message: "See what's in stock nearby."),
+        .init(.photoLibrary, title: "Share your receipts", message: "Attach photos of receipts.", optional: true)
+    ]
+
+    var body: some View {
+        Group {
+            if let summary {
+                let finished = PermissionFlowState(steps: steps, progress: progress).isFinished
+                List {
+                    Section(finished ? "Done" : "Paused") {
+                        ForEach(steps) { step in
+                            LabeledContent(step.permission.displayName, value: summary[step.permission]?.title ?? "Not asked")
+                        }
+                    }
+                    if !finished {
+                        Button("Continue") { self.summary = nil }
+                    }
+                    Button("Start over") {
+                        progress.reset()
+                        self.summary = nil
+                    }
+                }
+            } else {
+                PermissionFlow(store: store, steps: steps, progress: $progress) { statuses in
+                    summary = statuses
+                }
+            }
+        }
+        .navigationTitle("Onboarding")
     }
 }
 

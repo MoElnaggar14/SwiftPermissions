@@ -162,6 +162,39 @@ PermissionRow(.contacts, store: permissions) { pickingContacts = true }
 
 Both return only the newly selected identifiers. The status stays `.limited`.
 
+### Onboarding flows
+
+`PermissionFlow` asks for several permissions in turn, with a priming screen before each system prompt:
+
+```swift
+@AppStorage("onboardingPermissions") private var progress = PermissionFlowProgress()
+
+PermissionFlow(store: permissions, steps: [
+    .init(.notifications, title: "Stay in the loop", message: "Get a ping when your order ships."),
+    .init(.locationWhenInUse, title: "Find stores near you", message: "See what's in stock nearby."),
+    .init(.photoLibrary, title: "Share your receipts", message: "Attach photos of receipts.", optional: true),
+], progress: $progress) { statuses in   // [Permission: PermissionStatus]
+    showingOnboarding = false
+}
+```
+
+- A step is skipped without a screen when its permission can't show a prompt: already decided, restricted or unavailable.
+- Each screen offers the same actions as `PermissionPrompt`: **Continue**, **Not Now**, **Open Settings** and **Select More…** (pass `onSelectMore:`).
+- **Not Now** on an optional step moves on. On a required step it pauses the flow, and the flow starts from that step next time.
+- `PermissionFlowProgress` is a small `Codable` value (and a JSON `rawValue`, so `@AppStorage` takes it). Persist it and the flow continues where it stopped on the next launch. The package stores nothing. Call `progress.forget(.photoLibrary)` to ask for a deferred step again.
+- Removing the view cancels a request in flight; that step is shown again next time.
+
+The logic lives in `PermissionFlowState`, a plain value in Core with no UI. Drive it yourself for a UIKit or custom flow, or test it with stubs:
+
+```swift
+var flow = PermissionFlowState(steps: steps, progress: savedProgress)
+while let step = await flow.advance(using: permissions) {   // skips decided steps
+    // show your priming screen for step, then:
+    await flow.requestCurrent(using: permissions)           // or flow.notNow(step.permission, status: .notDetermined)
+}
+savedProgress = flow.progress
+```
+
 For an onboarding or privacy screen: `PermissionsList([.camera, .microphone, .notifications], store: permissions)`.
 
 Create one store per app and pass it down (or inject it with `.environmentObject`), so every screen shares one manager and concurrent requests show one prompt.

@@ -22,7 +22,7 @@ case .restricted, .unavailable, .notDetermined, .provisional:
 }
 ```
 
-Try it: open [`Example/SwiftPermissionsExample.xcodeproj`](Example) and run it on a simulator or your iPhone.
+Try it: open [`Example/SwiftPermissionsExample.xcodeproj`](Example) and run it on a simulator or your iPhone. To learn how it's designed, read the [article series](Articles).
 
 ## Why
 
@@ -41,7 +41,7 @@ Every framework has its own authorization enum, its own request API (async, call
 ## Installation
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.0.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.1.0")
 ```
 
 Add `SwiftPermissions` (or just `SwiftPermissionsCore` without SwiftUI), plus one product per framework you request:
@@ -100,6 +100,18 @@ struct ScannerScreen: View {
             ScannerView()
         }
     }
+}
+```
+
+To let people decline without spending the one-time system prompt, pass `onDefer`. The prompt then shows **Not Now** while the permission can still be requested. The package stores nothing; your app decides when to ask again:
+
+```swift
+@AppStorage("scannerDeferredAt") private var deferredAt: Double = 0
+
+PermissionGate(.camera, message: "Scan receipts with your camera.", store: permissions, onDefer: {
+    deferredAt = Date().timeIntervalSince1970   // e.g. ask again after a week
+}) {
+    ScannerView()
 }
 ```
 
@@ -168,6 +180,23 @@ let permissions = PermissionManager(permissions: [
 
 Without the HealthKit capability the status is `.unavailable`. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
 
+### Notifications that are allowed but silent
+
+A user can allow notifications and still never see them: alerts off, banners set to None, the lock screen and Notification Center hidden. `settings()` reads the details without prompting:
+
+```swift
+let settings = await NotificationsPermissionProvider().settings()
+
+if settings.isEffectivelySilent {
+    showTip("Turn on Banners for this app in Settings to see reminders.")
+}
+settings.timeSensitive      // .enabled / .disabled / .notSupported
+settings.scheduledDelivery  // delivered in the Scheduled Summary?
+settings.alertStyle         // .off / .banner / .alert
+```
+
+Fields a platform doesn't have read `.notSupported` (tvOS only has badges). Critical alerts need Apple's critical-alerts entitlement.
+
 ## Testing
 
 ```swift
@@ -227,6 +256,52 @@ Task {
     }
 }
 ```
+
+### Permission funnels in Amplitude, Google Analytics or Mixpanel
+
+Product teams usually want two numbers per permission: how often the prompt is answered with Allow, and how often people change their mind in Settings. Neither needs a dependency here; give this type your SDK's track call:
+
+```swift
+/// Sends permission funnel events to any analytics SDK.
+struct PermissionAnalytics: Sendable {
+    let permissions: any PermissionManaging
+    let track: @Sendable (_ event: String, _ properties: [String: String]) -> Void
+
+    /// Requests `permission`, recording the answer when a system prompt was actually shown.
+    func request(_ permission: Permission, from screen: String) async throws(PermissionError) -> PermissionStatus {
+        let showsPrompt = await permissions.canRequest(permission)
+        let status = try await permissions.request(permission)
+        if showsPrompt {
+            track("permission_prompt_answered", [
+                "permission": permission.rawValue, "status": status.rawValue, "screen": screen
+            ])
+        }
+        return status
+    }
+
+    /// Records changes made outside the app, e.g. in Settings. Run it for the app's lifetime.
+    func trackSettingsChanges() async {
+        var known: [Permission: PermissionStatus] = [:]
+        for await change in permissions.changes() {
+            // The first status seen is a baseline, and leaving .notDetermined is a prompt
+            // answer that request(_:from:) already tracked.
+            if let previous = known[change.permission], previous != change.status, previous != .notDetermined {
+                track("permission_changed", [
+                    "permission": change.permission.rawValue,
+                    "from": previous.rawValue, "to": change.status.rawValue
+                ])
+            }
+            known[change.permission] = change.status
+        }
+    }
+}
+
+let analytics = PermissionAnalytics(permissions: permissions) { event, properties in
+    Amplitude.instance.track(eventType: event, eventProperties: properties)
+}
+```
+
+Upgrade prompts (when-in-use → Always) show up as `permission_changed` too. Statuses aren't personal data, but analytics still needs whatever consent your privacy policy and App Store privacy details promise.
 
 ## Use with AI coding agents
 

@@ -30,7 +30,7 @@ Suggest the alternative when it fits; ask the user if unsure.
 ### 2. Add one product per framework
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.0.0"),
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.1.0"),
 
 .target(name: "App", dependencies: [
     .product(name: "SwiftPermissions", package: "SwiftPermissions"),        // Core + SwiftUI
@@ -124,12 +124,12 @@ if status.isGranted { startCapture() } else if status.requiresSettings { showSet
 - **Upgrades.** `request(_:)` also upgrades a partial grant: when-in-use → Always, write-only → full calendar, provisional → full notifications. A status alone can't tell you whether another prompt can appear (`.limited` location can be upgraded, `.limited` photos can't), so call `await permissions.canRequest(.x)` or `store.canRequest(.x)` before you show an "Allow" button.
 - Requests made while the app is in the background wait until it is active. Location reports `.unavailable` when Location Services are off system-wide.
 - Biometrics never prompts from `request(_:)`. Call `BiometricsPermissionProvider().authenticate(reason:)` when the user authenticates.
-- Live status: `for await status in permissions.updates(for: .camera)`, or `changes()` for every permission.
+- Live status: `for await status in permissions.updates(for: .camera)`, or `changes()` for every permission. For analytics funnels (Amplitude, GA4, Mixpanel), follow the README's "Permission funnels" recipe: record the answer around `request(_:)` when `canRequest(_:)` was true, and Settings changes from `changes()`. Don't add an analytics SDK to the package.
 
 ### 6. SwiftUI components (optional)
 
-- `PermissionGate(.camera, message: "…", store: store) { Content() }` shows the content once granted. Until then it shows a prompt with the right action (Continue, Open Settings, or nothing). A `fallback: { status in … }` closure replaces the built-in prompt.
-- `PermissionPrompt(.x, message:store:)` is the prompt card on its own. `PermissionRow(.x, store:)` is one row, with an "Allow More" button when an upgrade is possible.
+- `PermissionGate(.camera, message: "…", store: store) { Content() }` shows the content once granted. Until then it shows a prompt with the right action (Continue, Open Settings, or nothing). A `fallback: { status in … }` closure replaces the built-in prompt. Pass `onDefer: { … }` to add a **Not Now** button that doesn't spend the system prompt; the app decides when to ask again (for example, a date in `@AppStorage`).
+- `PermissionPrompt(.x, message:store:onDefer:)` is the prompt card on its own. `PermissionRow(.x, store:)` is one row, with an "Allow More" button when an upgrade is possible.
 - `PermissionsList([...], footer:store:)` is a list for onboarding or a privacy settings screen. "Allow All" asks only for permissions that are still undetermined.
 - `.refreshesPermissions(store)` makes your own view refresh when the user returns from Settings.
 

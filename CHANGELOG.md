@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.1.0] — 2026-10-06
+
+A Not Now option for pre-permission prompts, notification settings that explain "allowed but silent", and an article series on the design. Additive; no API changes.
+
+### Added
+- **Notification settings.** `NotificationsPermissionProvider().settings()` returns a `NotificationSettingsSnapshot` with alert, sound, badge, lock screen, Notification Center, critical alert, time-sensitive and scheduled-delivery settings, plus the alert style and previews. `isEffectivelySilent` answers "notifications are allowed, so why don't I see them?". Fields a platform lacks read `.notSupported`. ([#8](https://github.com/MoElnaggar14/SwiftPermissions/issues/8))
+- **Not Now.** `PermissionPrompt` and `PermissionGate` take an optional `onDefer` closure. When it's set, the prompt also shows a **Not Now** button while the permission can still be requested (including upgrades), so users can decline without spending the one-time system prompt. The package stores nothing; the app decides when to ask again. ([#12](https://github.com/MoElnaggar14/SwiftPermissions/issues/12))
+
+### Fixed
+- Release notes on GitHub link to `MIGRATION.md` and other repository files at the released tag, instead of relative links that didn't resolve.
+
+### Documentation
+
+- A README recipe for tracking permission funnels (prompt answers and Settings changes) in Amplitude, Google Analytics or Mixpanel, with no new dependency.
+- A four-part [article series](Articles) on the design: the domain model, the `PermissionManager` actor, modular products and App Review, and SwiftUI and testing.
 
 ## [3.0.0] — 2026-10-05
 

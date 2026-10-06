@@ -16,16 +16,12 @@ struct ContentView: View {
             List {
                 Section {
                     NavigationLink("Camera") {
-                        PermissionGate(.camera, message: "Scan documents with your camera.", store: permissions) {
-                            Label("Camera is ready", systemImage: "camera.viewfinder")
-                                .font(.title2)
-                        }
-                        .navigationTitle("Camera")
+                        CameraScreen(store: permissions)
                     }
                 } header: {
                     Text("Gate a feature")
                 } footer: {
-                    Text("PermissionGate shows its content once granted, and the right prompt until then.")
+                    Text("PermissionGate shows its content once granted, and the right prompt until then. Not Now goes back without spending the system prompt.")
                 }
 
                 Section {
@@ -146,6 +142,22 @@ private struct ChangeLog: View {
                 events.append("\(time)  \(change.permission.displayName): \(change.status)")
             }
         }
+    }
+}
+
+/// A gated feature whose prompt offers Not Now. Deferring goes back without
+/// spending the one-time system prompt; a real app might remember the date and
+/// ask again later.
+private struct CameraScreen: View {
+    @ObservedObject var store: PermissionStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        PermissionGate(.camera, message: "Scan documents with your camera.", store: store, onDefer: { dismiss() }) {
+            Label("Camera is ready", systemImage: "camera.viewfinder")
+                .font(.title2)
+        }
+        .navigationTitle("Camera")
     }
 }
 

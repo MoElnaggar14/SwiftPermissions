@@ -197,6 +197,37 @@ if await location.accuracy() == .reduced {   // nil until location is authorized
 
 The purpose key names an entry in the `NSLocationTemporaryUsageDescriptionDictionary` Info.plist dictionary, and the system shows that string as the reason. A missing entry throws `.missingUsageDescription` before anything is shown. Reduced accuracy is never reported as `.limited`, which for location means "when in use". tvOS has no temporary request.
 
+### Location service sessions (iOS 18)
+
+iOS 18 added `CLServiceSession`, which tells Core Location that the app needs location at a given level. While a session is alive, Core Location shows the prompt when the app is in use and the user hasn't decided, and reports diagnostics that explain why location isn't arriving. Apps that set `NSLocationRequireExplicitServiceSession` in Info.plist get location updates only while they hold one. `startServiceSession(fullAccuracyPurposeKey:)` starts a session and hands it to you:
+
+```swift
+@available(iOS 18.0, *)
+@MainActor final class MapModel {
+    private var session: LocationServiceSession?
+
+    func start() async throws {
+        let session = try await LocationPermissionProvider.whenInUse.startServiceSession()
+        self.session = session                       // keep it while the map needs location
+        for await update in session.updates {
+            show(update.status)                      // .denied, .restricted, .unavailable, ...
+            if update.diagnostic.insufficientlyInUse { /* ask again once the app is in use */ }
+        }
+    }
+
+    func stop() {
+        session?.invalidate()                        // or let the model go
+        session = nil
+    }
+}
+```
+
+`request(_:)` through `CLLocationManager` stays the default; the session is opt-in. Use `LocationPermissionProvider.always` for an Always session, and pass `fullAccuracyPurposeKey` to ask for precise location as well. Missing usage descriptions or purpose strings throw `.missingUsageDescription` before anything is shown.
+
+**You own the session.** It lasts until you call `invalidate()` or release the `LocationServiceSession`, so keep it in the object whose lifetime matches the feature (a screen's model, a workout), not in a local that goes out of scope. The package never keeps one alive for you: a hidden session would tell Core Location that the app still needs location after the feature has gone. `updates` has one consumer and finishes when the session ends.
+
+Each update carries the `PermissionStatus` and the raw `LocationSessionDiagnostic`. Restricted maps to `.restricted`, denied to `.denied`, and Location Services off to `.unavailable` (or `.denied` once the user has decided). Otherwise the status is the one `status()` reports, so a prompt in progress or an app that isn't in use enough reads `.notDetermined`. When an Always session gets When In Use, the status is `.limited`. Reduced accuracy is never a status; check `diagnostic.fullAccuracyDenied`. Sessions are available on iOS 18, Mac Catalyst 18, tvOS 18, watchOS 11 and visionOS 2, not on macOS.
+
 ### Notifications that are allowed but silent
 
 A user can allow notifications and still never see them: alerts off, banners set to None, the lock screen and Notification Center hidden. `settings()` reads the details without prompting:

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Location service sessions.** On iOS 18, watchOS 11, tvOS 18 and visionOS 2, `LocationPermissionProvider.startServiceSession(fullAccuracyPurposeKey:)` starts a `CLServiceSession` at the provider's level and returns a `LocationServiceSession` that the app owns: the session lasts until `invalidate()` or until the handle is released. Its `updates` stream maps each `CLServiceSession.Diagnostic` onto `PermissionStatus` and includes the diagnostic as a `LocationSessionDiagnostic`. `request(_:)` through `CLLocationManager` stays the default. The example app shows a session. ([#9](https://github.com/MoElnaggar14/SwiftPermissions/issues/9))
+
 ## [3.2.0] — 2026-10-06
 
 Precise vs approximate location and the iOS 26 AlarmKit permission. Additive; no API changes.

@@ -57,7 +57,7 @@ public extension PermissionGate where Fallback == PermissionPrompt {
     /// A gate whose fallback is a ``PermissionPrompt`` with an optional explanation.
     ///
     /// - Parameter onDefer: Offers **Not Now** on the prompt and is called when it's tapped.
-    ///   See ``PermissionPrompt/init(_:message:store:onDefer:)``.
+    ///   See ``PermissionPrompt/init(_:message:store:onDefer:onSelectMore:)``.
     init(
         _ permission: Permission,
         message: String? = nil,

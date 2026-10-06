@@ -138,6 +138,30 @@ PermissionGate(.microphone, store: permissions) {
 }
 ```
 
+### Limited photos and contacts
+
+With limited access, people can share more photos (or, on iOS 18, contacts) without going to Settings. Pass `onSelectMore` to `PermissionRow` or `PermissionPrompt` and they show **Select More…** while the status is `.limited`. The pickers live in the framework products, so the UI module never links Photos or Contacts:
+
+```swift
+import SwiftPermissionsContacts
+import SwiftPermissionsPhotos
+
+// Photos (iOS and Mac Catalyst): a UIKit picker, so present it from a view controller.
+PermissionRow(.photoLibrary, store: permissions) {
+    Task { await PhotoLibraryPermissionProvider.readWrite.presentLimitedLibraryPicker(from: controller) }
+}
+
+// Contacts (iOS 18): a SwiftUI modifier.
+@State private var pickingContacts = false
+
+PermissionRow(.contacts, store: permissions) { pickingContacts = true }
+    .limitedContactsPicker(isPresented: $pickingContacts) { identifiers in
+        // newly shared contact identifiers
+    }
+```
+
+Both return only the newly selected identifiers. The status stays `.limited`.
+
 For an onboarding or privacy screen: `PermissionsList([.camera, .microphone, .notifications], store: permissions)`.
 
 Create one store per app and pass it down (or inject it with `.environmentObject`), so every screen shares one manager and concurrent requests show one prompt.

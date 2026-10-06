@@ -40,6 +40,33 @@ final class PromptActionsTests: XCTestCase {
         XCTAssertFalse(actions.offersDefer)
     }
 
+    func testLimitedWithPickerOffersSelectMoreInsteadOfSettings() {
+        let actions = PromptActions(
+            status: .limited, canRequest: false, hasSettingsURL: true, canDefer: true, canSelectMore: true
+        )
+
+        XCTAssertEqual(actions.primary, .selectMore)
+        XCTAssertFalse(actions.offersDefer)
+    }
+
+    func testUpgradeWinsOverSelectMore() {
+        let actions = PromptActions(
+            status: .limited, canRequest: true, hasSettingsURL: true, canDefer: false, canSelectMore: true
+        )
+
+        XCTAssertEqual(actions.primary, .request)
+    }
+
+    func testSelectMoreOnlyWhenLimited() {
+        for status in [PermissionStatus.denied, .authorized, .restricted] {
+            let actions = PromptActions(
+                status: status, canRequest: false, hasSettingsURL: true, canDefer: false, canSelectMore: true
+            )
+
+            XCTAssertNotEqual(actions.primary, .selectMore, "\(status)")
+        }
+    }
+
     func testNoSettingsURLMeansNoSettingsButton() {
         // watchOS has no Settings URL.
         let actions = PromptActions(status: .denied, canRequest: false, hasSettingsURL: false, canDefer: true)

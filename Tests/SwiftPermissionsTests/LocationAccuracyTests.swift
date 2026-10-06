@@ -3,9 +3,16 @@ import SwiftPermissionsCore
 @testable import SwiftPermissionsLocation
 import Testing
 
+// `authorizedWhenInUse` is unavailable on macOS, which only has Always.
+#if os(macOS)
+private let authorizedStatuses: [CLAuthorizationStatus] = [.authorizedAlways]
+#else
+private let authorizedStatuses: [CLAuthorizationStatus] = [.authorizedAlways, .authorizedWhenInUse]
+#endif
+
 @Suite("Location accuracy")
 struct LocationAccuracyTests {
-    @Test(arguments: [CLAuthorizationStatus.authorizedAlways, .authorizedWhenInUse])
+    @Test(arguments: authorizedStatuses)
     func authorizedStatusesReportTheGrantedAccuracy(status: CLAuthorizationStatus) {
         #expect(LocationPermissionProvider.map(status, .fullAccuracy) == .full)
         #expect(LocationPermissionProvider.map(status, .reducedAccuracy) == .reduced)

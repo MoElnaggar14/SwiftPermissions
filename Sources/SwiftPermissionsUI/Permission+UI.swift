@@ -22,6 +22,7 @@ public extension Permission {
         case .biometrics: "faceid"
         case .health: "heart.fill"
         case .alarms: "alarm.fill"
+        case .localNetwork: "network"
         default: "lock.shield.fill"
         }
     }

@@ -85,8 +85,11 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 | `.biometrics` | `SwiftPermissionsBiometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS) |
 | `.health(share:read:)` | `SwiftPermissionsHealth` | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` + HealthKit capability |
 | `.alarms` | `SwiftPermissionsAlarms` | ✓ (26+) | | | | `NSAlarmKitUsageDescription` |
+| `.localNetwork` | `SwiftPermissionsLocalNetwork` | ✓ | ✓ (15+) | | | `NSLocalNetworkUsageDescription` + `_swiftperms._tcp` in `NSBonjourServices` |
 
 `.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
+
+`.localNetwork` has no system API to read or request it. `request` runs a short Bonjour probe (advertise and browse `_swiftperms._tcp`), which shows the prompt the first time: finding itself means `.authorized`, a policy-denied error after the prompt closed means `.denied`, and no answer within the timeout leaves `.notDetermined`. `status` is `.notDetermined` until a request has run, then the last result; after a relaunch, request again (no prompt if the user already answered). To probe a service type your app already declares, register `.localNetwork(serviceType: "_myapp._tcp")`. On tvOS and macOS before 15 nothing gates the local network, so it reads `.authorized`.
 
 Some features need no permission at all, so don't add a product for them: `PhotosPicker` / `PHPickerViewController` (picking photos), `LocationButton` / `CLLocationButton` (one-time location), and `ContactAccessButton` on iOS 18.
 

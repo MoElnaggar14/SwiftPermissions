@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Local network.** A `SwiftPermissionsLocalNetwork` product with `.localNetwork` and `.localNetwork(serviceType:)` registrations. iOS has no API for this permission, so `request()` runs a short Bonjour probe (`NWListener` + `NWBrowser`) that shows the prompt and maps the outcome: finding its own service is `.authorized`, `PolicyDenied` after the prompt closed is `.denied`, and a timeout leaves `.notDetermined`. `status()` is `.notDetermined` until a request has run, then the last result. It needs `NSLocalNetworkUsageDescription` and the probe's service type (`_swiftperms._tcp` by default) in `NSBonjourServices`. On tvOS and macOS before 15 the status is `.authorized`; on watchOS `.unavailable`. ([#4](https://github.com/MoElnaggar14/SwiftPermissions/issues/4))
+
+### Changed
+- `InfoPlist(bundle:)` also reads arrays of strings, such as `NSBonjourServices`, as their entries joined by newlines, so `requiredUsageDescriptionKeys` can name them.
+
 ## [3.2.0] — 2026-10-06
 
 Precise vs approximate location and the iOS 26 AlarmKit permission. Additive; no API changes.

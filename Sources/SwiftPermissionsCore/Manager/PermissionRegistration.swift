@@ -62,6 +62,7 @@ extension Permission {
         case .biometrics: ("SwiftPermissionsBiometrics", ".biometrics")
         case .health: ("SwiftPermissionsHealth", ".health(share:read:)")
         case .alarms: ("SwiftPermissionsAlarms", ".alarms")
+        case .localNetwork: ("SwiftPermissionsLocalNetwork", ".localNetwork")
         default: nil
         }
     }

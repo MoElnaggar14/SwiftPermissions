@@ -41,6 +41,7 @@ PERMISSIONS = {
     "biometrics": ("SwiftPermissionsBiometrics", ["NSFaceIDUsageDescription"], []),
     "health": ("SwiftPermissionsHealth", ["NSHealthShareUsageDescription"], []),
     "alarms": ("SwiftPermissionsAlarms", ["NSAlarmKitUsageDescription"], []),
+    "localNetwork": ("SwiftPermissionsLocalNetwork", ["NSLocalNetworkUsageDescription", "NSBonjourServices"], []),
 }
 # Products that also contain or re-export Core.
 CORE_PRODUCTS = {"SwiftPermissions", "SwiftPermissionsCore", "SwiftPermissionsUI"}
@@ -100,6 +101,9 @@ def declared_keys(root):
             continue
         if isinstance(data, dict):
             keys.update(k for k, v in data.items() if isinstance(v, str) and v.strip())
+            # NSBonjourServices is an array of service types.
+            keys.update(k for k, v in data.items()
+                        if isinstance(v, list) and any(isinstance(i, str) and i.strip() for i in v))
     for path in walk(root, {".pbxproj", ".xcconfig"}):
         text = path.read_text(errors="ignore")
         for key, value in re.findall(r"INFOPLIST_KEY_(NS\w+UsageDescription)\s*=\s*([^;\n]*)", text):

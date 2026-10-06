@@ -180,6 +180,23 @@ let permissions = PermissionManager(permissions: [
 
 Without the HealthKit capability the status is `.unavailable`. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
 
+### Notifications that are allowed but silent
+
+A user can allow notifications and still never see them: alerts off, banners set to None, the lock screen and Notification Center hidden. `settings()` reads the details without prompting:
+
+```swift
+let settings = await NotificationsPermissionProvider().settings()
+
+if settings.isEffectivelySilent {
+    showTip("Turn on Banners for this app in Settings to see reminders.")
+}
+settings.timeSensitive      // .enabled / .disabled / .notSupported
+settings.scheduledDelivery  // delivered in the Scheduled Summary?
+settings.alertStyle         // .off / .banner / .alert
+```
+
+Fields a platform doesn't have read `.notSupported` (tvOS only has badges). Critical alerts need Apple's critical-alerts entitlement.
+
 ## Testing
 
 ```swift

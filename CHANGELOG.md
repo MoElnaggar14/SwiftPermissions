@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Notification settings.** `NotificationsPermissionProvider().settings()` returns a `NotificationSettingsSnapshot` with alert, sound, badge, lock screen, Notification Center, critical alert, time-sensitive and scheduled-delivery settings, plus the alert style and previews. `isEffectivelySilent` answers "notifications are allowed, so why don't I see them?". Fields a platform lacks read `.notSupported`. ([#8](https://github.com/MoElnaggar14/SwiftPermissions/issues/8))
 - **Not Now.** `PermissionPrompt` and `PermissionGate` take an optional `onDefer` closure. When it's set, the prompt also shows a **Not Now** button while the permission can still be requested (including upgrades), so users can decline without spending the one-time system prompt. The package stores nothing; the app decides when to ask again. ([#12](https://github.com/MoElnaggar14/SwiftPermissions/issues/12))
 
 ### Documentation

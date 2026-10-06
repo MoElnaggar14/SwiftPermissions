@@ -8,7 +8,7 @@ import XCTest
 final class DomainTests: XCTestCase {
     func testGrantedStatuses() {
         let granted = PermissionStatus.allCases.filter(\.isGranted)
-        XCTAssertEqual(Set(granted), [.authorized, .limited, .provisional])
+        XCTAssertEqual(Set(granted), [.authorized, .limited(.partial), .provisional])
     }
 
     func testOnlyNotDeterminedCanBeRequested() {
@@ -30,7 +30,7 @@ final class DomainTests: XCTestCase {
     }
 
     func testCodableRoundTrip() throws {
-        let original: [Permission: PermissionStatus] = [.camera: .limited, Permission("custom"): .denied]
+        let original: [Permission: PermissionStatus] = [.camera: .limited(.partial), Permission("custom"): .denied]
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode([Permission: PermissionStatus].self, from: data)
         XCTAssertEqual(decoded, original)
@@ -42,7 +42,9 @@ final class DomainTests: XCTestCase {
     }
 
     func testBatchResultAllGranted() {
-        XCTAssertTrue(PermissionBatchResult(statuses: [.camera: .authorized, .photoLibrary: .limited]).allGranted)
+        XCTAssertTrue(
+            PermissionBatchResult(statuses: [.camera: .authorized, .photoLibrary: .limited(.selectedItems)]).allGranted
+        )
         XCTAssertFalse(PermissionBatchResult(statuses: [.camera: .authorized, .microphone: .denied]).allGranted)
         XCTAssertFalse(
             PermissionBatchResult(

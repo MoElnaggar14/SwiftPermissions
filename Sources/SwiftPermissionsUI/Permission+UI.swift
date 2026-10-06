@@ -32,7 +32,8 @@ public extension Permission {
 }
 
 public extension PermissionStatus {
-    /// A short English label, e.g. "Allowed".
+    /// A short English label, e.g. "Allowed". `.limited` reads "Limited" whatever the
+    /// reason; ``Limitation/title`` names the reason.
     var title: String {
         switch self {
         case .notDetermined: "Not Asked"
@@ -63,6 +64,18 @@ public extension PermissionStatus {
         case .restricted: .orange
         case .authorized: .green
         case .limited, .provisional: .yellow
+        }
+    }
+}
+
+public extension Limitation {
+    /// A short English label for the reason access is limited, e.g. "Selected Items".
+    var title: String {
+        switch self {
+        case .selectedItems: "Selected Items"
+        case .whenInUse: "While Using"
+        case .writeOnly: "Write Only"
+        case .partial: "Partial"
         }
     }
 }

@@ -28,8 +28,13 @@ public struct ContactsPermissionProvider: PermissionProvider {
         case .authorized: return .authorized
         default:
             // `.limited` (iOS 18) — compared by raw value so older SDK deployment targets compile.
-            return status.rawValue == 4 ? .limited : .denied
+            return status.rawValue == 4 ? .limited(.selectedItems) : .denied
         }
+    }
+
+    /// Why ``map(_:)`` reports `.limited`, or `nil` when it doesn't. 4.0 puts it in the status.
+    static func mapLimitation(_ status: CNAuthorizationStatus) -> Limitation? {
+        map(status).isLimited ? .selectedItems : nil
     }
 }
 

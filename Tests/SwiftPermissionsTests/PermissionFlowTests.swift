@@ -35,7 +35,7 @@ struct PermissionFlowStateTests {
         #expect(flow.steps == steps)
     }
 
-    @Test(arguments: [PermissionStatus.authorized, .denied, .restricted, .limited, .provisional])
+    @Test(arguments: [PermissionStatus.authorized, .denied, .restricted, .limited(.partial), .provisional])
     func decidedStepIsSkipped(status: PermissionStatus) {
         var flow = PermissionFlowState(steps: steps)
 
@@ -66,7 +66,7 @@ struct PermissionFlowStateTests {
         // When-in-use location asked for Always: still a prompt to show.
         var flow = PermissionFlowState(steps: [.init(.locationAlways, title: "Always")])
 
-        let skipped = flow.skipIfDecided(.locationAlways, status: .limited, canRequest: true)
+        let skipped = flow.skipIfDecided(.locationAlways, status: .limited(.whenInUse), canRequest: true)
         #expect(!skipped)
     }
 

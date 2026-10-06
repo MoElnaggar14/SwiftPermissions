@@ -9,6 +9,9 @@ import Foundation
 /// ```swift
 /// @AppStorage("onboardingPermissions") private var progress = PermissionFlowProgress()
 /// ```
+///
+/// Progress saved by 4.0, where a limited status is stored with its reason
+/// (`"limited.selectedItems"`), reads back with that status as ``PermissionStatus/limited``.
 public struct PermissionFlowProgress: Sendable, Equatable, Codable, RawRepresentable {
     /// The outcome of each finished step.
     public private(set) var outcomes: [Permission: PermissionFlowStepOutcome]

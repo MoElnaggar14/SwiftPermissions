@@ -28,8 +28,12 @@ final class PermissionStoreTests: XCTestCase {
     }
 
     func testUpgradableStatusIsRequestable() async {
-        let location = StubPermissionProvider(.locationAlways, status: .limited, upgradableFrom: [.limited])
-        let photos = StubPermissionProvider(.photoLibrary, status: .limited)
+        let location = StubPermissionProvider(
+            .locationAlways,
+            status: .limited(.whenInUse),
+            upgradableFrom: [.limited(.whenInUse)]
+        )
+        let photos = StubPermissionProvider(.photoLibrary, status: .limited(.selectedItems))
         let store = PermissionStore(manager: PermissionManager.stubbed(location, photos))
 
         await store.load([.locationAlways, .photoLibrary])

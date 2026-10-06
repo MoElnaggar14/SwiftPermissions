@@ -9,7 +9,9 @@ import SwiftPermissionsCore
 ///
 /// - ``PermissionStatus/notDetermined`` while HealthKit would still show its sheet.
 /// - The aggregated sharing (write) status when you write types: ``PermissionStatus/authorized``
-///   if all are allowed, ``PermissionStatus/denied`` if none, ``PermissionStatus/limited`` otherwise.
+///   if all are allowed, ``PermissionStatus/denied`` if none, ``PermissionStatus/limited`` otherwise
+///   (``Limitation/partial``). Because read authorization is hidden, `.limited` only ever
+///   reflects the share types, never the read types.
 /// - ``PermissionStatus/authorized`` once the sheet has been shown, for read-only setups.
 ///   Your queries may still return no data if the user declined.
 ///
@@ -69,8 +71,14 @@ public struct HealthPermissionProvider: PermissionProvider, @unchecked Sendable 
         switch authorized {
         case statuses.count: return .authorized
         case 0: return .denied
-        default: return .limited
+        default: return .limited(.partial)
         }
+    }
+
+    /// Why ``aggregate(_:)`` reports `.limited`, or `nil` when it doesn't. Share types
+    /// only: HealthKit hides read authorization. 4.0 puts it in the status.
+    static func aggregateLimitation(_ statuses: [HKAuthorizationStatus]) -> Limitation? {
+        aggregate(statuses).isLimited ? .partial : nil
     }
 }
 

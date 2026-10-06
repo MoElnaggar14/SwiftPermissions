@@ -56,6 +56,14 @@ let status = try await permissions.request(.camera)
 - ``InMemoryRequestHistory``
 - ``UserDefaultsRequestHistory``
 
+### Onboarding flows
+
+- ``PermissionFlowState``
+- ``PermissionFlowStep``
+- ``PermissionFlowStepOutcome``
+- ``PermissionFlowProgress``
+- ``PermissionFlowResult``
+
 ### Results
 
 - ``PermissionBatchResult``

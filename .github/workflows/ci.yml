@@ -161,7 +161,7 @@ jobs:
         # App Store review asks for the usage description of every permission whose
         # request API is in the binary, so those frameworks live in opt-in products.
         run: |
-          FRAMEWORKS='AVFoundation|Photos|Contacts|EventKit|CoreLocation|CoreBluetooth|CoreMotion|Speech|MediaPlayer|Intents|AppTrackingTransparency|LocalAuthentication|HealthKit|AlarmKit'
+          FRAMEWORKS='AVFoundation|Photos|Contacts|EventKit|CoreLocation|CoreBluetooth|CoreMotion|Speech|MediaPlayer|Intents|AppTrackingTransparency|LocalAuthentication|HealthKit|AlarmKit|IOKit'
           if grep -rnE "^[[:space:]]*(@preconcurrency[[:space:]]+)?import[[:space:]]+($FRAMEWORKS)\b" \
               Sources/SwiftPermissionsCore Sources/SwiftPermissionsUI Sources/SwiftPermissions; then
             echo "::error::Move this code into its framework product (Sources/SwiftPermissions<Framework>)."

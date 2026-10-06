@@ -67,7 +67,10 @@ public enum AppSettings {
             .locationAlways: "Privacy_LocationServices",
             .speechRecognition: "Privacy_SpeechRecognition",
             .bluetooth: "Privacy_Bluetooth",
-            .tracking: "Privacy_Advertising"
+            .tracking: "Privacy_Advertising",
+            .screenRecording: "Privacy_ScreenCapture",
+            .accessibility: "Privacy_Accessibility",
+            .inputMonitoring: "Privacy_ListenEvent"
         ]
         return anchors[permission]
     }

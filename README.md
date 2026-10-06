@@ -85,8 +85,15 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 | `.biometrics` | `SwiftPermissionsBiometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS) |
 | `.health(share:read:)` | `SwiftPermissionsHealth` | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` + HealthKit capability |
 | `.alarms` | `SwiftPermissionsAlarms` | ✓ (26+) | | | | `NSAlarmKitUsageDescription` |
+| `.screenRecording` | `SwiftPermissionsScreenRecording` | | ✓ | | | none |
+| `.accessibility` | `SwiftPermissionsAccessibility` | | ✓ | | | none |
+| `.inputMonitoring` | `SwiftPermissionsInputMonitoring` | | ✓ | | | none |
+
+`.bluetooth` in an AccessorySetupKit app: on iOS 18+, an app whose Info.plist lists `Bluetooth` under `NSAccessorySetupKitSupports` never sees the Bluetooth prompt. The user grants access to each accessory in the AccessorySetupKit picker, and `CBManager.authorization` stays `.notDetermined` before and after pairing. In such an app `.bluetooth` reports `.unavailable` instead of a `.notDetermined` that no prompt can resolve, and `request(.bluetooth)` shows nothing and returns at once. Use `ASAccessorySession.accessories` to see which accessories the app can reach. A real `.denied` or `.restricted` is still reported. Keep `NSBluetoothAlwaysUsageDescription` if you also support iOS 17, where the normal prompt still appears.
 
 `.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
+
+`.screenRecording`, `.accessibility` and `.inputMonitoring` are macOS only (not Mac Catalyst); elsewhere their products are empty. They have no usage description: a request shows a system alert that sends the user to System Settings, and `AppSettings.open(for:)` opens the matching Privacy & Security pane. macOS only says whether Screen Recording and Accessibility are granted, so they read `.notDetermined` until the provider has asked in the current launch, and `.denied` after that. Input Monitoring reports all three states.
 
 Some features need no permission at all, so don't add a product for them: `PhotosPicker` / `PHPickerViewController` (picking photos), `LocationButton` / `CLLocationButton` (one-time location), and `ContactAccessButton` on iOS 18.
 
@@ -127,6 +134,30 @@ PermissionGate(.microphone, store: permissions) {
     MicrophoneOnboarding(status: status) { Task { await permissions.request(.microphone) } }
 }
 ```
+
+### Limited photos and contacts
+
+With limited access, people can share more photos (or, on iOS 18, contacts) without going to Settings. Pass `onSelectMore` to `PermissionRow` or `PermissionPrompt` and they show **Select More…** while the status is `.limited`. The pickers live in the framework products, so the UI module never links Photos or Contacts:
+
+```swift
+import SwiftPermissionsContacts
+import SwiftPermissionsPhotos
+
+// Photos (iOS and Mac Catalyst): a UIKit picker, so present it from a view controller.
+PermissionRow(.photoLibrary, store: permissions) {
+    Task { await PhotoLibraryPermissionProvider.readWrite.presentLimitedLibraryPicker(from: controller) }
+}
+
+// Contacts (iOS 18): a SwiftUI modifier.
+@State private var pickingContacts = false
+
+PermissionRow(.contacts, store: permissions) { pickingContacts = true }
+    .limitedContactsPicker(isPresented: $pickingContacts) { identifiers in
+        // newly shared contact identifiers
+    }
+```
+
+Both return only the newly selected identifiers. The status stays `.limited`.
 
 For an onboarding or privacy screen: `PermissionsList([.camera, .microphone, .notifications], store: permissions)`.
 

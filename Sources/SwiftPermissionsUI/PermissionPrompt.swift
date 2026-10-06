@@ -19,10 +19,15 @@ import SwiftUI
 ///     deferredAt = Date().timeIntervalSince1970   // ask again in a week, say
 /// }
 /// ```
+///
+/// Pass `onSelectMore` for permissions with a limited-access picker (photos, contacts):
+/// while access is ``PermissionStatus/limited`` the prompt offers **Select More…** instead
+/// of **Open Settings**. The framework products provide the pickers.
 public struct PermissionPrompt: View {
     private let permission: Permission
     private let message: String?
     private let onDefer: (() -> Void)?
+    private let onSelectMore: (() -> Void)?
     @ObservedObject private var store: PermissionStore
     // openURL rather than AppSettings.open, so the view also compiles in app extensions.
     @Environment(\.openURL) private var openURL
@@ -31,16 +36,21 @@ public struct PermissionPrompt: View {
     ///   - message: Why your app needs this permission. Shown while it can still be requested.
     ///   - onDefer: Called when the user taps **Not Now**. When `nil`, there's no such button.
     ///     The button only appears while a prompt can still be shown.
+    ///   - onSelectMore: Called when the user taps **Select More…**, shown instead of
+    ///     **Open Settings** while access is limited. Present the system's limited-access
+    ///     picker from it. When `nil`, limited access offers **Open Settings**.
     public init(
         _ permission: Permission,
         message: String? = nil,
         store: PermissionStore,
-        onDefer: (() -> Void)? = nil
+        onDefer: (() -> Void)? = nil,
+        onSelectMore: (() -> Void)? = nil
     ) {
         self.permission = permission
         self.message = message
         self.store = store
         self.onDefer = onDefer
+        self.onSelectMore = onSelectMore
     }
 
     private var status: PermissionStatus { store[permission] ?? .notDetermined }
@@ -85,7 +95,8 @@ public struct PermissionPrompt: View {
             status: status,
             canRequest: store.canRequest(permission),
             hasSettingsURL: AppSettings.url(for: permission) != nil,
-            canDefer: onDefer != nil
+            canDefer: onDefer != nil,
+            canSelectMore: onSelectMore != nil
         )
     }
 
@@ -98,6 +109,11 @@ public struct PermissionPrompt: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(store.isPending(permission))
+        case .selectMore:
+            if let onSelectMore {
+                Button("Select More…", action: onSelectMore)
+                    .buttonStyle(.bordered)
+            }
         case .openSettings:
             if let settings = AppSettings.url(for: permission) {
                 Button("Open Settings") {
@@ -121,6 +137,8 @@ struct PromptActions: Equatable {
     enum Primary: Equatable {
         /// Show the system prompt (or the upgrade prompt).
         case request
+        /// Access is limited: show the app's limited-access picker.
+        case selectMore
         /// Only Settings can change the status.
         case openSettings
         /// Nothing the user can do: restricted, unavailable, or already granted.
@@ -131,9 +149,17 @@ struct PromptActions: Equatable {
     /// Whether to offer **Not Now** next to the primary action.
     let offersDefer: Bool
 
-    init(status: PermissionStatus, canRequest: Bool, hasSettingsURL: Bool, canDefer: Bool) {
+    init(
+        status: PermissionStatus,
+        canRequest: Bool,
+        hasSettingsURL: Bool,
+        canDefer: Bool,
+        canSelectMore: Bool = false
+    ) {
         if canRequest {
             primary = .request
+        } else if status == .limited && canSelectMore {
+            primary = .selectMore
         } else if (status.requiresSettings || status == .limited) && hasSettingsURL {
             primary = .openSettings
         } else {

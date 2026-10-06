@@ -1,7 +1,10 @@
 import SwiftPermissions
 import SwiftPermissionsBiometrics
+import SwiftPermissionsContacts
 import SwiftPermissionsLocation
+import SwiftPermissionsPhotos
 import SwiftUI
+import UIKit
 
 /// Tours the ways to use SwiftPermissions in SwiftUI: gating a feature, upgrades,
 /// a custom multi-permission flow, an onboarding list and a live change log.
@@ -34,6 +37,15 @@ struct ContentView: View {
                     Text("Upgrades")
                 } footer: {
                     Text("Allow location while using first, then Always: the row offers Allow More while an upgrade prompt can still appear. Turn off Precise when allowing location to see Ask Once.")
+                }
+
+                Section {
+                    LimitedPhotosRow(store: permissions)
+                    LimitedContactsRow(store: permissions)
+                } header: {
+                    Text("Limited access")
+                } footer: {
+                    Text("Choose Limit Access when allowing Photos or Contacts: the row then offers Select More… to share more items without leaving the app.")
                 }
 
                 Section("Custom flows") {
@@ -140,6 +152,66 @@ private struct PreciseLocationRow: View {
         .task(id: [store[.locationWhenInUse], store[.locationAlways]]) {
             accuracy = await LocationPermissionProvider.whenInUse.accuracy()
         }
+    }
+}
+
+/// With limited photo access, Select More… shows the system picker so people can
+/// share more photos without a trip to Settings.
+private struct LimitedPhotosRow: View {
+    @ObservedObject var store: PermissionStore
+    @State private var outcome = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            PermissionRow(.photoLibrary, store: store) {
+                guard let controller = UIApplication.shared.topViewController else { return }
+                Task {
+                    let added = await PhotoLibraryPermissionProvider.readWrite
+                        .presentLimitedLibraryPicker(from: controller)
+                    outcome = "Added \(added.count) photo(s)"
+                }
+            }
+            if !outcome.isEmpty {
+                Text(outcome).font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// Limited contacts access (iOS 18) has its own picker, presented as a SwiftUI modifier.
+private struct LimitedContactsRow: View {
+    @ObservedObject var store: PermissionStore
+    @State private var picking = false
+    @State private var outcome = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            if #available(iOS 18, *) {
+                PermissionRow(.contacts, store: store) { picking = true }
+                    .limitedContactsPicker(isPresented: $picking) { added in
+                        outcome = "Added \(added.count) contact(s)"
+                    }
+            } else {
+                PermissionRow(.contacts, store: store)
+            }
+            if !outcome.isEmpty {
+                Text(outcome).font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private extension UIApplication {
+    /// The view controller to present UIKit pickers from.
+    var topViewController: UIViewController? {
+        let scene = connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        var top = scene?.keyWindow?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
     }
 }
 

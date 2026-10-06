@@ -55,14 +55,18 @@ public struct PermissionGate<Granted: View, Fallback: View>: View {
 
 public extension PermissionGate where Fallback == PermissionPrompt {
     /// A gate whose fallback is a ``PermissionPrompt`` with an optional explanation.
+    ///
+    /// - Parameter onDefer: Offers **Not Now** on the prompt and is called when it's tapped.
+    ///   See ``PermissionPrompt/init(_:message:store:onDefer:)``.
     init(
         _ permission: Permission,
         message: String? = nil,
         store: PermissionStore,
+        onDefer: (() -> Void)? = nil,
         @ViewBuilder granted: @escaping () -> Granted
     ) {
         self.init(permission, store: store, granted: granted) { _ in
-            PermissionPrompt(permission, message: message, store: store)
+            PermissionPrompt(permission, message: message, store: store, onDefer: onDefer)
         }
     }
 }

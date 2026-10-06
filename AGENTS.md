@@ -24,6 +24,8 @@ CI builds with Swift 6.4, 6.3 and 6.1, and builds for iOS, Mac Catalyst, tvOS an
 - `Sources/SwiftPermissions`: the umbrella module, which re-exports Core and UI.
 - `Sources/SwiftPermissions<Framework>`: one provider per privacy framework, plus its `PermissionRegistration` static members.
 - `Sources/SwiftPermissionsTesting`: `StubPermissionProvider` and `PermissionManager.stubbed`.
+- `Example/`: a SwiftUI demo app that requests every permission.
+- `Articles/`: the four-part article series. Keep its code samples on the current API.
 - `plugin/`: the Claude Code plugin and agent skill for app developers.
 
 ## Rules
@@ -38,5 +40,5 @@ CI builds with Swift 6.4, 6.3 and 6.1, and builds for iOS, Mac Catalyst, tvOS an
 1. Add the framework name to `frameworks` in `Package.swift` and create `Sources/SwiftPermissions<Framework>/`.
 2. Implement a `PermissionProvider`, and add `public extension PermissionRegistration { static var x }`.
 3. Add the permission to `Permission.registrationHint` in `Core/Manager/PermissionRegistration.swift`, so `providerNotRegistered` names the product.
-4. Update the README's permissions table and the CHANGELOG.
+4. Update the README's permissions table and the CHANGELOG (and the Articles, if their samples or tables change).
 5. Update the agent skill: `plugin/skills/swiftpermissions/references/permissions.md` and the `PERMISSIONS` map in `scripts/check_usage_descriptions.py`. CI fails if a product is missing from either.

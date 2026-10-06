@@ -39,6 +39,10 @@ jobs:
             echo "::error file=CHANGELOG.md::Add a dated '## [$VERSION] — YYYY-MM-DD' section (not 'Unreleased') before tagging."
             exit 1
           }
+          # Relative links (e.g. MIGRATION.md) don't resolve on a release page, so point them
+          # at the tagged files on GitHub. Absolute URLs and #anchors are left alone.
+          export BASE="https://github.com/${{ github.repository }}/blob/${GITHUB_REF#refs/tags/}"
+          perl -pi -e 's{\]\((?!https?://|#|mailto:)([^)\s]+)\)}{]($ENV{BASE}/$1)}g' release_notes.md
           {
             echo
             echo "## Install"

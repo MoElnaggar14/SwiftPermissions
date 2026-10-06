@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.6.0] — 2026-10-06
+
+Groundwork for 4.0's `limited(Limitation)`: why access is limited, `isLimited`, rollback-safe storage and one rule for limited grants in the UI. Additive; `PermissionStatus.rawValue` is deprecated.
 
 ### Added
 - **Why access is limited.** A `Limitation` enum in Core (`.selectedItems`, `.whenInUse`, `.writeOnly`, `.partial`) names the four grants that `.limited` covers, with a `title` in `SwiftPermissionsUI` ("Selected Items", "While Using", "Write Only", "Partial"). `PermissionStatus.title` stays "Limited". This prepares 4.0, where the case becomes `limited(Limitation)`. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))

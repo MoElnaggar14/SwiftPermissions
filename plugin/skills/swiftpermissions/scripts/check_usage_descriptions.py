@@ -41,6 +41,9 @@ PERMISSIONS = {
     "biometrics": ("SwiftPermissionsBiometrics", ["NSFaceIDUsageDescription"], []),
     "health": ("SwiftPermissionsHealth", ["NSHealthShareUsageDescription"], []),
     "alarms": ("SwiftPermissionsAlarms", ["NSAlarmKitUsageDescription"], []),
+    "screenRecording": ("SwiftPermissionsScreenRecording", [], []),
+    "accessibility": ("SwiftPermissionsAccessibility", [], []),
+    "inputMonitoring": ("SwiftPermissionsInputMonitoring", [], []),
     "localNetwork": ("SwiftPermissionsLocalNetwork", ["NSLocalNetworkUsageDescription", "NSBonjourServices"], []),
 }
 # Products that also contain or re-export Core.

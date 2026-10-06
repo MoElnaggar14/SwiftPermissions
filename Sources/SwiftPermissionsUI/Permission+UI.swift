@@ -22,6 +22,9 @@ public extension Permission {
         case .biometrics: "faceid"
         case .health: "heart.fill"
         case .alarms: "alarm.fill"
+        case .screenRecording: "record.circle"
+        case .accessibility: "accessibility"
+        case .inputMonitoring: "keyboard"
         case .localNetwork: "network"
         default: "lock.shield.fill"
         }

@@ -85,9 +85,16 @@ Requesting a permission you didn't register throws `providerNotRegistered`, and 
 | `.biometrics` | `SwiftPermissionsBiometrics` | ✓ | ✓ | | | `NSFaceIDUsageDescription` (iOS) |
 | `.health(share:read:)` | `SwiftPermissionsHealth` | ✓ | | | ✓ | `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` + HealthKit capability |
 | `.alarms` | `SwiftPermissionsAlarms` | ✓ (26+) | | | | `NSAlarmKitUsageDescription` |
+| `.screenRecording` | `SwiftPermissionsScreenRecording` | | ✓ | | | none |
+| `.accessibility` | `SwiftPermissionsAccessibility` | | ✓ | | | none |
+| `.inputMonitoring` | `SwiftPermissionsInputMonitoring` | | ✓ | | | none |
 | `.localNetwork` | `SwiftPermissionsLocalNetwork` | ✓ | ✓ (15+) | | | `NSLocalNetworkUsageDescription` + `_swiftperms._tcp` in `NSBonjourServices` |
 
+`.bluetooth` in an AccessorySetupKit app: on iOS 18+, an app whose Info.plist lists `Bluetooth` under `NSAccessorySetupKitSupports` never sees the Bluetooth prompt. The user grants access to each accessory in the AccessorySetupKit picker, and `CBManager.authorization` stays `.notDetermined` before and after pairing. In such an app `.bluetooth` reports `.unavailable` instead of a `.notDetermined` that no prompt can resolve, and `request(.bluetooth)` shows nothing and returns at once. Use `ASAccessorySession.accessories` to see which accessories the app can reach. A real `.denied` or `.restricted` is still reported. Keep `NSBluetoothAlwaysUsageDescription` if you also support iOS 17, where the normal prompt still appears.
+
 `.alarms` covers AlarmKit, whose alarms and timers sound through Silent mode and Focus. Before iOS 26 it reports `.unavailable`, so apps with an older deployment target can register it without availability checks.
+
+`.screenRecording`, `.accessibility` and `.inputMonitoring` are macOS only (not Mac Catalyst); elsewhere their products are empty. They have no usage description: a request shows a system alert that sends the user to System Settings, and `AppSettings.open(for:)` opens the matching Privacy & Security pane. macOS only says whether Screen Recording and Accessibility are granted, so they read `.notDetermined` until the provider has asked in the current launch, and `.denied` after that. Input Monitoring reports all three states.
 
 `.localNetwork` has no system API to read or request it. `request` runs a short Bonjour probe (advertise and browse `_swiftperms._tcp`), which shows the prompt the first time: finding itself means `.authorized`, a policy-denied error after the prompt closed means `.denied`, and no answer within the timeout leaves `.notDetermined`. `status` is `.notDetermined` until a request has run, then the last result; after a relaunch, request again (no prompt if the user already answered). To probe a service type your app already declares, register `.localNetwork(serviceType: "_myapp._tcp")`. On tvOS and macOS before 15 nothing gates the local network, so it reads `.authorized`.
 

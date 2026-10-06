@@ -51,6 +51,9 @@ struct ContentView: View {
                 Section("Custom flows") {
                     RecordButton(store: permissions)
                     BiometricsButton()
+                    if #available(iOS 18.0, *) {
+                        LocationSessionRow()
+                    }
                 }
 
                 Section {
@@ -209,6 +212,67 @@ private extension UIApplication {
             top = presented
         }
         return top
+    }
+}
+
+/// A Core Location service session (iOS 18). The row owns the session: it lasts while
+/// the row is on screen and Stop hasn't been tapped, and the status follows its diagnostics.
+@available(iOS 18.0, *)
+private struct LocationSessionRow: View {
+    @State private var session: LocationServiceSession?
+    @State private var update: LocationServiceSession.Update?
+    @State private var outcome = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                Text("Location session")
+                Spacer()
+                if session == nil {
+                    Button("Start") { start() }
+                } else {
+                    Button("Stop") { stop() }
+                }
+            }
+            if let update {
+                Text(describe(update)).font(.footnote).foregroundStyle(.secondary)
+            }
+            if !outcome.isEmpty {
+                Text(outcome).font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        .onDisappear { stop() }
+    }
+
+    private func start() {
+        Task {
+            do {
+                let session = try await LocationPermissionProvider.whenInUse.startServiceSession()
+                self.session = session
+                outcome = ""
+                for await update in session.updates {
+                    self.update = update
+                }
+            } catch {
+                outcome = "\(error)"
+            }
+        }
+    }
+
+    private func stop() {
+        session?.invalidate()
+        session = nil
+        update = nil
+    }
+
+    private func describe(_ update: LocationServiceSession.Update) -> String {
+        let diagnostic = update.diagnostic
+        let notes = [
+            diagnostic.authorizationRequestInProgress ? "prompt showing" : nil,
+            diagnostic.insufficientlyInUse ? "app not in use" : nil,
+            diagnostic.fullAccuracyDenied ? "approximate" : nil
+        ].compactMap { $0 }
+        return ([update.status.description] + notes).joined(separator: " · ")
     }
 }
 

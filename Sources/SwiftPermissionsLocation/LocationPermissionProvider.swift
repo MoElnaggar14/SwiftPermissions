@@ -26,6 +26,9 @@ public struct LocationPermissionProvider: PermissionProvider {
         self.level = level
     }
 
+    /// Whether this is the Always provider.
+    var wantsAlways: Bool { level == .always }
+
     public var requiredUsageDescriptionKeys: [String] {
         #if os(macOS)
         // macOS uses one key for both levels.

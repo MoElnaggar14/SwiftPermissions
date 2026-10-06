@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Location accuracy.** `LocationPermissionProvider.accuracy()` returns `.full` or `.reduced` once location is authorized, so apps can tell that the user turned off Precise; `PermissionStatus` is unchanged. `requestTemporaryFullAccuracy(purposeKey:)` asks for precise location for the session, after checking the purpose string in `NSLocationTemporaryUsageDescriptionDictionary`. The example app shows both. ([#6](https://github.com/MoElnaggar14/SwiftPermissions/issues/6))
+- **AlarmKit.** A `SwiftPermissionsAlarms` product with an `.alarms` registration for iOS 26 alarms and timers, which sound through Silent mode and Focus. It needs `NSAlarmKitUsageDescription`. Before iOS 26, on Mac Catalyst, and with SDKs that have no AlarmKit (Xcode 16), the status is `.unavailable`, so apps with an older deployment target register it without availability checks. ([#5](https://github.com/MoElnaggar14/SwiftPermissions/issues/5))
 
 ## [3.1.0] — 2026-10-06
 

@@ -7,8 +7,12 @@
         framework product depends on Core.
 
         SwiftPermissions only reads and requests authorization statuses. It collects no
-        data, doesn't track, sends nothing off the device and uses no required-reason APIs.
-        Your app still declares what it does with the data each permission unlocks.
+        data, doesn't track and sends nothing off the device. Your app still declares what
+        it does with the data each permission unlocks.
+
+        UserDefaultsRequestHistory stores which permissions the app has asked for in
+        UserDefaults, read only by the app itself (CA92.1). Apps that pass an app group's
+        UserDefaults declare 1C8F.1 in their own manifest.
     -->
     <key>NSPrivacyTracking</key>
     <false/>
@@ -17,6 +21,15 @@
     <key>NSPrivacyCollectedDataTypes</key>
     <array/>
     <key>NSPrivacyAccessedAPITypes</key>
-    <array/>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>

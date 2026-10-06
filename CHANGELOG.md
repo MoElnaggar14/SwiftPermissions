@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **AlarmKit.** A `SwiftPermissionsAlarms` product with an `.alarms` registration for iOS 26 alarms and timers, which sound through Silent mode and Focus. It needs `NSAlarmKitUsageDescription`. Before iOS 26, on Mac Catalyst, and with SDKs that have no AlarmKit (Xcode 16), the status is `.unavailable`, so apps with an older deployment target register it without availability checks. ([#5](https://github.com/MoElnaggar14/SwiftPermissions/issues/5))
+
 ## [3.1.0] — 2026-10-06
 
 A Not Now option for pre-permission prompts, notification settings that explain "allowed but silent", and an article series on the design. Additive; no API changes.

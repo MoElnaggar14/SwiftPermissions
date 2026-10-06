@@ -173,7 +173,9 @@ PermissionFlow(store: permissions, steps: [
     .init(.notifications, title: "Stay in the loop", message: "Get a ping when your order ships."),
     .init(.locationWhenInUse, title: "Find stores near you", message: "See what's in stock nearby."),
     .init(.photoLibrary, title: "Share your receipts", message: "Attach photos of receipts.", optional: true),
-], progress: $progress) { statuses in   // [Permission: PermissionStatus]
+], progress: $progress) { result in
+    // result.reason is .completed, or .paused(at:) after Not Now on a required step.
+    // result.statuses has the last known status of each step.
     showingOnboarding = false
 }
 ```

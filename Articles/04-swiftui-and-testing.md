@@ -99,7 +99,7 @@ For onboarding, **`PermissionFlow`** asks for several permissions in turn, each 
 PermissionFlow(store: permissions, steps: [
     .init(.notifications, title: "Stay in the loop", message: "Get a ping when your order ships."),
     .init(.photoLibrary, title: "Share your receipts", optional: true),
-], progress: $progress) { statuses in
+], progress: $progress) { result in   // .completed, or .paused(at:)
     showingOnboarding = false
 }
 ```

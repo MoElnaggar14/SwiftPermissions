@@ -37,7 +37,12 @@ struct ProviderLimitationTests {
     @Test func locationAlwaysUpgradesOnlyFromWhenInUse() {
         let always = LocationPermissionProvider.always
 
+        // The Always upgrade prompt only exists on iOS.
+        #if os(iOS)
         #expect(always.canRequest(from: .limited(.whenInUse)))
+        #else
+        #expect(!always.canRequest(from: .limited(.whenInUse)))
+        #endif
         #expect(!always.canRequest(from: .limited(.partial)))
         #expect(!LocationPermissionProvider.whenInUse.canRequest(from: .limited(.whenInUse)))
     }

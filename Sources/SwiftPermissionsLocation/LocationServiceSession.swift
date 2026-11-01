@@ -54,16 +54,6 @@ public extension LocationPermissionProvider {
         }
         return status
     }
-
-    /// Why ``map(_:authorization:wantsAlways:)`` reports `.limited`, or `nil` when it
-    /// doesn't. 4.0 puts it in the status.
-    internal static func mapLimitation(
-        _ diagnostic: LocationSessionDiagnostic,
-        authorization: CLAuthorizationStatus,
-        wantsAlways: Bool
-    ) -> Limitation? {
-        map(diagnostic, authorization: authorization, wantsAlways: wantsAlways).isLimited ? .whenInUse : nil
-    }
 }
 
 #if !os(macOS)

@@ -26,7 +26,7 @@ public actor StubPermissionProvider: PermissionProvider {
 
     public nonisolated let permission: Permission
     public nonisolated let requiredUsageDescriptionKeys: [String]
-    /// Partial statuses a prompt can still be shown from (e.g. `.limited` for an upgrade).
+    /// Partial statuses a prompt can still be shown from (e.g. `.limited(.whenInUse)` for an upgrade).
     public nonisolated let upgradableFrom: Set<PermissionStatus>
 
     public private(set) var currentStatus: PermissionStatus

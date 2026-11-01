@@ -23,13 +23,3 @@ enum LimitedAction: Equatable {
         }
     }
 }
-
-extension PermissionStatus {
-    /// The reason for a `.limited` status of `permission`, or `nil` for any other status.
-    ///
-    /// 3.x statuses don't carry the reason, so it comes from what the built-in provider
-    /// reports. In 4.0 it's the status's own payload.
-    func limitation(for permission: Permission) -> Limitation? {
-        isLimited ? Limitation.reported(for: permission) : nil
-    }
-}

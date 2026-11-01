@@ -12,8 +12,8 @@ public protocol PermissionRequesting: Sendable {
     /// Whether ``request(_:)`` can still show a prompt: the permission hasn't been
     /// asked yet, or the provider supports an upgrade from its partial status
     /// (when-in-use → Always location, write-only → full calendar, provisional →
-    /// full notifications). The status alone can't tell: `.limited` location can be
-    /// upgraded, `.limited` photos can't.
+    /// full notifications). The status alone can't tell: `.limited(.whenInUse)` location can be
+    /// upgraded, `.limited(.selectedItems)` photos can't.
     func canRequest(_ permission: Permission) async -> Bool
 }
 

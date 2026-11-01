@@ -41,9 +41,9 @@ public struct EventKitPermissionProvider: PermissionProvider {
         Self.map(EKEventStore.authorizationStatus(for: entityType), wantsFullAccess: access != .writeOnlyEvents)
     }
 
-    /// Write-only calendar access (reported as `.limited`) can be upgraded to full access.
+    /// Write-only calendar access (reported as `.limited(.writeOnly)`) can be upgraded to full access.
     public func canRequest(from status: PermissionStatus) -> Bool {
-        status == .notDetermined || (access == .fullEvents && status.isLimited)
+        status == .notDetermined || (access == .fullEvents && status == .limited(.writeOnly))
     }
 
     public func request() async throws -> PermissionStatus {
@@ -74,12 +74,6 @@ public struct EventKitPermissionProvider: PermissionProvider {
             default: return .denied
             }
         }
-    }
-
-    /// Why ``map(_:wantsFullAccess:)`` reports `.limited`, or `nil` when it doesn't.
-    /// 4.0 puts it in the status.
-    static func mapLimitation(_ status: EKAuthorizationStatus, wantsFullAccess: Bool) -> Limitation? {
-        map(status, wantsFullAccess: wantsFullAccess).isLimited ? .writeOnly : nil
     }
 }
 

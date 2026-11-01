@@ -33,7 +33,7 @@ public extension Permission {
 
 public extension PermissionStatus {
     /// A short English label, e.g. "Allowed". `.limited` reads "Limited" whatever the
-    /// reason; ``Limitation/title`` names the reason.
+    /// reason; `status.limitation?.title` names the reason.
     var title: String {
         switch self {
         case .notDetermined: "Not Asked"
@@ -44,6 +44,13 @@ public extension PermissionStatus {
         case .provisional: "Provisional"
         case .unavailable: "Unavailable"
         }
+    }
+
+    /// ``title`` followed by the reason access is limited, e.g. "Limited · Selected Items".
+    /// The same as ``title`` for every other status. ``PermissionRow`` shows it.
+    var detailedTitle: String {
+        guard let limitation else { return title }
+        return "\(title) · \(limitation.title)"
     }
 
     var systemImage: String {

@@ -97,8 +97,7 @@ public struct PermissionPrompt: View {
             canRequest: store.canRequest(permission),
             hasSettingsURL: AppSettings.url(for: permission) != nil,
             canDefer: onDefer != nil,
-            canSelectMore: onSelectMore != nil,
-            limitation: status.limitation(for: permission)
+            canSelectMore: onSelectMore != nil
         )
     }
 
@@ -151,20 +150,17 @@ struct PromptActions: Equatable {
     /// Whether to offer **Not Now** next to the primary action.
     let offersDefer: Bool
 
-    /// - Parameter limitation: Why access is limited, when `status` is `.limited`.
-    ///   `nil` reads as ``Limitation/partial``.
     init(
         status: PermissionStatus,
         canRequest: Bool,
         hasSettingsURL: Bool,
         canDefer: Bool,
-        canSelectMore: Bool = false,
-        limitation: Limitation? = nil
+        canSelectMore: Bool = false
     ) {
         if canRequest {
             primary = .request
-        } else if status.isLimited {
-            switch LimitedAction(limitation ?? .partial, canSelectMore: canSelectMore, hasSettingsURL: hasSettingsURL) {
+        } else if let limitation = status.limitation {
+            switch LimitedAction(limitation, canSelectMore: canSelectMore, hasSettingsURL: hasSettingsURL) {
             case .selectMore: primary = .selectMore
             case .openSettings: primary = .openSettings
             case .nothing: primary = .nothing

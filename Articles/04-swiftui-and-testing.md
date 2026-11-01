@@ -83,7 +83,7 @@ PermissionGate(.microphone, store: permissions) {
 }
 ```
 
-**`PermissionRow`** and **`PermissionsList`** build a privacy screen. A row shows the icon, name and status, plus the next action. Its button says **Allow** for `.notDetermined` and **Allow More** when an upgrade is possible, using `store.canRequest(_:)` rather than the status. That's Part 2's `canRequest(from:)` reaching the UI: `.limited` location gets an Allow More button, `.limited` photos doesn't. For photos and contacts, pass `onSelectMore:` and the row offers **Select More…** instead, which presents the system picker from the Photos or Contacts product. Only selected items get it: when-in-use location whose upgrade prompt is spent, or write-only calendar, gets **Settings**.
+**`PermissionRow`** and **`PermissionsList`** build a privacy screen. A row shows the icon, name and status (with the reason for a limited grant, "Limited · Selected Items"), plus the next action. Its button says **Allow** for `.notDetermined` and **Allow More** when an upgrade is possible, using `store.canRequest(_:)` rather than the status. That's Part 2's `canRequest(from:)` reaching the UI: `.limited(.whenInUse)` location gets an Allow More button, `.limited(.selectedItems)` photos don't. For photos and contacts, pass `onSelectMore:` and the row offers **Select More…** instead, which presents the system picker from the Photos or Contacts product. Only selected items get it: when-in-use location whose upgrade prompt is spent, or write-only calendar, gets **Settings**.
 
 ```swift
 PermissionsList([.camera, .locationWhenInUse, .notifications],

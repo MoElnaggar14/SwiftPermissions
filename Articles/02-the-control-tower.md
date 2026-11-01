@@ -116,7 +116,7 @@ observe(didBecomeActive)   { if upgradePromptShown { finish(with: manager.author
 after(1.5 seconds)         { if !upgradePromptShown { finish(with: manager.authorizationStatus) } }
 ```
 
-If no prompt appears within 1.5 seconds, the request returns `.limited`. If the user keeps While Using, it returns `.limited` as soon as they're back. Either way the continuation resumes exactly once.
+If no prompt appears within 1.5 seconds, the request returns `.limited(.whenInUse)`. If the user keeps While Using, it returns `.limited(.whenInUse)` as soon as they're back. Either way the continuation resumes exactly once.
 
 ## Job 5: announce every change
 
@@ -141,7 +141,7 @@ let permissions = PermissionManager(permissions: [.locationWhenInUse, .locationA
 _ = try await permissions.request(.locationWhenInUse)       // first prompt
 // later, when the feature needs background location:
 if await permissions.canRequest(.locationAlways) {
-    _ = try await permissions.request(.locationAlways)      // upgrade prompt, from .limited
+    _ = try await permissions.request(.locationAlways)      // upgrade prompt, from .limited(.whenInUse)
 }
 ```
 
@@ -156,7 +156,7 @@ The same works for write-only to full calendar access, and provisional to full n
 | Missing Info.plist key kills the app | Throws `missingUsageDescription` before prompting |
 | Prompt ignored while inactive | Waits for the app to become active |
 | Location Services off | Reports `.unavailable` |
-| Always upgrade never shown | Watches the app lifecycle and returns `.limited` |
+| Always upgrade never shown | Watches the app lifecycle and returns `.limited(.whenInUse)` |
 | Changes made in Settings | `refresh()` and `AsyncStream`s |
 
 Next: [link only what you use](03-link-only-what-you-use.md), where the module boundaries matter as much to App Review as to the architecture.

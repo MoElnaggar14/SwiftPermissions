@@ -28,19 +28,14 @@ final class LimitedActionTests: XCTestCase {
         XCTAssertEqual(LimitedAction(.partial, canSelectMore: true, hasSettingsURL: true), .nothing)
     }
 
-    func testReasonComesFromThePermission() {
-        let limited: PermissionStatus = .limited
-        XCTAssertEqual(limited.limitation(for: .photoLibrary), .selectedItems)
-        XCTAssertEqual(limited.limitation(for: .contacts), .selectedItems)
-        XCTAssertEqual(limited.limitation(for: .locationAlways), .whenInUse)
-        XCTAssertEqual(limited.limitation(for: .calendar), .writeOnly)
-        XCTAssertEqual(limited.limitation(for: .health), .partial)
-        XCTAssertEqual(limited.limitation(for: Permission("custom")), .partial)
-        XCTAssertNil(PermissionStatus.authorized.limitation(for: .photoLibrary))
-    }
-
     func testEveryLimitationHasATitle() {
         XCTAssertEqual(Limitation.allCases.map(\.title), ["Selected Items", "While Using", "Write Only", "Partial"])
         XCTAssertEqual(PermissionStatus.limited(.selectedItems).title, "Limited")
+    }
+
+    func testDetailedTitleNamesTheReason() {
+        XCTAssertEqual(PermissionStatus.limited(.selectedItems).detailedTitle, "Limited · Selected Items")
+        XCTAssertEqual(PermissionStatus.limited(.whenInUse).detailedTitle, "Limited · While Using")
+        XCTAssertEqual(PermissionStatus.authorized.detailedTitle, "Allowed")
     }
 }

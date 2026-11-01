@@ -7,9 +7,10 @@ import UIKit
 /// Location access, when-in-use or always.
 ///
 /// For ``Permission/locationAlways``, when-in-use authorization is reported as
-/// ``PermissionStatus/limited`` (``Limitation/whenInUse``). On iOS, requesting from `.limited` asks for the upgrade
-/// to Always. iOS offers that prompt at most once; if it doesn't appear (or the user
-/// keeps "While Using"), the request returns `.limited` instead of waiting forever.
+/// `.limited(.whenInUse)`. On iOS, requesting from `.limited(.whenInUse)` asks for the
+/// upgrade to Always. iOS offers that prompt at most once; if it doesn't appear (or the
+/// user keeps "While Using"), the request returns `.limited(.whenInUse)` instead of
+/// waiting forever.
 public struct LocationPermissionProvider: PermissionProvider {
     private enum Level: Sendable { case whenInUse, always }
 
@@ -52,7 +53,7 @@ public struct LocationPermissionProvider: PermissionProvider {
 
     public func canRequest(from status: PermissionStatus) -> Bool {
         #if os(iOS)
-        status == .notDetermined || (level == .always && status.isLimited)
+        status == .notDetermined || (level == .always && status == .limited(.whenInUse))
         #else
         status == .notDetermined
         #endif
@@ -78,12 +79,6 @@ public struct LocationPermissionProvider: PermissionProvider {
         case .authorizedWhenInUse: wantsAlways ? .limited(.whenInUse) : .authorized
         @unknown default: .denied
         }
-    }
-
-    /// Why ``map(_:wantsAlways:)`` reports `.limited`, or `nil` when it doesn't.
-    /// 4.0 puts it in the status.
-    static func mapLimitation(_ status: CLAuthorizationStatus, wantsAlways: Bool) -> Limitation? {
-        map(status, wantsAlways: wantsAlways).isLimited ? .whenInUse : nil
     }
 }
 

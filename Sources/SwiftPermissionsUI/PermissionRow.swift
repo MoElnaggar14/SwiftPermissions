@@ -40,7 +40,7 @@ public struct PermissionRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(permission.displayName)
                 if let status {
-                    Label(status.title, systemImage: status.systemImage)
+                    Label(status.detailedTitle, systemImage: status.systemImage)
                         .font(.caption)
                         .foregroundStyle(status.tint)
                 }
@@ -58,8 +58,7 @@ public struct PermissionRow: View {
             isPending: store.isPending(permission),
             canRequest: store.canRequest(permission),
             hasSettingsURL: AppSettings.url(for: permission) != nil,
-            canSelectMore: onSelectMore != nil,
-            limitation: status?.limitation(for: permission)
+            canSelectMore: onSelectMore != nil
         ) {
         case .progress:
             ProgressView()
@@ -100,15 +99,12 @@ enum RowAction: Equatable {
     /// Nothing to offer: not loaded yet, granted, restricted or unavailable.
     case nothing
 
-    /// - Parameter limitation: Why access is limited, when `status` is `.limited`.
-    ///   `nil` reads as ``Limitation/partial``.
     init(
         status: PermissionStatus?,
         isPending: Bool,
         canRequest: Bool,
         hasSettingsURL: Bool,
-        canSelectMore: Bool,
-        limitation: Limitation? = nil
+        canSelectMore: Bool
     ) {
         guard !isPending else {
             self = .progress
@@ -120,8 +116,8 @@ enum RowAction: Equatable {
         }
         if canRequest {
             self = .request(upgrade: status != .notDetermined)
-        } else if status.isLimited {
-            switch LimitedAction(limitation ?? .partial, canSelectMore: canSelectMore, hasSettingsURL: hasSettingsURL) {
+        } else if let limitation = status.limitation {
+            switch LimitedAction(limitation, canSelectMore: canSelectMore, hasSettingsURL: hasSettingsURL) {
             case .selectMore: self = .selectMore
             case .openSettings: self = .openSettings
             case .nothing: self = .nothing

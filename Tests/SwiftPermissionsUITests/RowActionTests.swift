@@ -10,16 +10,14 @@ final class RowActionTests: XCTestCase {
         isPending: Bool = false,
         canRequest: Bool = false,
         hasSettingsURL: Bool = true,
-        canSelectMore: Bool = false,
-        limitation: Limitation? = nil
+        canSelectMore: Bool = false
     ) -> RowAction {
         RowAction(
             status: status,
             isPending: isPending,
             canRequest: canRequest,
             hasSettingsURL: hasSettingsURL,
-            canSelectMore: canSelectMore,
-            limitation: limitation
+            canSelectMore: canSelectMore
         )
     }
 
@@ -34,19 +32,19 @@ final class RowActionTests: XCTestCase {
     func testRequestAndUpgrade() {
         XCTAssertEqual(action(.notDetermined, canRequest: true), .request(upgrade: false))
         XCTAssertEqual(
-            action(.limited(.whenInUse), canRequest: true, canSelectMore: true, limitation: .whenInUse),
+            action(.limited(.whenInUse), canRequest: true, canSelectMore: true),
             .request(upgrade: true)
         )
     }
 
     func testSelectedItemsOfferSelectMoreWithAPicker() {
-        XCTAssertEqual(action(.limited(.selectedItems), canSelectMore: true, limitation: .selectedItems), .selectMore)
+        XCTAssertEqual(action(.limited(.selectedItems), canSelectMore: true), .selectMore)
     }
 
     func testSelectedItemsWithoutAPickerOfferSettings() {
-        XCTAssertEqual(action(.limited(.selectedItems), limitation: .selectedItems), .openSettings)
+        XCTAssertEqual(action(.limited(.selectedItems)), .openSettings)
         XCTAssertEqual(
-            action(.limited(.selectedItems), hasSettingsURL: false, limitation: .selectedItems),
+            action(.limited(.selectedItems), hasSettingsURL: false),
             .nothing,
             "no Settings URL on watchOS"
         )
@@ -56,7 +54,7 @@ final class RowActionTests: XCTestCase {
         // When-in-use location after the Always prompt was spent used to offer Select More….
         for limitation in [Limitation.whenInUse, .writeOnly] {
             XCTAssertEqual(
-                action(.limited(limitation), canSelectMore: true, limitation: limitation),
+                action(.limited(limitation), canSelectMore: true),
                 .openSettings,
                 "\(limitation)"
             )
@@ -64,8 +62,7 @@ final class RowActionTests: XCTestCase {
     }
 
     func testPartialOffersNothing() {
-        XCTAssertEqual(action(.limited(.partial), canSelectMore: true, limitation: .partial), .nothing)
-        XCTAssertEqual(action(.limited(.partial), canSelectMore: true), .nothing, "no reason reads as partial")
+        XCTAssertEqual(action(.limited(.partial), canSelectMore: true), .nothing)
     }
 
     func testDeniedStillOffersSettings() {
@@ -105,8 +102,7 @@ final class RowActionTests: XCTestCase {
             isPending: store.isPending(permission),
             canRequest: store.canRequest(permission),
             hasSettingsURL: true,
-            canSelectMore: true,
-            limitation: store[permission]?.limitation(for: permission)
+            canSelectMore: true
         )
     }
 }

@@ -100,7 +100,7 @@ final class PermissionStoreTests: XCTestCase {
     }
 
     func testPermissionUIMetadataIsDefinedForEveryStatus() {
-        for status in PermissionStatus.allCases {
+        for status in PermissionStatus.everyStatus {
             XCTAssertFalse(status.title.isEmpty)
             XCTAssertFalse(status.systemImage.isEmpty)
         }

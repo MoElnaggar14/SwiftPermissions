@@ -41,20 +41,15 @@ public struct PhotoLibraryPermissionProvider: PermissionProvider {
         @unknown default: .denied
         }
     }
-
-    /// Why ``map(_:)`` reports `.limited`, or `nil` when it doesn't. 4.0 puts it in the status.
-    static func mapLimitation(_ status: PHAuthorizationStatus) -> Limitation? {
-        map(status).isLimited ? .selectedItems : nil
-    }
 }
 
 #if os(iOS)
 public extension PhotoLibraryPermissionProvider {
-    /// Shows the system picker where people with ``PermissionStatus/limited`` access can
+    /// Shows the system picker where people with ``PermissionStatus/limited(_:)`` access can
     /// add photos to (or remove them from) the ones your app can see.
     ///
     /// Use it as the "Select More…" action of a `PermissionRow` or `PermissionPrompt`.
-    /// The status stays `.limited`; only the selection changes. Showing the picker when
+    /// The status stays `.limited(.selectedItems)`; only the selection changes. Showing the picker when
     /// access isn't limited does nothing useful, so check the status first.
     ///
     /// - Parameter controller: The view controller to present the picker from.

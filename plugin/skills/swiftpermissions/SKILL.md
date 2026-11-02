@@ -1,9 +1,9 @@
 ---
 name: swiftpermissions
-description: Integrate and use the SwiftPermissions 3.x Swift package to request Apple privacy permissions (camera, microphone, photos, contacts, calendar, reminders, location, notifications, Bluetooth, tracking/ATT, speech, motion, Siri, media library, Face ID/biometrics, HealthKit) in iOS, macOS, tvOS or watchOS apps. Use this skill whenever the user's project imports SwiftPermissions or depends on it in Package.swift, whenever they ask to add, request, check, test or show UI for an app permission in Swift/SwiftUI, hit a missing NS…UsageDescription crash or an App Store ITMS-90683 rejection, or are upgrading from SwiftPermissions 2.x — even if they don't name the package.
+description: Integrate and use the SwiftPermissions 4.x Swift package to request Apple privacy permissions (camera, microphone, photos, contacts, calendar, reminders, location, notifications, Bluetooth, tracking/ATT, speech, motion, Siri, media library, Face ID/biometrics, HealthKit) in iOS, macOS, tvOS or watchOS apps. Use this skill whenever the user's project imports SwiftPermissions or depends on it in Package.swift, whenever they ask to add, request, check, test or show UI for an app permission in Swift/SwiftUI, hit a missing NS…UsageDescription crash or an App Store ITMS-90683 rejection, or are upgrading from SwiftPermissions 2.x or 3.x — even if they don't name the package.
 ---
 
-# SwiftPermissions 3.x
+# SwiftPermissions 4.x
 
 SwiftPermissions gives every Apple permission one async API: `PermissionManager` (an actor) asks a registered `PermissionProvider` per permission and returns a normalised `PermissionStatus`. Each framework lives in its own product, so the app links only the privacy frameworks it really uses. That matters because App Review scans the binary and asks for usage descriptions of any permission code it finds.
 
@@ -30,7 +30,7 @@ Suggest the alternative when it fits; ask the user if unsure.
 ### 2. Add one product per framework
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.6.0"),
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "4.0.0"),
 
 .target(name: "App", dependencies: [
     .product(name: "SwiftPermissions", package: "SwiftPermissions"),        // Core + SwiftUI
@@ -95,7 +95,7 @@ With a `PermissionManager` (or `any PermissionManaging`), `request(_:)` throws:
 do {
     switch try await permissions.request(.camera) {
     case .authorized:          startCapture()
-    case .limited:             startCapture(limited: true)
+    case .limited:             startCapture(limited: true)   // .limited(.selectedItems) etc. for one reason
     case .denied:              showSettingsHint()      // await AppSettings.open(for: .camera)
     case .restricted:          showRestrictedState()   // parental controls / MDM; Settings can't fix it
     case .unavailable:         hideFeature()           // no hardware, service off, capability missing
@@ -121,8 +121,8 @@ if status.isGranted { startCapture() } else if status.requiresSettings { showSet
 
 - The manager's `request(_:)` throws `PermissionError` (typed throws). `.cancelled` means the calling task was cancelled; the prompt stays up for other callers.
 - `isGranted` is true for `.authorized`, `.limited` and `.provisional`.
-- **Limited, and why.** `.limited` covers four grants, named by `Limitation`: `.selectedItems` (photos, contacts), `.whenInUse` (`.locationAlways` granted when in use), `.writeOnly` (`.calendar`), `.partial` (some HealthKit share types, custom providers). In 4.0 the case becomes `limited(Limitation)`. Write code that compiles on both: `switch` with `case .limited:`, test with `status.isLimited` (never `status == .limited`), build values with `.limited(.selectedItems)`, and log `status.description` (`rawValue` is deprecated). Don't use `PermissionStatus.allCases` in app code.
-- **Upgrades.** `request(_:)` also upgrades a partial grant: when-in-use → Always, write-only → full calendar, provisional → full notifications. A status alone can't tell you whether another prompt can appear (`.limited` location can be upgraded, `.limited` photos can't), so call `await permissions.canRequest(.x)` or `store.canRequest(.x)` before you show an "Allow" button.
+- **Limited, and why.** The case is `limited(Limitation)`, and the reason is one of `.selectedItems` (photos, contacts), `.whenInUse` (`.locationAlways` granted when in use), `.writeOnly` (`.calendar`), `.partial` (some HealthKit share types, custom providers). Match one reason with `case .limited(.selectedItems):` and any with `case .limited:`; test with `status.isLimited` or read `status.limitation`. Never infer the reason from the permission. Log `status.description` (`"limited.selectedItems"`); `PermissionStatus` has no `rawValue` or `allCases`. A custom provider returns `.limited(.partial)` unless a more specific reason fits.
+- **Upgrades.** `request(_:)` also upgrades a partial grant: when-in-use → Always, write-only → full calendar, provisional → full notifications. A status alone can't tell you whether another prompt can appear (`.limited(.whenInUse)` location can be upgraded once, `.limited(.selectedItems)` photos never), so call `await permissions.canRequest(.x)` or `store.canRequest(.x)` before you show an "Allow" button.
 - Requests made while the app is in the background wait until it is active. Location reports `.unavailable` when Location Services are off system-wide.
 - Biometrics never prompts from `request(_:)`. Call `BiometricsPermissionProvider().authenticate(reason:)` when the user authenticates.
 - Live status: `for await status in permissions.updates(for: .camera)`, or `changes()` for every permission. For analytics funnels (Amplitude, GA4, Mixpanel), follow the README's "Permission funnels" recipe: record the answer around `request(_:)` when `canRequest(_:)` was true, and Settings changes from `changes()`. Don't add an analytics SDK to the package.
@@ -172,6 +172,10 @@ Guard the Info.plist with a unit test. The test must be hosted by the app, so `B
 ## Custom permissions
 
 Conform to `PermissionProvider` (`permission`, `requiredUsageDescriptionKeys`, `status()`, `request()`; optionally `canRequest(from:)` for upgrades), then register it with `.provider(MyProvider())`. Declare the permission with `Permission("localNetwork", displayName: "Local Network")`. Registering a provider for a built-in permission replaces how that permission is requested.
+
+## Upgrading from 3.x
+
+Read [references/migration-3x.md](references/migration-3x.md) when the code compares `== .limited`, builds `.limited` without a reason, or uses `PermissionStatus.rawValue`, `PermissionStatus(rawValue:)` or `PermissionStatus.allCases`.
 
 ## Upgrading from 2.x
 

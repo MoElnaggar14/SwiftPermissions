@@ -34,14 +34,14 @@ Every framework has its own authorization enum, its own request API (async, call
 - **No hangs.** A request made while the app is in the background waits until it's active (iOS ignores prompts until then). Location reports `.unavailable` when Location Services are off system-wide. Cancelling the calling task throws `.cancelled` without dismissing the prompt for other callers.
 - **Concurrency-correct.** `PermissionManager` is an actor. It's checked under the Swift 6 language mode. Concurrent requests for the same permission share one prompt.
 - **Live.** `updates(for:)` and `changes()` are `AsyncStream`s. `PermissionGate`, `PermissionPrompt` and `PermissionsList` refresh when the user returns from Settings; use `.refreshesPermissions(store)` on your own views.
-- **Upgrades included.** `request(_:)` asks for when-in-use → Always location, write-only → full calendar and provisional → full notifications from the partial status. The location upgrade never hangs, even when iOS doesn't show the prompt. `PermissionRow` offers an **Allow More** button when an upgrade is possible, and `canRequest(_:)` (on the manager and the store) tells you whether a prompt can still appear, since the status alone can't: `.limited` location can be upgraded, `.limited` photos can't.
+- **Upgrades included.** `request(_:)` asks for when-in-use → Always location, write-only → full calendar and provisional → full notifications from the partial status. The location upgrade never hangs, even when iOS doesn't show the prompt. `PermissionRow` offers an **Allow More** button when an upgrade is possible, and `canRequest(_:)` (on the manager and the store) tells you whether a prompt can still appear, since the status alone can't: `.limited(.whenInUse)` location can be upgraded once, `.limited(.selectedItems)` photos never.
 - **Open for extension.** Each permission is a small `PermissionProvider`. You can add your own permission, or replace how a built-in one is requested, without forking.
 - **Testable.** `SwiftPermissionsTesting` provides scriptable stubs that run through the real manager logic, with no simulator prompts.
 
 ## Installation
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "3.6.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "4.0.0")
 ```
 
 Add `SwiftPermissions` (or just `SwiftPermissionsCore` without SwiftUI), plus one product per framework you request:
@@ -160,11 +160,21 @@ PermissionRow(.contacts, store: permissions) { pickingContacts = true }
     }
 ```
 
-Both return only the newly selected identifiers. The status stays `.limited`.
+Both return only the newly selected identifiers. The status stays `.limited(.selectedItems)`.
 
 ### Why access is limited
 
-`.limited` covers four different grants. `Limitation` names them:
+`.limited` covers four different grants, so the case carries a `Limitation` that names them:
+
+```swift
+switch status {
+case .limited(.selectedItems): showLibrary(banner: .selectMore)   // one reason
+case .limited:                 showLibrary()                      // any other reason
+default:                       break
+}
+if status.isLimited { … }                     // any reason
+let reason = status.limitation                // Limitation?, nil unless limited
+```
 
 | `Limitation` | Meaning | Reported by | What the UI offers once no prompt can appear |
 | --- | --- | --- | --- |
@@ -173,15 +183,7 @@ Both return only the newly selected identifiers. The status stays `.limited`.
 | `.writeOnly` | Write-only calendar when full access was asked for | `.calendar` (iOS 17+) | **Settings** (after the upgrade prompt) |
 | `.partial` | Some of the requested items, e.g. some HealthKit share types | `.health`, and custom providers | nothing |
 
-In 3.x the status doesn't carry the reason yet; 4.0 changes the case to `limited(Limitation)`. `case .limited:` in a `switch` compiles in both. Get ready for the rest now:
-
-```swift
-if status.isLimited { … }                                     // not status == .limited
-StubPermissionProvider(.photoLibrary, status: .limited(.selectedItems))   // in 3.x, this builds .limited
-log.info("status: \(status)")                                  // description, not the deprecated rawValue
-```
-
-`Limitation.title` gives a short label for the reason ("Selected Items", "While Using", "Write Only", "Partial"); `PermissionStatus.title` stays "Limited".
+`Limitation.title` gives a short label for the reason ("Selected Items", "While Using", "Write Only", "Partial"); `PermissionStatus.title` stays "Limited", and `PermissionRow` shows both ("Limited · Selected Items"). A logged or stored limited status reads `"limited.selectedItems"`. Upgrading from 3.x? See [MIGRATION.md](MIGRATION.md#migrating-from-3x-to-40).
 
 ### Onboarding flows
 
@@ -271,7 +273,7 @@ let permissions = PermissionManager(permissions: [
 ])
 ```
 
-Without the HealthKit capability the status is `.unavailable`. When some share types are allowed and others aren't, the status is `.limited` (`Limitation.partial`). HealthKit hides read authorization, so this only ever reflects the share types. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
+Without the HealthKit capability the status is `.unavailable`. When some share types are allowed and others aren't, the status is `.limited(.partial)`. HealthKit hides read authorization, so this only ever reflects the share types. Only request share access for types your app can write: HealthKit raises an exception that Swift can't catch for read-only types such as characteristics.
 
 ### Precise or approximate location
 
@@ -285,7 +287,7 @@ if await location.accuracy() == .reduced {   // nil until location is authorized
 }
 ```
 
-The purpose key names an entry in the `NSLocationTemporaryUsageDescriptionDictionary` Info.plist dictionary, and the system shows that string as the reason. A missing entry throws `.missingUsageDescription` before anything is shown. Reduced accuracy is never reported as `.limited`, which for location means "when in use". tvOS has no temporary request.
+The purpose key names an entry in the `NSLocationTemporaryUsageDescriptionDictionary` Info.plist dictionary, and the system shows that string as the reason. A missing entry throws `.missingUsageDescription` before anything is shown. Reduced accuracy is never reported as `.limited`; for location, `.limited(.whenInUse)` means "when in use". tvOS has no temporary request.
 
 ### Location service sessions (iOS 18)
 
@@ -316,7 +318,7 @@ iOS 18 added `CLServiceSession`, which tells Core Location that the app needs lo
 
 **You own the session.** It lasts until you call `invalidate()` or release the `LocationServiceSession`, so keep it in the object whose lifetime matches the feature (a screen's model, a workout), not in a local that goes out of scope. The package never keeps one alive for you: a hidden session would tell Core Location that the app still needs location after the feature has gone. `updates` has one consumer and finishes when the session ends.
 
-Each update carries the `PermissionStatus` and the raw `LocationSessionDiagnostic`. Restricted maps to `.restricted`, denied to `.denied`, and Location Services off to `.unavailable` (or `.denied` once the user has decided). Otherwise the status is the one `status()` reports, so a prompt in progress or an app that isn't in use enough reads `.notDetermined`. When an Always session gets When In Use, the status is `.limited`. Reduced accuracy is never a status; check `diagnostic.fullAccuracyDenied`. Sessions are available on iOS 18, Mac Catalyst 18, tvOS 18, watchOS 11 and visionOS 2, not on macOS.
+Each update carries the `PermissionStatus` and the raw `LocationSessionDiagnostic`. Restricted maps to `.restricted`, denied to `.denied`, and Location Services off to `.unavailable` (or `.denied` once the user has decided). Otherwise the status is the one `status()` reports, so a prompt in progress or an app that isn't in use enough reads `.notDetermined`. When an Always session gets When In Use, the status is `.limited(.whenInUse)`. Reduced accuracy is never a status; check `diagnostic.fullAccuracyDenied`. Sessions are available on iOS 18, Mac Catalyst 18, tvOS 18, watchOS 11 and visionOS 2, not on macOS.
 
 ### Notifications that are allowed but silent
 
@@ -494,7 +496,7 @@ CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 1
 
 - **App extensions.** Every product compiles into widgets and notification extensions. Requests skip the "wait until the app is active" step there. `AppSettings.open` and `PermissionStore.openSettings` are unavailable in extensions. The SwiftUI views open Settings through SwiftUI's `openURL` action, so they work everywhere.
 - **Privacy manifest.** Core ships a `PrivacyInfo.xcprivacy` declaring no tracking and no collected data, and `UserDefaults` access with reason `CA92.1` for `UserDefaultsRequestHistory`. Your app still declares what it does with the data each permission unlocks.
-- **Stable statuses.** `PermissionStatus` won't gain cases in 3.x, so exhaustive `switch`es stay valid. New permissions map onto the existing cases.
+- **Stable statuses.** `PermissionStatus` and `Limitation` won't gain cases in 4.x, so exhaustive `switch`es stay valid. New permissions map onto the existing cases.
 
 Upgrading from 2.x? See [MIGRATION.md](MIGRATION.md).
 

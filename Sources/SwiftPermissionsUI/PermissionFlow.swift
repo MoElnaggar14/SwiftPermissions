@@ -170,8 +170,7 @@ public struct PermissionFlow: View {
             canRequest: store.canRequest(permission),
             hasSettingsURL: AppSettings.url(for: permission) != nil,
             canDefer: true,
-            canSelectMore: onSelectMore != nil,
-            limitation: status.limitation(for: permission)
+            canSelectMore: onSelectMore != nil
         )
         switch decision.primary {
         case .request:

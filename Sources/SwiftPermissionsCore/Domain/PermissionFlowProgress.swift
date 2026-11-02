@@ -10,8 +10,9 @@ import Foundation
 /// @AppStorage("onboardingPermissions") private var progress = PermissionFlowProgress()
 /// ```
 ///
-/// Progress saved by 4.0, where a limited status is stored with its reason
-/// (`"limited.selectedItems"`), reads back with that status as ``PermissionStatus/limited``.
+/// Progress saved by 3.x, where a limited status was stored without its reason
+/// (`"limited"`), reads back with the reason that step's built-in provider meant, e.g.
+/// `.limited(.selectedItems)` for ``Permission/photoLibrary``.
 public struct PermissionFlowProgress: Sendable, Equatable, Codable, RawRepresentable {
     /// The outcome of each finished step.
     public private(set) var outcomes: [Permission: PermissionFlowStepOutcome]
@@ -50,12 +51,40 @@ public struct PermissionFlowProgress: Sendable, Equatable, Codable, RawRepresent
     // `RawRepresentable` would encode `rawValue`, which encodes `self` again.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let stored = try container.decode([String: PermissionFlowStepOutcome].self, forKey: .outcomes)
+        let stored = try container.decode([String: StoredOutcome].self, forKey: .outcomes)
         var outcomes: [Permission: PermissionFlowStepOutcome] = [:]
-        for (rawValue, outcome) in stored {
-            outcomes[Permission(rawValue: rawValue)] = outcome
+        for (rawValue, stored) in stored {
+            let permission = Permission(rawValue: rawValue)
+            outcomes[permission] = try stored.outcome(for: permission, codingPath: container.codingPath)
         }
         self.outcomes = outcomes
+    }
+
+    /// ``PermissionFlowStepOutcome`` as stored, with the status still a string, so a 3.x
+    /// `"limited"` can be read with the permission it was stored for. Its synthesised
+    /// `Codable` reads the same JSON as the outcome's (`{"skipped":{"_0":"limited"}}`).
+    private enum StoredOutcome: Decodable {
+        case skipped(String)
+        case answered(String)
+        case deferred(String)
+        case failed
+
+        func outcome(for permission: Permission, codingPath: [any CodingKey]) throws -> PermissionFlowStepOutcome {
+            func status(_ value: String) throws -> PermissionStatus {
+                guard let status = PermissionStatus(storageValue: value, permission: permission) else {
+                    throw DecodingError.dataCorrupted(
+                        DecodingError.Context(codingPath: codingPath, debugDescription: "Unknown status '\(value)'")
+                    )
+                }
+                return status
+            }
+            switch self {
+            case let .skipped(value): return try .skipped(status(value))
+            case let .answered(value): return try .answered(status(value))
+            case let .deferred(value): return try .deferred(status(value))
+            case .failed: return .failed
+            }
+        }
     }
 
     public func encode(to encoder: any Encoder) throws {

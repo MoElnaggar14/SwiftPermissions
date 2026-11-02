@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+`PermissionStatus.limited` says why access is limited: `case limited(Limitation)`. The one breaking change of 4.0; code already on the 3.6 replacements compiles unchanged. See [MIGRATION.md](MIGRATION.md#migrating-from-3x-to-40).
+
+### Changed
+- **BREAKING: `limited(Limitation)`.** `.limited` carries its reason: `.selectedItems` (photos, contacts), `.whenInUse` (`.locationAlways` granted When In Use), `.writeOnly` (`.calendar`) or `.partial` (some HealthKit share types, anything else). `case .limited(.selectedItems):` matches one reason and `case .limited:` still matches all of them. `PermissionStatus.limitation` reads the reason, and `isLimited` stays. The built-in providers report their reason, and the Always-location and full-calendar upgrades are offered only from `.limited(.whenInUse)` and `.limited(.writeOnly)`. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+- **BREAKING: one stored and logged form.** `description` and the `Codable` form of a limited status are `"limited.<reason>"`, e.g. `"limited.selectedItems"`; other statuses are unchanged. `PermissionFlowProgress` and `UserDefaultsRequestHistory` store it. A 3.x `"limited"` still reads: as the reason the built-in provider meant for that permission in saved flow progress and request history, and as `.partial` in a bare decode. 3.6 reads the new form, so rolling back to 3.6 keeps saved data. ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+- `PermissionRow`, `PermissionPrompt` and `PermissionFlow` read the reason from the status instead of inferring it from the permission, so a custom provider's `.limited(.selectedItems)` gets **Select More…** too. `PermissionRow` shows the reason next to the status ("Limited · Selected Items"); `PermissionStatus.title` is still "Limited". ([#35](https://github.com/MoElnaggar14/SwiftPermissions/issues/35))
+
+### Removed
+- **BREAKING:** `PermissionStatus.rawValue`, `PermissionStatus.init(rawValue:)` and `RawRepresentable` (deprecated in 3.6). Use `description` for logging and `Codable` for storage.
+- **BREAKING:** `PermissionStatus.allCases` and `CaseIterable`: a case with a payload can't list every value. List the statuses you need.
+- The 3.6 `PermissionStatus.limited(_:)` static function, now the case itself.
+
 ## [3.6.0] — 2026-10-06
 
 Groundwork for 4.0's `limited(Limitation)`: why access is limited, `isLimited`, rollback-safe storage and one rule for limited grants in the UI. Additive; `PermissionStatus.rawValue` is deprecated.

@@ -1,15 +1,53 @@
-# Preparing for 4.0
+# Migrating from 3.x to 4.0
 
-In 4.0, `PermissionStatus.limited` carries the reason access is limited: `case limited(Limitation)`. 3.6 adds the replacements first, so you can move before upgrading. Nothing breaks in 3.6; `rawValue` only gets a deprecation warning.
+4.0 has one breaking change: `PermissionStatus.limited` carries the reason access is limited, `case limited(Limitation)`. If you already moved to the 3.6 replacements, your code compiles unchanged.
 
-| Breaks in 4.0 | 3.6 replacement |
+```swift
+switch try await permissions.request(.photoLibrary) {
+case .authorized:              showLibrary()
+case .limited(.selectedItems): showLibrary(banner: .selectMore)   // new: the reason
+case .limited:                 showLibrary()                      // unchanged: any reason
+case .provisional:             break
+case .denied:                  await AppSettings.open(for: .photoLibrary)
+case .notDetermined, .restricted, .unavailable: showUnavailableState()
+}
+```
+
+| 3.x | 4.0 |
 | --- | --- |
-| `status == .limited` | `status.isLimited` |
-| `.limited` built as a value, e.g. `StubPermissionProvider(.photoLibrary, status: .limited)` | `.limited(.selectedItems)` (in 3.x it builds `.limited`) |
-| `status.rawValue`, `PermissionStatus(rawValue:)` | `status.description` for logging, `Codable` for storage |
-| `PermissionStatus.allCases` | none; list the statuses you need |
+| `status == .limited` | `status.isLimited`, or `status == .limited(.selectedItems)` for one reason |
+| `.limited` built as a value, e.g. `StubPermissionProvider(.photoLibrary, status: .limited)` | `.limited(.selectedItems)` (or `.whenInUse`, `.writeOnly`, `.partial`) |
+| `upgradableFrom: [.limited]` | `upgradableFrom: [.limited(.whenInUse)]` |
+| `status.rawValue` | `status.description` |
+| `PermissionStatus(rawValue:)` | `Codable` (`JSONDecoder().decode(PermissionStatus.self, …)`) |
+| `PermissionStatus.allCases` | list the statuses you need |
+| — | `status.limitation` (`Limitation?`) reads the reason |
 
-`case .limited:` in a `switch` compiles unchanged in 4.0. A custom `PermissionProvider` that returns `.limited` should return `.limited(.partial)` (or a more specific reason), and compare with `status.isLimited` in `canRequest(from:)`.
+`case .limited:` in a `switch` compiles unchanged and matches every reason.
+
+What each reason means:
+
+| `Limitation` | Reported for |
+| --- | --- |
+| `.selectedItems` | Selected photos, selected contacts (iOS 18) |
+| `.whenInUse` | `.locationAlways` granted only When In Use |
+| `.writeOnly` | `.calendar` granted write-only |
+| `.partial` | Some HealthKit share types; anything else |
+
+## Logging and stored data
+
+- `description` of a limited status is now `"limited.selectedItems"` (and so on); other statuses are unchanged. If your analytics group by `"limited"`, use `status.isLimited` or split by reason.
+- The `Codable` form is the same string. `PermissionFlowProgress` and `UserDefaultsRequestHistory` store it.
+- **Data saved by 3.x still reads.** A stored `"limited"` has no reason, so it reads as the reason the built-in provider meant for that permission: `.selectedItems` for photos and contacts, `.whenInUse` for Always location, `.writeOnly` for calendar, `.partial` otherwise. A bare `JSONDecoder` decode of `"limited"` reads `.limited(.partial)`.
+- **Rolling back to 3.6 is safe.** 3.6 reads `"limited.selectedItems"` as `.limited`. Earlier 3.x releases don't; roll back to 3.6 or later.
+
+## Custom providers
+
+A `PermissionProvider` that returned `.limited` must pick a reason. `.partial` fits when nothing more specific does. In `canRequest(from:)`, compare with the reason you report, e.g. `status == .limited(.partial)`, or with `status.isLimited`.
+
+## UI
+
+`PermissionRow`, `PermissionPrompt` and `PermissionFlow` read the reason from the status instead of inferring it from the permission, so a custom provider's `.limited(.selectedItems)` gets **Select More…** too. `PermissionRow` shows the reason next to the status ("Limited · Selected Items"); `PermissionStatus.title` is still "Limited" and `Limitation.title` names the reason.
 
 # Migrating from 2.x to 3.0
 

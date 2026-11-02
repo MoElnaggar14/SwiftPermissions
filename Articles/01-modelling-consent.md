@@ -47,12 +47,12 @@ Identity is the raw value only. The display name is presentation, so two `Permis
 ### `PermissionStatus`: seven cases, nothing lost
 
 ```swift
-public enum PermissionStatus: Sendable, Hashable, Codable, CaseIterable {
+public enum PermissionStatus: Sendable, Hashable, Codable {
     case notDetermined   // never asked: a request shows the prompt
     case denied          // the user said no: only Settings can change it
     case restricted      // a policy said no: the user can't change it
     case authorized      // full access
-    case limited         // partial: selected photos, write-only calendar, when-in-use for Always
+    case limited(Limitation)  // partial, and why: selected photos, when-in-use for Always, …
     case provisional     // quiet notifications, granted without asking
     case unavailable     // no such hardware or capability on this device
 }
@@ -75,14 +75,20 @@ status.canRequest        // .notDetermined: a prompt will appear
 status.requiresSettings  // .denied: send them to Settings
 ```
 
-The case list is frozen for every 3.x release, so you can switch exhaustively without a `default`. A new permission maps onto these seven cases; a new case only arrives in a major version.
+The case list is frozen for every 4.x release, so you can switch exhaustively without a `default`. A new permission maps onto these seven cases; a new case only arrives in a major version.
 
-`.limited` is the one case that hides a choice. Selected photos, when-in-use location for an Always request, write-only calendar and some HealthKit types are four different grants, and the right button differs for each. `Limitation` names them (`.selectedItems`, `.whenInUse`, `.writeOnly`, `.partial`), and the UI picks its action from it, so only selected items get **Select More…**. In 4.0 the case carries it, `limited(Limitation)`; until then, `status.isLimited` and `.limited(.selectedItems)` are spelled the way 4.0 will need them:
+`.limited` is the case that used to hide a choice. Selected photos, when-in-use location for an Always request, write-only calendar and some HealthKit types are four different grants, and the right button differs for each. So the case carries a `Limitation` that names them (`.selectedItems`, `.whenInUse`, `.writeOnly`, `.partial`). Back at the front desk, "some floors only" now says *which* floors. The UI picks its action from the reason, so only selected items get **Select More…**:
 
 ```swift
-if status.isLimited { … }                 // compiles on 3.6 and 4.0; status == .limited won't
-let stub: PermissionStatus = .limited(.selectedItems)   // .limited in 3.x
+switch status {
+case .limited(.selectedItems): showLibrary(banner: .selectMore)   // one reason
+case .limited:                 showLibrary()                      // any other reason
+default:                       break
+}
+if status.isLimited { … }       // any reason; status.limitation reads it
 ```
+
+Reduced location accuracy is deliberately *not* a limitation: it's a property of a grant, not a kind of grant, since a user can allow When In Use *and* turn Precise off. It stays on `accuracy()`.
 
 ### `PermissionError`: the developer's problems, typed
 

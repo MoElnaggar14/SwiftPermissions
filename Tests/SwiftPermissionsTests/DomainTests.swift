@@ -7,16 +7,19 @@ import XCTest
 
 final class DomainTests: XCTestCase {
     func testGrantedStatuses() {
-        let granted = PermissionStatus.allCases.filter(\.isGranted)
-        XCTAssertEqual(Set(granted), [.authorized, .limited(.partial), .provisional])
+        let granted = PermissionStatus.everyStatus.filter(\.isGranted)
+        XCTAssertEqual(
+            Set(granted),
+            Set([PermissionStatus.authorized, .provisional] + Limitation.allCases.map(PermissionStatus.limited))
+        )
     }
 
     func testOnlyNotDeterminedCanBeRequested() {
-        XCTAssertEqual(PermissionStatus.allCases.filter(\.canRequest), [.notDetermined])
+        XCTAssertEqual(PermissionStatus.everyStatus.filter(\.canRequest), [.notDetermined])
     }
 
     func testOnlyDeniedRequiresSettings() {
-        XCTAssertEqual(PermissionStatus.allCases.filter(\.requiresSettings), [.denied])
+        XCTAssertEqual(PermissionStatus.everyStatus.filter(\.requiresSettings), [.denied])
     }
 
     func testPermissionIdentityIgnoresDisplayName() {

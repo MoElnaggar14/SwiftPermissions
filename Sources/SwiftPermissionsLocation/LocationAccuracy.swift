@@ -20,7 +20,7 @@ public extension LocationPermissionProvider {
     static let temporaryUsageDescriptionsKey = "NSLocationTemporaryUsageDescriptionDictionary"
 
     /// The accuracy the user granted, or `nil` while location isn't authorized
-    /// (any status other than ``PermissionStatus/authorized`` or ``PermissionStatus/limited``).
+    /// (any status other than ``PermissionStatus/authorized`` or ``PermissionStatus/limited(_:)``).
     func accuracy() async -> LocationAccuracy? {
         let (status, accuracy) = await MainActor.run {
             let manager = CLLocationManager()
@@ -85,7 +85,7 @@ public extension LocationPermissionProvider {
     // MARK: - Mapping
 
     /// `nil` unless location is authorized; reduced accuracy is reported as such, never
-    /// as ``PermissionStatus/limited``, which for location means "when in use".
+    /// as ``PermissionStatus/limited(_:)``, which for location means "when in use".
     internal static func map(
         _ status: CLAuthorizationStatus,
         _ accuracy: CLAccuracyAuthorization

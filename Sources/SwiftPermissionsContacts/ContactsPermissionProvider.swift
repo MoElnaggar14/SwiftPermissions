@@ -31,11 +31,6 @@ public struct ContactsPermissionProvider: PermissionProvider {
             return status.rawValue == 4 ? .limited(.selectedItems) : .denied
         }
     }
-
-    /// Why ``map(_:)`` reports `.limited`, or `nil` when it doesn't. 4.0 puts it in the status.
-    static func mapLimitation(_ status: CNAuthorizationStatus) -> Limitation? {
-        map(status).isLimited ? .selectedItems : nil
-    }
 }
 
 public extension PermissionRegistration {
@@ -49,7 +44,7 @@ import SwiftUI
 
 @available(iOS 18.0, *)
 public extension View {
-    /// Presents the system picker where people with ``PermissionStatus/limited`` contacts
+    /// Presents the system picker where people with ``PermissionStatus/limited(_:)`` contacts
     /// access can share more contacts with your app.
     ///
     /// Drive it from the "Select More…" action of a `PermissionRow` or `PermissionPrompt`:
@@ -61,7 +56,7 @@ public extension View {
     ///     .limitedContactsPicker(isPresented: $pickingContacts)
     /// ```
     ///
-    /// The status stays `.limited`; only the selection changes. iOS only (not Mac Catalyst).
+    /// The status stays `.limited(.selectedItems)`; only the selection changes. iOS only (not Mac Catalyst).
     ///
     /// - Parameters:
     ///   - isPresented: Whether the picker is showing. Reset to `false` when it closes.

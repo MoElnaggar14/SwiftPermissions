@@ -1,10 +1,10 @@
-/// Why access is ``PermissionStatus/limited`` rather than ``PermissionStatus/authorized``.
+/// Why access is ``PermissionStatus/limited(_:)`` rather than ``PermissionStatus/authorized``.
 ///
-/// In 3.x the status doesn't carry the reason yet: providers work it out internally and
-/// ``PermissionStatus/limited(_:)`` drops it. In 4.0 the case becomes `limited(Limitation)`,
-/// so `case .limited(.selectedItems):` can tell selected photos from when-in-use location.
+/// `case .limited(.selectedItems):` tells selected photos from when-in-use location, and
+/// `case .limited:` matches every reason.
 ///
-/// The set of cases is fixed for the 3.x and 4.x releases, like ``PermissionStatus``.
+/// The set of cases is fixed for the 4.x releases, like ``PermissionStatus``. A custom
+/// provider with no more specific reason reports ``partial``.
 public enum Limitation: String, Sendable, Hashable, Codable, CaseIterable {
     /// Only items the user picked: selected photos, or selected contacts (iOS 18).
     /// The system picker can add more.
@@ -19,16 +19,18 @@ public enum Limitation: String, Sendable, Hashable, Codable, CaseIterable {
 }
 
 extension Limitation {
-    /// The reason the built-in provider for `permission` means when it reports `.limited`.
+    /// The reason a 3.x built-in provider meant when it reported `.limited` for
+    /// `permission`. Only for reading data stored by 3.x, which has no reason.
     ///
-    /// 3.x statuses don't carry the reason, so the UI and the decoders of 3.x data read it
-    /// from this one table. Anything not listed, including custom permissions, is `.partial`.
-    package static func reported(for permission: Permission) -> Limitation {
+    /// Anything not listed, including custom permissions and an unknown permission, is
+    /// ``partial``.
+    package static func legacy(for permission: Permission?) -> Limitation {
+        guard let permission else { return .partial }
         switch permission {
-        case .photoLibrary, .contacts: .selectedItems
-        case .locationAlways: .whenInUse
-        case .calendar: .writeOnly
-        default: .partial
+        case .photoLibrary, .contacts: return .selectedItems
+        case .locationAlways: return .whenInUse
+        case .calendar: return .writeOnly
+        default: return .partial
         }
     }
 }

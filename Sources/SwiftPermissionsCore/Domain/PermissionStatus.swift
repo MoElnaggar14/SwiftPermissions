@@ -2,25 +2,33 @@
 ///
 /// Each framework has its own authorization enum; providers map them onto this one so
 /// your app logic has a single vocabulary. Nothing is collapsed that matters for UX:
-/// `limited` photo access, `provisional` notifications and parental `restricted`
-/// controls each keep their own case.
+/// `limited` access says why it's limited, `provisional` notifications and parental
+/// `restricted` controls each keep their own case.
+///
+/// ```swift
+/// switch try await permissions.request(.photoLibrary) {
+/// case .authorized:              showLibrary()
+/// case .limited(.selectedItems): showLibrary(banner: .selectMore)
+/// case .limited:                 showLibrary()      // any other reason
+/// case .provisional:             break
+/// case .denied:                  await AppSettings.open(for: .photoLibrary)
+/// case .notDetermined, .restricted, .unavailable: showUnavailableState()
+/// }
+/// ```
 ///
 /// ## Stability
 ///
-/// The set of cases is fixed for the 3.x releases, so you can switch over it exhaustively
-/// without a `default`. New permissions map onto these cases. Adding a case would break
-/// exhaustive switches, so it only happens in a major release.
+/// The set of cases, and of ``Limitation`` reasons, is fixed for the 4.x releases, so you
+/// can switch over it exhaustively without a `default`. New permissions map onto these
+/// cases. Adding a case would break exhaustive switches, so it only happens in a major
+/// release.
 ///
-/// ## Moving to 4.0
+/// ## Storing and logging
 ///
-/// In 4.0 `limited` carries a ``Limitation`` (`case limited(Limitation)`). `case .limited:`
-/// in a `switch` keeps compiling. To be ready for the rest:
-///
-/// - Use ``isLimited`` instead of `status == .limited`.
-/// - Build the value with ``limited(_:)``, e.g. `.limited(.selectedItems)` in stubs.
-/// - Use ``description`` instead of the deprecated `rawValue` for logging, and the
-///   `Codable` form for storage.
-public enum PermissionStatus: Sendable, Hashable, CaseIterable, CustomStringConvertible {
+/// ``description`` and the `Codable` form are the same string: the case name, e.g.
+/// `"authorized"`, and `"limited.selectedItems"` for a limited status. A 3.x `"limited"`
+/// still decodes, as ``Limitation/partial``.
+public enum PermissionStatus: Sendable, Hashable, CustomStringConvertible {
     /// The user hasn't been asked yet. Requesting will show the system prompt.
     case notDetermined
     /// The user declined. Only the Settings app can change this.
@@ -29,9 +37,10 @@ public enum PermissionStatus: Sendable, Hashable, CaseIterable, CustomStringConv
     case restricted
     /// Full access.
     case authorized
-    /// Partial access, e.g. selected photos, write-only calendar, or when-in-use location
-    /// when ``Permission/locationAlways`` was asked for. ``Limitation`` lists the reasons.
-    case limited
+    /// Partial access, and why: selected photos or contacts, when-in-use location when
+    /// ``Permission/locationAlways`` was asked for, write-only calendar, or some HealthKit
+    /// share types. `case .limited:` matches every reason.
+    case limited(Limitation)
     /// Notifications delivered quietly without having asked the user (iOS 12+).
     case provisional
     /// The capability doesn't exist on this platform or device (no camera, no HealthKit, ...).
@@ -51,58 +60,64 @@ public enum PermissionStatus: Sendable, Hashable, CaseIterable, CustomStringConv
     /// Whether the only path forward is sending the user to Settings.
     public var requiresSettings: Bool { self == .denied }
 
-    /// The status's name, e.g. `"authorized"`. Use it instead of `rawValue` for logging.
+    /// The status's name, e.g. `"authorized"` or `"limited.selectedItems"`. The same
+    /// string as the `Codable` form, so it's safe to log and to compare with stored values.
     public var description: String { storageValue }
 }
 
 public extension PermissionStatus {
-    /// Whether the status is ``limited``, whatever the reason.
-    ///
-    /// Use it instead of `status == .limited`, which won't compile in 4.0, where `limited`
-    /// carries a ``Limitation``.
-    var isLimited: Bool { self == .limited }
+    /// Why access is limited, or `nil` for any other status.
+    var limitation: Limitation? {
+        switch self {
+        case let .limited(limitation): limitation
+        case .notDetermined, .denied, .restricted, .authorized, .provisional, .unavailable: nil
+        }
+    }
 
-    /// Builds ``limited``. In 3.x the reason is dropped; in 4.0 this is the case itself, so
-    /// code such as `StubPermissionProvider(.photoLibrary, status: .limited(.selectedItems))`
-    /// compiles unchanged.
-    static func limited(_ limitation: Limitation) -> PermissionStatus { .limited }
+    /// Whether the status is ``limited(_:)``, whatever the reason.
+    var isLimited: Bool { limitation != nil }
 }
 
 // MARK: - Storage
 
 extension PermissionStatus {
-    /// The form statuses are stored and logged in: the case name, e.g. `"authorized"`.
+    private static let limitedPrefix = "limited."
+
+    /// The form statuses are stored and logged in: the case name, e.g. `"authorized"`, and
+    /// `"limited.<reason>"` for a limited status.
     var storageValue: String {
         switch self {
         case .notDetermined: "notDetermined"
         case .denied: "denied"
         case .restricted: "restricted"
         case .authorized: "authorized"
-        case .limited: "limited"
+        case let .limited(limitation): Self.limitedPrefix + limitation.rawValue
         case .provisional: "provisional"
         case .unavailable: "unavailable"
         }
     }
 
-    /// Reads ``storageValue``, and the 4.0 form of a limited status
-    /// (`"limited.selectedItems"`, …) as ``limited``. Data written by 4.0 then still reads
-    /// after rolling back to 3.x.
-    init?(storageValue: String) {
+    /// Reads ``storageValue``, and the 3.x value `"limited"`, which has no reason.
+    ///
+    /// - Parameter permission: The permission the value was stored for, when known. A 3.x
+    ///   `"limited"` then reads as the reason that permission's built-in provider meant
+    ///   (``Limitation/legacy(for:)``); without it, as ``Limitation/partial``.
+    init?(storageValue: String, permission: Permission? = nil) {
         switch storageValue {
         case "notDetermined": self = .notDetermined
         case "denied": self = .denied
         case "restricted": self = .restricted
         case "authorized": self = .authorized
-        case "limited": self = .limited
+        case "limited": self = .limited(.legacy(for: permission))
         case "provisional": self = .provisional
         case "unavailable": self = .unavailable
         default:
-            let prefix = "limited."
-            guard storageValue.hasPrefix(prefix),
-                  Limitation(rawValue: String(storageValue.dropFirst(prefix.count))) != nil else {
+            guard storageValue.hasPrefix(Self.limitedPrefix),
+                  let limitation = Limitation(rawValue: String(storageValue.dropFirst(Self.limitedPrefix.count)))
+            else {
                 return nil
             }
-            self = .limited
+            self = .limited(limitation)
         }
     }
 }
@@ -122,18 +137,4 @@ extension PermissionStatus: Codable {
         var container = encoder.singleValueContainer()
         try container.encode(storageValue)
     }
-}
-
-// Written by hand, rather than as `String` raw values, so `rawValue` can be deprecated
-// before 4.0 removes it: a case with a payload can't have a raw value.
-extension PermissionStatus: RawRepresentable {
-    public typealias RawValue = String
-
-    @available(*, deprecated, message: "PermissionStatus loses raw values in 4.0. Decode it with Codable instead.")
-    public init?(rawValue: String) {
-        self.init(storageValue: rawValue)
-    }
-
-    @available(*, deprecated, message: "PermissionStatus loses raw values in 4.0. Use description or Codable instead.")
-    public var rawValue: String { storageValue }
 }

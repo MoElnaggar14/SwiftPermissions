@@ -20,7 +20,7 @@ final class PromptActionsTests: XCTestCase {
     func testUpgradeCanBeDeferredToo() {
         // When-in-use location asking for Always: still requestable, so "Not Now" makes sense.
         let actions = PromptActions(
-            status: .limited(.whenInUse), canRequest: true, hasSettingsURL: true, canDefer: true, limitation: .whenInUse
+            status: .limited(.whenInUse), canRequest: true, hasSettingsURL: true, canDefer: true
         )
 
         XCTAssertEqual(actions.primary, .request)
@@ -40,8 +40,7 @@ final class PromptActionsTests: XCTestCase {
             status: .limited(.selectedItems),
             canRequest: false,
             hasSettingsURL: true,
-            canDefer: true,
-            limitation: .selectedItems
+            canDefer: true
         )
 
         XCTAssertEqual(actions.primary, .openSettings)
@@ -54,8 +53,7 @@ final class PromptActionsTests: XCTestCase {
             canRequest: false,
             hasSettingsURL: true,
             canDefer: true,
-            canSelectMore: true,
-            limitation: .selectedItems
+            canSelectMore: true
         )
 
         XCTAssertEqual(actions.primary, .selectMore)
@@ -68,8 +66,7 @@ final class PromptActionsTests: XCTestCase {
             canRequest: true,
             hasSettingsURL: true,
             canDefer: false,
-            canSelectMore: true,
-            limitation: .selectedItems
+            canSelectMore: true
         )
 
         XCTAssertEqual(actions.primary, .request)
@@ -83,8 +80,7 @@ final class PromptActionsTests: XCTestCase {
                 canRequest: false,
                 hasSettingsURL: true,
                 canDefer: true,
-                canSelectMore: true,
-                limitation: limitation
+                canSelectMore: true
             )
 
             XCTAssertEqual(actions.primary, .openSettings, "\(limitation)")
@@ -98,8 +94,7 @@ final class PromptActionsTests: XCTestCase {
             canRequest: false,
             hasSettingsURL: true,
             canDefer: true,
-            canSelectMore: true,
-            limitation: .partial
+            canSelectMore: true
         )
 
         XCTAssertEqual(actions.primary, .nothing)

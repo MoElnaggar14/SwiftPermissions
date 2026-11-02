@@ -1,6 +1,6 @@
 # SwiftPermissions — Article Series
 
-A four-part series on how SwiftPermissions 3.0 is designed, and why each piece exists. Every code sample uses the 3.0 API: one `PermissionManager` (or `PermissionStore`) created at your composition root and injected, with one product per privacy framework.
+A four-part series on how SwiftPermissions is designed, and why each piece exists. Every code sample uses the 4.x API: one `PermissionManager` (or `PermissionStore`) created at your composition root and injected, with one product per privacy framework.
 
 | # | Title | What you'll learn |
 |---|---|---|
@@ -11,4 +11,4 @@ A four-part series on how SwiftPermissions 3.0 is designed, and why each piece e
 
 Read in order, or jump to whichever is on fire for you today.
 
-New to the package? Start with the [README](../README.md). Upgrading from 2.x? See [MIGRATION.md](../MIGRATION.md).
+New to the package? Start with the [README](../README.md). Upgrading from 2.x or 3.x? See [MIGRATION.md](../MIGRATION.md).

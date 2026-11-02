@@ -1,0 +1,9 @@
+# Swift Package Index: https://swiftpackageindex.com/MoElnaggar14/SwiftPermissions
+# Builds hosted DocC documentation for the products apps import directly.
+version: 1
+builder:
+  configs:
+    - documentation_targets:
+        - SwiftPermissionsCore
+        - SwiftPermissionsUI
+        - SwiftPermissionsTesting

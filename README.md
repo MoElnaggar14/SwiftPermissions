@@ -41,7 +41,7 @@ Every framework has its own authorization enum, its own request API (async, call
 ## Installation
 
 ```swift
-.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "4.0.0")
+.package(url: "https://github.com/MoElnaggar14/SwiftPermissions", from: "4.0.1")
 ```
 
 Add `SwiftPermissions` (or just `SwiftPermissionsCore` without SwiftUI), plus one product per framework you request:
@@ -499,6 +499,12 @@ CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 1
 - **Stable statuses.** `PermissionStatus` and `Limitation` won't gain cases in 4.x, so exhaustive `switch`es stay valid. New permissions map onto the existing cases.
 
 Upgrading from 2.x? See [MIGRATION.md](MIGRATION.md).
+
+## Who's using it
+
+Using SwiftPermissions in an app or a package? Open a pull request that adds it to this list, or an [issue](https://github.com/MoElnaggar14/SwiftPermissions/issues) to tell us how it went. Knowing who depends on it shapes what comes next.
+
+- *Your app here*
 
 ## License
 

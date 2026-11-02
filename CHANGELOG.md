@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] — 2026-11-02
+
+Docs and agent tooling only; no library changes.
+
+### Changed
+- A `.spi.yml` so Swift Package Index builds hosted DocC documentation for `SwiftPermissionsCore`, `SwiftPermissionsUI` and `SwiftPermissionsTesting`.
+- The README asks adopters to add their app to a new "Who's using it" section.
+- The Claude Code marketplace entry describes 4.x, and the article series index names the current API.
+
+### Fixed
+- A compiled `__pycache__/*.pyc` from the agent skill's script was committed; it's removed and ignored.
+
 ## [4.0.0] — 2026-11-02
 
 `PermissionStatus.limited` says why access is limited: `case limited(Limitation)`. The one breaking change of 4.0; code already on the 3.6 replacements compiles unchanged. See [MIGRATION.md](MIGRATION.md#migrating-from-3x-to-40).

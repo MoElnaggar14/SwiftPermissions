@@ -500,6 +500,12 @@ CI builds and tests with Swift 6.4 (Xcode 27), 6.3 (Xcode 26.6) and 6.1 (Xcode 1
 
 Upgrading from 2.x? See [MIGRATION.md](MIGRATION.md).
 
+## Who's using it
+
+Using SwiftPermissions in an app or a package? Open a pull request that adds it to this list, or an [issue](https://github.com/MoElnaggar14/SwiftPermissions/issues) to tell us how it went. Knowing who depends on it shapes what comes next.
+
+- *Your app here*
+
 ## License
 
 MIT

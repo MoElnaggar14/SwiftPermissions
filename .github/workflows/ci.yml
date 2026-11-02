@@ -149,6 +149,17 @@ jobs:
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO -quiet
 
+  mac-checks:
+    name: Mac checks app
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.0'
+      - name: Build
+        run: swift build --package-path Example/MacChecks
+
   lint:
     name: SwiftLint
     runs-on: macos-15

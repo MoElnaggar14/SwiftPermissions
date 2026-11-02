@@ -30,6 +30,12 @@
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Show how Bluetooth access looks in this demo.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Show how local network access looks in this demo.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_swiftperms._tcp</string>
+	</array>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Demonstrate the App Tracking Transparency prompt. This demo doesn't track you.</string>
 	<key>NSMotionUsageDescription</key>

@@ -4,6 +4,7 @@ import SwiftPermissionsBluetooth
 import SwiftPermissionsCalendar
 import SwiftPermissionsCamera
 import SwiftPermissionsContacts
+import SwiftPermissionsLocalNetwork
 import SwiftPermissionsLocation
 import SwiftPermissionsMotion
 import SwiftPermissionsPhotos
@@ -35,15 +36,20 @@ struct SwiftPermissionsExampleApp: App {
 }
 
 enum ExamplePermissions {
+    /// The system has no API to read Local Network access, so the provider remembers
+    /// the last result here. Without it, a relaunch reads Not Determined until the next request.
+    static let history = UserDefaultsRequestHistory()
+
     static let registrations: [PermissionRegistration] = [
         .camera, .microphone, .photoLibrary, .photoLibraryAddOnly, .contacts,
         .calendar, .reminders, .locationWhenInUse, .locationAlways, .notifications,
-        .bluetooth, .tracking, .motion, .speechRecognition, .biometrics
+        .bluetooth, .tracking, .motion, .speechRecognition, .biometrics,
+        .localNetwork(history: history)
     ]
 
     static let all: [Permission] = [
         .camera, .microphone, .photoLibrary, .photoLibraryAddOnly, .contacts,
         .calendar, .reminders, .locationWhenInUse, .locationAlways, .notifications,
-        .bluetooth, .tracking, .motion, .speechRecognition, .biometrics
+        .bluetooth, .tracking, .motion, .speechRecognition, .biometrics, .localNetwork
     ]
 }

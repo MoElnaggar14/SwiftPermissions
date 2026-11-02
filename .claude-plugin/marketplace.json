@@ -6,7 +6,7 @@
     {
       "name": "swiftpermissions",
       "source": "./plugin",
-      "description": "Integrate SwiftPermissions 3.x correctly: products, registration, Info.plist keys, statuses and tests."
+      "description": "Integrate SwiftPermissions 4.x correctly: products, registration, Info.plist keys, limited reasons, statuses and tests."
     }
   ]
 }

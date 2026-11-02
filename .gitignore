@@ -100,3 +100,7 @@ iOSInjectionProject/
 # IDE
 .vscode/
 .idea/
+
+# Python bytecode from running the agent skill scripts
+__pycache__/
+*.pyc

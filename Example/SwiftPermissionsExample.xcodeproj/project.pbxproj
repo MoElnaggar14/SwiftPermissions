@@ -18,6 +18,7 @@
 		EAC9C6E1528964C393AF679F /* SwiftPermissionsPhotos in Frameworks */ = {isa = PBXBuildFile; productRef = 1761DA1D48594997458B30AB /* SwiftPermissionsPhotos */; };
 		D0F40E8574F21DE7446B7CEB /* SwiftPermissionsSpeech in Frameworks */ = {isa = PBXBuildFile; productRef = B64BAB1641A66CBB6046B509 /* SwiftPermissionsSpeech */; };
 		95D425C8D07409623B2A82AA /* SwiftPermissionsTracking in Frameworks */ = {isa = PBXBuildFile; productRef = E0B19419BD301AA8BCF04ED2 /* SwiftPermissionsTracking */; };
+		A1C0FFEE0000000000000001 /* SwiftPermissionsLocalNetwork in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0FFEE0000000000000002 /* SwiftPermissionsLocalNetwork */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 				EAC9C6E1528964C393AF679F /* SwiftPermissionsPhotos in Frameworks */,
 				D0F40E8574F21DE7446B7CEB /* SwiftPermissionsSpeech in Frameworks */,
 				95D425C8D07409623B2A82AA /* SwiftPermissionsTracking in Frameworks */,
+				A1C0FFEE0000000000000001 /* SwiftPermissionsLocalNetwork in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +105,7 @@
 				1761DA1D48594997458B30AB /* SwiftPermissionsPhotos */,
 				B64BAB1641A66CBB6046B509 /* SwiftPermissionsSpeech */,
 				E0B19419BD301AA8BCF04ED2 /* SwiftPermissionsTracking */,
+				A1C0FFEE0000000000000002 /* SwiftPermissionsLocalNetwork */,
 			);
 			productName = SwiftPermissionsExample;
 			productReference = D2A57DC1D883FD21FB995169 /* SwiftPermissionsExample.app */;
@@ -333,6 +336,10 @@
 		E0B19419BD301AA8BCF04ED2 /* SwiftPermissionsTracking */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftPermissionsTracking;
+		};
+		A1C0FFEE0000000000000002 /* SwiftPermissionsLocalNetwork */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftPermissionsLocalNetwork;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
